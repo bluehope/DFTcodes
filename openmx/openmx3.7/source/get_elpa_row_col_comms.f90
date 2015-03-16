@@ -23,22 +23,22 @@ subroutine get_elpa_row_col_comms(mpi_comm_global, my_prow, my_pcol, mpi_comm_ro
 !
 !-------------------------------------------------------------------------------
 
-use ELPA1
+   use ELPA1 
 
-implicit none
+   implicit none
 
-integer, intent(in)  :: mpi_comm_global, my_prow, my_pcol
-integer, intent(out) :: mpi_comm_rows, mpi_comm_cols
+   integer, intent(in)  :: mpi_comm_global, my_prow, my_pcol
+   integer, intent(out) :: mpi_comm_rows, mpi_comm_cols
 
-integer :: mpierr
+   integer :: mpierr
 
-! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
-! having the same column coordinate share one mpi_comm_rows.
-! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
-! Analogous for mpi_comm_cols
+   ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
+   ! having the same column coordinate share one mpi_comm_rows.
+   ! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
+   ! Analogous for mpi_comm_cols
 
-call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
-call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
+   call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
+   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols,mpierr)
 
 end subroutine get_elpa_row_col_comms
 
