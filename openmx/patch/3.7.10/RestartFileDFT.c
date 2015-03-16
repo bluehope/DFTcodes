@@ -6,7 +6,7 @@
 
   Log of RestartFileDFT.c:
 
-     22/Nov/2001  Released by T.Ozaki 
+     22/Nov/2001  Released by T.Ozaki
 
 ***********************************************************************/
 
@@ -35,261 +35,267 @@ static void Extp_Charge(int MD_iter, double *extpln_coes);
 
 int RestartFileDFT(char *mode, int MD_iter, double *Uele, double *****H, double *****CntH, double *etime)
 {
-  int ret,ret1;
-  int numprocs,myid;
-  double *extpln_coes;
-  double Stime,Etime;
+    int ret,ret1;
+    int numprocs,myid;
+    double *extpln_coes;
+    double Stime,Etime;
 
-  *etime = 0.0; 
-  dtime(&Stime);
+    *etime = 0.0;
+    dtime(&Stime);
 
-  /* MPI */
-  MPI_Comm_size(mpi_comm_level1,&numprocs);
-  MPI_Comm_rank(mpi_comm_level1,&myid);
+    /* MPI */
+    MPI_Comm_size(mpi_comm_level1,&numprocs);
+    MPI_Comm_rank(mpi_comm_level1,&myid);
 
-  if (ML_flag) return 0;
+    if (ML_flag) return 0;
 
-  ret = 1;
+    ret = 1;
 
-  /* write */
-  if ( strcasecmp(mode,"write")==0 ) {
+    /* write */
+    if ( strcasecmp(mode,"write")==0 ) {
 
-    MPI_Barrier(mpi_comm_level1);
+        MPI_Barrier(mpi_comm_level1);
 
-    if      (Cnt_switch==0)  Output_HKS(MD_iter, Uele, H);
-    else if (Cnt_switch==1)  Output_HKS(MD_iter, Uele, CntH);
+        if      (Cnt_switch==0)  Output_HKS(MD_iter, Uele, H);
+        else if (Cnt_switch==1)  Output_HKS(MD_iter, Uele, CntH);
 
-    MPI_Barrier(mpi_comm_level1);
+        MPI_Barrier(mpi_comm_level1);
 
-    Output_Charge_Density(MD_iter);
-  }
+        Output_Charge_Density(MD_iter);
+    }
 
-  /* read */
-  else if (strcasecmp(mode,"read")==0) {
-    
-    /* find coefficients for extrapolation of charge density or H */
+    /* read */
+    else if (strcasecmp(mode,"read")==0) {
 
-    /* allocation */
+        /* find coefficients for extrapolation of charge density or H */
 
-    extpln_coes = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2)); 
+        /* allocation */
 
-    Extp_Charge(MD_iter,extpln_coes);
+        extpln_coes = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
 
-    /* read H */
+        Extp_Charge(MD_iter,extpln_coes);
 
-    if      (Cnt_switch==0)  ret = Input_HKS(MD_iter, Uele, H);
-    else if (Cnt_switch==1)  ret = Input_HKS(MD_iter, Uele, CntH);
+        /* read H */
 
-    /* read charge density */
+        if      (Cnt_switch==0)  ret = Input_HKS(MD_iter, Uele, H);
+        else if (Cnt_switch==1)  ret = Input_HKS(MD_iter, Uele, CntH);
 
-    ret1 = Input_Charge_Density(MD_iter,extpln_coes);
-    ret *= ret1; 
+        /* read charge density */
 
-    /* free */
+        ret1 = Input_Charge_Density(MD_iter,extpln_coes);
+        ret *= ret1;
 
-    free(extpln_coes);
-  }
+        /* free */
 
-  dtime(&Etime);
-  *etime = Etime - Stime;
+        free(extpln_coes);
+    }
 
-  return ret;
+    dtime(&Etime);
+    *etime = Etime - Stime;
+
+    return ret;
 }
 
-  
 
- 
+
+
 void Extp_Charge(int MD_iter, double *extpln_coes)
 {
-  int i,j,k;
-  int NumHis;
-  double sum;
-  double **A,**IA,*B;
+    int i,j,k;
+    int NumHis;
+    double sum;
+    double **A,**IA,*B;
 
-  for (i=0; i<Extrapolated_Charge_History; i++){
-    extpln_coes[i] = 0.0;
-  }
-  extpln_coes[0] = 1.0;
+    for (i=0; i<Extrapolated_Charge_History; i++) {
+        extpln_coes[i] = 0.0;
+    }
+    extpln_coes[0] = 1.0;
 
-  if (Cnt_switch==1) return;
+    if (Cnt_switch==1) return;
 
-  if (Extrapolated_Charge_History<MD_iter && 1<Extrapolated_Charge_History){
+    if (Extrapolated_Charge_History<MD_iter && 1<Extrapolated_Charge_History) {
 
-    /* allocation */
+        /* allocation */
 
-    A = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+2));
-    for (i=0; i<(Extrapolated_Charge_History+2); i++){
-      A[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
+        A = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+2));
+        for (i=0; i<(Extrapolated_Charge_History+2); i++) {
+            A[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
+        }
+
+        IA = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+2));
+        for (i=0; i<(Extrapolated_Charge_History+2); i++) {
+            IA[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
+        }
+
+        B = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
+
+        /* find the current number of history */
+
+        NumHis = MD_iter - 1;
+
+        if (Extrapolated_Charge_History<NumHis) {
+            NumHis = Extrapolated_Charge_History;
+        }
+
+        /* make the matrix A */
+
+        for (i=0; i<NumHis; i++) {
+            for (j=i; j<NumHis; j++) {
+
+                sum = rnd(1.0e-16);
+                for (k=0; k<3*atomnum; k++) {
+                    sum += His_Gxyz[i][k]*His_Gxyz[j][k];
+                }
+
+                A[i][j] = sum;
+                A[j][i] = sum;
+            }
+        }
+
+        /* make the vector B */
+
+        for (i=0; i<NumHis; i++) {
+
+            sum = 0.0;
+            k = 0;
+
+            for (j=1; j<=atomnum; j++) {
+                sum += His_Gxyz[i][k]*Gxyz[j][1];
+                k++;
+                sum += His_Gxyz[i][k]*Gxyz[j][2];
+                k++;
+                sum += His_Gxyz[i][k]*Gxyz[j][3];
+                k++;
+            }
+
+            B[i] = sum;
+        }
+
+        /* calculate the inverse of A */
+
+        Inverse(NumHis-1,A,IA);
+
+        /* calculate the coefficients */
+
+        for (i=0; i<NumHis; i++) {
+
+            sum = 0.0;
+            for (j=0; j<NumHis; j++) {
+                sum += IA[i][j]*B[j];
+            }
+
+            extpln_coes[i] = sum;
+        }
+
+        /* if a set of extpln_coes is improper, correct them */
+
+        sum = 0.0;
+        for (i=0; i<NumHis; i++) {
+            sum += extpln_coes[i];
+        }
+
+        if (sum<0.5) {
+            for (i=0; i<Extrapolated_Charge_History; i++) extpln_coes[i] = 0.0;
+            extpln_coes[NumHis-1] = 1.0;
+        }
+
+        /* free */
+
+        for (i=0; i<(Extrapolated_Charge_History+2); i++) {
+            free(A[i]);
+        }
+        free(A);
+
+        for (i=0; i<(Extrapolated_Charge_History+2); i++) {
+            free(IA[i]);
+        }
+        free(IA);
+
+        free(B);
+
+    } /* if (Extrapolated_Charge_History<MD_iter && 1<Extrapolated_Charge_History) */
+
+    /* shift His_Gxyz */
+
+    for (i=(Extrapolated_Charge_History-2); 0<=i; i--) {
+        for (k=0; k<3*atomnum; k++) {
+            His_Gxyz[i+1][k] = His_Gxyz[i][k];
+        }
     }
 
-    IA = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+2));
-    for (i=0; i<(Extrapolated_Charge_History+2); i++){
-      IA[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
+    k = 0;
+    for (i=1; i<=atomnum; i++) {
+        His_Gxyz[0][k] = Gxyz[i][1];
+        k++;
+        His_Gxyz[0][k] = Gxyz[i][2];
+        k++;
+        His_Gxyz[0][k] = Gxyz[i][3];
+        k++;
     }
- 
-    B = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+2));
-
-    /* find the current number of history */
-
-    NumHis = MD_iter - 1;
-    
-    if (Extrapolated_Charge_History<NumHis){
-      NumHis = Extrapolated_Charge_History;
-    }
-
-    /* make the matrix A */
-
-    for (i=0; i<NumHis; i++){
-      for (j=i; j<NumHis; j++){
-
-        sum = rnd(1.0e-16);
-        for (k=0; k<3*atomnum; k++){
-          sum += His_Gxyz[i][k]*His_Gxyz[j][k];       
-	}
-
-        A[i][j] = sum;
-        A[j][i] = sum;
-      }
-    }
-
-    /* make the vector B */
-
-    for (i=0; i<NumHis; i++){
-
-      sum = 0.0;
-      k = 0;
-
-      for (j=1; j<=atomnum; j++){
-	sum += His_Gxyz[i][k]*Gxyz[j][1]; k++;       
-	sum += His_Gxyz[i][k]*Gxyz[j][2]; k++;       
-	sum += His_Gxyz[i][k]*Gxyz[j][3]; k++;       
-      }
-
-      B[i] = sum; 
-    }
-  
-    /* calculate the inverse of A */
-
-    Inverse(NumHis-1,A,IA);
-
-    /* calculate the coefficients */
-
-    for (i=0; i<NumHis; i++){
-
-      sum = 0.0;
-      for (j=0; j<NumHis; j++){
-        sum += IA[i][j]*B[j]; 
-      }
-
-      extpln_coes[i] = sum;
-    }
-
-    /* if a set of extpln_coes is improper, correct them */
-
-    sum = 0.0;
-    for (i=0; i<NumHis; i++){
-      sum += extpln_coes[i];
-    }
-
-    if (sum<0.5){
-      for (i=0; i<Extrapolated_Charge_History; i++) extpln_coes[i] = 0.0;
-      extpln_coes[NumHis-1] = 1.0;   
-    }
-
-    /* free */
-
-    for (i=0; i<(Extrapolated_Charge_History+2); i++){
-      free(A[i]);
-    }
-    free(A);
- 
-    for (i=0; i<(Extrapolated_Charge_History+2); i++){
-      free(IA[i]);
-    }
-    free(IA);
-
-    free(B);
-
-  } /* if (Extrapolated_Charge_History<MD_iter && 1<Extrapolated_Charge_History) */   
-
-  /* shift His_Gxyz */
-
-  for (i=(Extrapolated_Charge_History-2); 0<=i; i--){
-    for (k=0; k<3*atomnum; k++){
-      His_Gxyz[i+1][k] = His_Gxyz[i][k];
-    }
-  }
-
-  k = 0;
-  for (i=1; i<=atomnum; i++){
-    His_Gxyz[0][k] = Gxyz[i][1]; k++;       
-    His_Gxyz[0][k] = Gxyz[i][2]; k++;       
-    His_Gxyz[0][k] = Gxyz[i][3]; k++;       
-  }
 }
 
 
 
 void Inverse(int n, double **a, double **ia)
 {
-  int i,j,k;
-  double sum;
-  double **a0,*ko,*iko;
+    int i,j,k;
+    double sum;
+    double **a0,*ko,*iko;
 
-  /***************************************************
-    allocation of arrays: 
-  ***************************************************/
+    /***************************************************
+      allocation of arrays:
+    ***************************************************/
 
-  a0 = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+3));
-  for (i=0; i<(Extrapolated_Charge_History+3); i++){
-    a0[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
-  }
-
-  ko = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
-  iko = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
-
-  /***************************************************
-    calculate the inverse
-  ***************************************************/
-
-  for (i=0; i<=n; i++){
-    for (j=0; j<=n; j++){
-      a0[i+1][j+1] = a[i][j];
-    }  
-  }  
-
-  Eigen_lapack(a0,ko,n+1,n+1);
-
-  for (i=1; i<=(n+1); i++){
-    if (fabs(ko[i])<1.0e-12) 
-      iko[i] = 0.0;
-    else    
-      iko[i] = 1.0/ko[i];
-  }
-
-  for (i=1; i<=(n+1); i++){
-    for (j=1; j<=(n+1); j++){
-
-      sum = 0.0;
-
-      for (k=1; k<=(n+1); k++){
-        sum += a0[i][k]*iko[k]*a0[j][k]; 
-      }
-      ia[i-1][j-1] = sum;
+    a0 = (double**)malloc(sizeof(double*)*(Extrapolated_Charge_History+3));
+    for (i=0; i<(Extrapolated_Charge_History+3); i++) {
+        a0[i] = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
     }
-  }
 
-  /***************************************************
-    freeing of arrays: 
-  ***************************************************/
+    ko = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
+    iko = (double*)malloc(sizeof(double)*(Extrapolated_Charge_History+3));
 
-  for (i=0; i<(Extrapolated_Charge_History+3); i++){
-    free(a0[i]);
-  }
-  free(a0);
+    /***************************************************
+      calculate the inverse
+    ***************************************************/
 
-  free(ko);
-  free(iko);
+    for (i=0; i<=n; i++) {
+        for (j=0; j<=n; j++) {
+            a0[i+1][j+1] = a[i][j];
+        }
+    }
+
+    Eigen_lapack(a0,ko,n+1,n+1);
+
+    for (i=1; i<=(n+1); i++) {
+        if (fabs(ko[i])<1.0e-12)
+            iko[i] = 0.0;
+        else
+            iko[i] = 1.0/ko[i];
+    }
+
+    for (i=1; i<=(n+1); i++) {
+        for (j=1; j<=(n+1); j++) {
+
+            sum = 0.0;
+
+            for (k=1; k<=(n+1); k++) {
+                sum += a0[i][k]*iko[k]*a0[j][k];
+            }
+            ia[i-1][j-1] = sum;
+        }
+    }
+
+    /***************************************************
+      freeing of arrays:
+    ***************************************************/
+
+    for (i=0; i<(Extrapolated_Charge_History+3); i++) {
+        free(a0[i]);
+    }
+    free(a0);
+
+    free(ko);
+    free(iko);
 }
 
 
@@ -297,244 +303,246 @@ void Inverse(int n, double **a, double **ia)
 
 int Input_HKS( int MD_iter, double *Uele, double *****CH )
 {
-  int Mc_AN,Gc_AN,h_AN,i,j,can;
-  int Gh_AN,pSCF,spin,Rn;
-  int wan1,wan2,TNO1,TNO2;
-  int h_AN0,Gh_AN0,Rn0,wan20,TNO20;
-  int i_vec[20],*p_vec,po;
-  int my_check,exit_flag;
-  int pFNAN;
-  int l1,l2,l3,l10,l20,l30;
-  int numprocs,myid;
-  char fileHKS[YOUSO10];
-  FILE *fp;
-  double *tmpvec;  
-  char buf[fp_bsize];          /* setvbuf */
+    int Mc_AN,Gc_AN,h_AN,i,j,can;
+    int Gh_AN,pSCF,spin,Rn;
+    int wan1,wan2,TNO1,TNO2;
+    int h_AN0,Gh_AN0,Rn0,wan20,TNO20;
+    int i_vec[20],*p_vec,po;
+    int my_check,exit_flag;
+    int pFNAN;
+    int l1,l2,l3,l10,l20,l30;
+    int numprocs,myid;
+    char fileHKS[YOUSO10];
+    FILE *fp;
+    double *tmpvec;
+    char buf[fp_bsize];          /* setvbuf */
 
-  /* MPI */
-  MPI_Comm_size(mpi_comm_level1,&numprocs);
-  MPI_Comm_rank(mpi_comm_level1,&myid);
+    /* MPI */
+    MPI_Comm_size(mpi_comm_level1,&numprocs);
+    MPI_Comm_rank(mpi_comm_level1,&myid);
 
-  /* allocation of array */ 
-  tmpvec = (double*)malloc(sizeof(double)*List_YOUSO[7]);
+    /* allocation of array */
+    tmpvec = (double*)malloc(sizeof(double)*List_YOUSO[7]);
 
-  /****************************************************
-   List_YOUSO[23] spin poralized     1
-                  non spin poralized 0
-   List_YOUSO[1]  atomnum
-   List_YOUSO[8]  max # of atoms in a rcut-off cluster
-   List_YOUSO[7]  max # of orbitals in an atom
-  ****************************************************/
+    /****************************************************
+     List_YOUSO[23] spin poralized     1
+                    non spin poralized 0
+     List_YOUSO[1]  atomnum
+     List_YOUSO[8]  max # of atoms in a rcut-off cluster
+     List_YOUSO[7]  max # of orbitals in an atom
+    ****************************************************/
 
-  my_check = 1;
+    my_check = 1;
 
-  for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++){
+    for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++) {
 
-    Gc_AN = M2G[Mc_AN];
-    wan1 = WhatSpecies[Gc_AN];
-    TNO1 = Spe_Total_CNO[wan1];
+        Gc_AN = M2G[Mc_AN];
+        wan1 = WhatSpecies[Gc_AN];
+        TNO1 = Spe_Total_CNO[wan1];
 
-    sprintf(fileHKS,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
+        sprintf(fileHKS,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
 
-    if ((fp = fopen(fileHKS,"rb")) != NULL){
+        if ((fp = fopen(fileHKS,"rb")) != NULL) {
 
 #ifdef xt3
-      setvbuf(fp,buf,_IOFBF,fp_bsize);  /* setvbuf */
+            setvbuf(fp,buf,_IOFBF,fp_bsize);  /* setvbuf */
 #endif
 
-      /****************************************************
-       List_YOUSO[23] 0:  non spin poralized
-                      1:  spin poralized
-                      3:  spin non-collinear
-       List_YOUSO[1]  atomnum
-       List_YOUSO[8]  max # of atoms in a rcut-off cluster
-       List_YOUSO[7]  max # of orbitals in an atom
-      ****************************************************/
+            /****************************************************
+             List_YOUSO[23] 0:  non spin poralized
+                            1:  spin poralized
+                            3:  spin non-collinear
+             List_YOUSO[1]  atomnum
+             List_YOUSO[8]  max # of atoms in a rcut-off cluster
+             List_YOUSO[7]  max # of orbitals in an atom
+            ****************************************************/
 
-      fread(i_vec,sizeof(int),10,fp);
+            fread(i_vec,sizeof(int),10,fp);
 
-      pFNAN = i_vec[8];
+            pFNAN = i_vec[8];
 
-      if ( i_vec[0]!=SpinP_switch   ||
-           i_vec[1]!=List_YOUSO[23] || 
-           i_vec[2]!=List_YOUSO[1]  ||
-           i_vec[4]!=List_YOUSO[7]  ||
-           i_vec[5]!=atomnum        ||
-           i_vec[6]!=wan1           ||
-           i_vec[7]!=TNO1           
-         )
-      {
-        printf("Failed (1) in reading the restart file %s\n",fileHKS); fflush(stdout);     
-        my_check = 0;
-      }
-      
-      if (my_check!=0){
-
-        /****************************************************
-              read Gh_AN0, l10, l20, l30, wan20, TNO20
-        ****************************************************/
-
-        p_vec = (int*)malloc(sizeof(int)*(pFNAN+1)*6);
-        fread(p_vec, sizeof(int), (pFNAN+1)*6, fp);
-        fread(Uele,sizeof(double),1,fp);
-
-        /****************************************************
-          store Hamiltonian to appropriate position while 
-          comparing Gh_AN, l1, l2, l3, wan2, TNO2
-        ****************************************************/
-
-        for (spin=0; spin<=SpinP_switch; spin++){ 
-	  for (h_AN0=0; h_AN0<=pFNAN; h_AN0++){
-	    Gh_AN0 = p_vec[              h_AN0];
-	    l10    = p_vec[(pFNAN+1)*1 + h_AN0];
-	    l20    = p_vec[(pFNAN+1)*2 + h_AN0];
-	    l30    = p_vec[(pFNAN+1)*3 + h_AN0];
-	    wan20  = p_vec[(pFNAN+1)*4 + h_AN0];
-	    TNO20  = p_vec[(pFNAN+1)*5 + h_AN0]; 
- 
-	    exit_flag = 0;
-	    h_AN = 0;
-
-	    do {
-
-	      Gh_AN = natn[Gc_AN][h_AN];
-	      Rn    = ncn[Gc_AN][h_AN];
-              l1 = atv_ijk[Rn][1];
-              l2 = atv_ijk[Rn][2];
-              l3 = atv_ijk[Rn][3];
-	      wan2  = WhatSpecies[Gh_AN];
-	      TNO2  = Spe_Total_CNO[wan2];
-
-	      if ( Gh_AN==Gh_AN0 &&
-		   l1==l10 &&
-		   l2==l20 &&
-		   l3==l30 &&
-		   wan2==wan20   &&
-		   TNO2==TNO20 )
-		{
-
-		  for (i=0; i<TNO1; i++){
-		    fread(&CH[spin][Mc_AN][h_AN][i][0],sizeof(double),TNO2,fp);
-		  }
-
-		  /* add contribution of SO coupling */
-		  if (i_vec[9]==0 && SO_switch==1 && spin==2){
-
-		    for (i=0; i<TNO1; i++){
-		      for (j=0; j<TNO2; j++){
-			CH[2][Mc_AN][h_AN][i][j] += HNL[2][Mc_AN][h_AN][i][j];
-		      }
-		    }
-		  }
-
-		  exit_flag = 1;
-		}
-
-	      h_AN++;
-
-	    } while (h_AN<=FNAN[Gc_AN] && exit_flag==0);
-
-            /* In case appropriate one is not found, just read the Hamiltonian */ 
-
-            if (exit_flag==0){
-	      for (i=0; i<TNO1; i++){
-	        fread(&tmpvec[0],sizeof(double),TNO20,fp);
-	      }
+            if ( i_vec[0]!=SpinP_switch   ||
+                    i_vec[1]!=List_YOUSO[23] ||
+                    i_vec[2]!=List_YOUSO[1]  ||
+                    i_vec[4]!=List_YOUSO[7]  ||
+                    i_vec[5]!=atomnum        ||
+                    i_vec[6]!=wan1           ||
+                    i_vec[7]!=TNO1
+               )
+            {
+                printf("Failed (1) in reading the restart file %s\n",fileHKS);
+                fflush(stdout);
+                my_check = 0;
             }
 
-	  } /* h_AN */
-	} /* spin */
+            if (my_check!=0) {
 
-        /****************************************************
-          store iHNL to appropriate position while 
-          comparing Gh_AN, Rn, wan2, TNO2
-        ****************************************************/
+                /****************************************************
+                      read Gh_AN0, l10, l20, l30, wan20, TNO20
+                ****************************************************/
 
-        if (SpinP_switch==3){
+                p_vec = (int*)malloc(sizeof(int)*(pFNAN+1)*6);
+                fread(p_vec, sizeof(int), (pFNAN+1)*6, fp);
+                fread(Uele,sizeof(double),1,fp);
 
-	  for (spin=0; spin<SpinP_switch; spin++){
-	    for (h_AN0=0; h_AN0<=pFNAN; h_AN0++){
+                /****************************************************
+                  store Hamiltonian to appropriate position while
+                  comparing Gh_AN, l1, l2, l3, wan2, TNO2
+                ****************************************************/
 
-	      Gh_AN0 = p_vec[              h_AN0];
-	      l10    = p_vec[(pFNAN+1)*1 + h_AN0];
-	      l20    = p_vec[(pFNAN+1)*2 + h_AN0];
-	      l30    = p_vec[(pFNAN+1)*3 + h_AN0];
-	      wan20  = p_vec[(pFNAN+1)*4 + h_AN0];
-	      TNO20  = p_vec[(pFNAN+1)*5 + h_AN0]; 
- 
-	      exit_flag = 0;
-	      h_AN = 0;
+                for (spin=0; spin<=SpinP_switch; spin++) {
+                    for (h_AN0=0; h_AN0<=pFNAN; h_AN0++) {
+                        Gh_AN0 = p_vec[              h_AN0];
+                        l10    = p_vec[(pFNAN+1)*1 + h_AN0];
+                        l20    = p_vec[(pFNAN+1)*2 + h_AN0];
+                        l30    = p_vec[(pFNAN+1)*3 + h_AN0];
+                        wan20  = p_vec[(pFNAN+1)*4 + h_AN0];
+                        TNO20  = p_vec[(pFNAN+1)*5 + h_AN0];
 
-	      do {
+                        exit_flag = 0;
+                        h_AN = 0;
 
-		Gh_AN = natn[Gc_AN][h_AN];
-		Rn    = ncn[Gc_AN][h_AN];
-                l1 = atv_ijk[Rn][1];
-                l2 = atv_ijk[Rn][2];
-                l3 = atv_ijk[Rn][3];
-		wan2  = WhatSpecies[Gh_AN];
-		TNO2  = Spe_Total_CNO[wan2];
+                        do {
 
-		if ( Gh_AN==Gh_AN0 &&
-		     l1==l10 &&
-		     l2==l20 &&
-		     l3==l30 &&
-		     wan2==wan20   &&
-		     TNO2==TNO20 )
-		  {
+                            Gh_AN = natn[Gc_AN][h_AN];
+                            Rn    = ncn[Gc_AN][h_AN];
+                            l1 = atv_ijk[Rn][1];
+                            l2 = atv_ijk[Rn][2];
+                            l3 = atv_ijk[Rn][3];
+                            wan2  = WhatSpecies[Gh_AN];
+                            TNO2  = Spe_Total_CNO[wan2];
 
-		    for (i=0; i<TNO1; i++){
-		      fread(&iHNL[spin][Mc_AN][h_AN][i][0],sizeof(double),TNO2,fp);
-		    }
+                            if ( Gh_AN==Gh_AN0 &&
+                                    l1==l10 &&
+                                    l2==l20 &&
+                                    l3==l30 &&
+                                    wan2==wan20   &&
+                                    TNO2==TNO20 )
+                            {
 
-                    /* add contribution of SO coupling */
-                    if (i_vec[9]==0 && SO_switch==1){
+                                for (i=0; i<TNO1; i++) {
+                                    fread(&CH[spin][Mc_AN][h_AN][i][0],sizeof(double),TNO2,fp);
+                                }
 
-  	  	      for (i=0; i<TNO1; i++){
-    	    	        for (j=0; j<TNO2; j++){
-                          iHNL[spin][Mc_AN][h_AN][i][j] += iHNL0[spin][Mc_AN][h_AN][i][j];
-			}
-		      }
-                    }
+                                /* add contribution of SO coupling */
+                                if (i_vec[9]==0 && SO_switch==1 && spin==2) {
 
-		    exit_flag = 1;
-		  }
+                                    for (i=0; i<TNO1; i++) {
+                                        for (j=0; j<TNO2; j++) {
+                                            CH[2][Mc_AN][h_AN][i][j] += HNL[2][Mc_AN][h_AN][i][j];
+                                        }
+                                    }
+                                }
 
-		h_AN++;
+                                exit_flag = 1;
+                            }
 
-	      } while (h_AN<=FNAN[Gc_AN] && exit_flag==0);
+                            h_AN++;
 
-	      /* In case appropriate one is not found, just read the iHNL */ 
+                        } while (h_AN<=FNAN[Gc_AN] && exit_flag==0);
 
-	      if (exit_flag==0){
-		for (i=0; i<TNO1; i++){
-		  fread(&tmpvec[0],sizeof(double),TNO20,fp);
-		}
-	      }
+                        /* In case appropriate one is not found, just read the Hamiltonian */
 
-	    } /* h_AN */
-	  } /* spin */
+                        if (exit_flag==0) {
+                            for (i=0; i<TNO1; i++) {
+                                fread(&tmpvec[0],sizeof(double),TNO20,fp);
+                            }
+                        }
 
-	} /* if (SpinP_switch==3) */
+                    } /* h_AN */
+                } /* spin */
 
-        /* freeing of array */ 
-        free(p_vec);
-      }
+                /****************************************************
+                  store iHNL to appropriate position while
+                  comparing Gh_AN, Rn, wan2, TNO2
+                ****************************************************/
 
-      /* close the file */
+                if (SpinP_switch==3) {
 
-      fclose(fp);
+                    for (spin=0; spin<SpinP_switch; spin++) {
+                        for (h_AN0=0; h_AN0<=pFNAN; h_AN0++) {
+
+                            Gh_AN0 = p_vec[              h_AN0];
+                            l10    = p_vec[(pFNAN+1)*1 + h_AN0];
+                            l20    = p_vec[(pFNAN+1)*2 + h_AN0];
+                            l30    = p_vec[(pFNAN+1)*3 + h_AN0];
+                            wan20  = p_vec[(pFNAN+1)*4 + h_AN0];
+                            TNO20  = p_vec[(pFNAN+1)*5 + h_AN0];
+
+                            exit_flag = 0;
+                            h_AN = 0;
+
+                            do {
+
+                                Gh_AN = natn[Gc_AN][h_AN];
+                                Rn    = ncn[Gc_AN][h_AN];
+                                l1 = atv_ijk[Rn][1];
+                                l2 = atv_ijk[Rn][2];
+                                l3 = atv_ijk[Rn][3];
+                                wan2  = WhatSpecies[Gh_AN];
+                                TNO2  = Spe_Total_CNO[wan2];
+
+                                if ( Gh_AN==Gh_AN0 &&
+                                        l1==l10 &&
+                                        l2==l20 &&
+                                        l3==l30 &&
+                                        wan2==wan20   &&
+                                        TNO2==TNO20 )
+                                {
+
+                                    for (i=0; i<TNO1; i++) {
+                                        fread(&iHNL[spin][Mc_AN][h_AN][i][0],sizeof(double),TNO2,fp);
+                                    }
+
+                                    /* add contribution of SO coupling */
+                                    if (i_vec[9]==0 && SO_switch==1) {
+
+                                        for (i=0; i<TNO1; i++) {
+                                            for (j=0; j<TNO2; j++) {
+                                                iHNL[spin][Mc_AN][h_AN][i][j] += iHNL0[spin][Mc_AN][h_AN][i][j];
+                                            }
+                                        }
+                                    }
+
+                                    exit_flag = 1;
+                                }
+
+                                h_AN++;
+
+                            } while (h_AN<=FNAN[Gc_AN] && exit_flag==0);
+
+                            /* In case appropriate one is not found, just read the iHNL */
+
+                            if (exit_flag==0) {
+                                for (i=0; i<TNO1; i++) {
+                                    fread(&tmpvec[0],sizeof(double),TNO20,fp);
+                                }
+                            }
+
+                        } /* h_AN */
+                    } /* spin */
+
+                } /* if (SpinP_switch==3) */
+
+                /* freeing of array */
+                free(p_vec);
+            }
+
+            /* close the file */
+
+            fclose(fp);
+        }
+        else {
+            printf("Failed (2) in reading the restart file %s\n",fileHKS);
+            fflush(stdout);
+            my_check = 0;
+        }
     }
-    else{
-      printf("Failed (2) in reading the restart file %s\n",fileHKS); fflush(stdout);     
-      my_check = 0;
-    }
-  }
 
-  /* freeing of array */ 
-  free(tmpvec);
+    /* freeing of array */
+    free(tmpvec);
 
-  return my_check;
+    return my_check;
 }
 
 
@@ -543,145 +551,145 @@ int Input_HKS( int MD_iter, double *Uele, double *****CH )
 
 void Output_HKS(int MD_iter, double *Uele, double *****CH )
 {
-  int Mc_AN,Gc_AN,h_AN,i,j,can,Gh_AN;
-  int wan1,wan2,TNO1,TNO2,spin,Rn,po;
-  int i_vec[20],*p_vec;
-  int numprocs,myid;
-  char operate[1000];
-  char fileHKS[YOUSO10];
-  FILE *fp;
-  char buf[fp_bsize];          /* setvbuf */
+    int Mc_AN,Gc_AN,h_AN,i,j,can,Gh_AN;
+    int wan1,wan2,TNO1,TNO2,spin,Rn,po;
+    int i_vec[20],*p_vec;
+    int numprocs,myid;
+    char operate[1000];
+    char fileHKS[YOUSO10];
+    FILE *fp;
+    char buf[fp_bsize];          /* setvbuf */
 
-  /* MPI */
-  MPI_Comm_size(mpi_comm_level1,&numprocs);
-  MPI_Comm_rank(mpi_comm_level1,&myid);
+    /* MPI */
+    MPI_Comm_size(mpi_comm_level1,&numprocs);
+    MPI_Comm_rank(mpi_comm_level1,&myid);
 
-  /* delete if there are */
+    /* delete if there are */
 
-  if (myid==Host_ID){
+    if (myid==Host_ID) {
 
-    if (MD_iter==1){
-      sprintf(operate,"%s%s_rst",filepath,filename);
-      mkdir(operate,0775); 
-    }
-
-    for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++){
-      sprintf(operate,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
-      remove(operate);
-    }
-  }
-
-  MPI_Barrier(mpi_comm_level1);
-
-  /* write */
-
-  for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++){
-
-    Gc_AN = M2G[Mc_AN];
-    wan1 = WhatSpecies[Gc_AN];
-    TNO1 = Spe_Total_CNO[wan1];
-
-    sprintf(fileHKS,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
-
-    po = 0;
-
-    do {
-
-      if ((fp = fopen(fileHKS,"wb")) != NULL){
-
-#ifdef xt3
-         setvbuf(fp,buf,_IOFBF,fp_bsize);  /* setvbuf */
-#endif
-
-	/****************************************************
-         List_YOUSO[23] 0:  non spin poralized
-                        1:  spin poralized
-                        3:  spin non-collinear
-         List_YOUSO[1]  atomnum
-         List_YOUSO[8]  max # of atoms in a rcut-off cluster
-         List_YOUSO[7]  max # of orbitals including an atom
-	****************************************************/
-
-	i_vec[0] = SpinP_switch;
-	i_vec[1] = List_YOUSO[23];
-	i_vec[2] = List_YOUSO[1];
-	i_vec[3] = List_YOUSO[8];
-	i_vec[4] = List_YOUSO[7];
-	i_vec[5] = atomnum;
-	i_vec[6] = wan1;
-	i_vec[7] = TNO1;
-	i_vec[8] = FNAN[Gc_AN];
-	i_vec[9] = SO_switch;
-
-	fwrite(i_vec,sizeof(int),10,fp);
-
-	/****************************************************
-                  # of orbitals in each FNAN atom
-	****************************************************/
-
-	p_vec = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*6);
-	for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++){
-	  Gh_AN = natn[Gc_AN][h_AN];
-	  Rn = ncn[Gc_AN][h_AN];
-	  wan2 = WhatSpecies[Gh_AN];
-	  TNO2 = Spe_Total_CNO[wan2];
-	  p_vec[                    h_AN] = Gh_AN;
-	  p_vec[(FNAN[Gc_AN]+1)*1 + h_AN] = atv_ijk[Rn][1];
-	  p_vec[(FNAN[Gc_AN]+1)*2 + h_AN] = atv_ijk[Rn][2];
-	  p_vec[(FNAN[Gc_AN]+1)*3 + h_AN] = atv_ijk[Rn][3];
-	  p_vec[(FNAN[Gc_AN]+1)*4 + h_AN] = wan2;
-	  p_vec[(FNAN[Gc_AN]+1)*5 + h_AN] = TNO2;
-	}
-	fwrite(p_vec,sizeof(int), (FNAN[Gc_AN]+1)*6, fp);
-	free(p_vec);
-
-	/****************************************************
-                           Uele
-	****************************************************/
-
-	fwrite(Uele,sizeof(double),1,fp);
-
-	/****************************************************
-                        Kohn-Sham Hamiltonian
-	****************************************************/
-
-	for (spin=0; spin<=SpinP_switch; spin++){
-	  for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++){
-	    Gh_AN = natn[Gc_AN][h_AN];
-	    wan2 = WhatSpecies[Gh_AN];
-	    TNO2 = Spe_Total_CNO[wan2];
-	    for (i=0; i<TNO1; i++){
-	      fwrite(CH[spin][Mc_AN][h_AN][i],sizeof(double),TNO2,fp);
-	    }
-	  }
-	}
-
-        if (SpinP_switch==3){
-	  for (spin=0; spin<SpinP_switch; spin++){
-	    for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++){
-	      Gh_AN = natn[Gc_AN][h_AN];
-	      wan2 = WhatSpecies[Gh_AN];
-	      TNO2 = Spe_Total_CNO[wan2];
-	      for (i=0; i<TNO1; i++){
-	        fwrite(iHNL[spin][Mc_AN][h_AN][i],sizeof(double),TNO2,fp);
-	      }
-	    }
-  	  }
+        if (MD_iter==1) {
+            sprintf(operate,"%s%s_rst",filepath,filename);
+            mkdir(operate,0775);
         }
 
-	fclose(fp);
+        for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
+            sprintf(operate,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
+            remove(operate);
+        }
+    }
 
-	po = 1;
+    MPI_Barrier(mpi_comm_level1);
 
-      }
-      else{
-	printf("Failed in saving the restart file %s\n",fileHKS);      
-        /* openmx gives up to save the restart file. */
-        po = 1;
-      }
+    /* write */
 
-    } while (po==0);
-  }
+    for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++) {
+
+        Gc_AN = M2G[Mc_AN];
+        wan1 = WhatSpecies[Gc_AN];
+        TNO1 = Spe_Total_CNO[wan1];
+
+        sprintf(fileHKS,"%s%s_rst/%s.rst%i",filepath,filename,filename,Gc_AN);
+
+        po = 0;
+
+        do {
+
+            if ((fp = fopen(fileHKS,"wb")) != NULL) {
+
+#ifdef xt3
+                setvbuf(fp,buf,_IOFBF,fp_bsize);  /* setvbuf */
+#endif
+
+                /****************************************************
+                     List_YOUSO[23] 0:  non spin poralized
+                                    1:  spin poralized
+                                    3:  spin non-collinear
+                     List_YOUSO[1]  atomnum
+                     List_YOUSO[8]  max # of atoms in a rcut-off cluster
+                     List_YOUSO[7]  max # of orbitals including an atom
+                ****************************************************/
+
+                i_vec[0] = SpinP_switch;
+                i_vec[1] = List_YOUSO[23];
+                i_vec[2] = List_YOUSO[1];
+                i_vec[3] = List_YOUSO[8];
+                i_vec[4] = List_YOUSO[7];
+                i_vec[5] = atomnum;
+                i_vec[6] = wan1;
+                i_vec[7] = TNO1;
+                i_vec[8] = FNAN[Gc_AN];
+                i_vec[9] = SO_switch;
+
+                fwrite(i_vec,sizeof(int),10,fp);
+
+                /****************************************************
+                              # of orbitals in each FNAN atom
+                ****************************************************/
+
+                p_vec = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*6);
+                for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++) {
+                    Gh_AN = natn[Gc_AN][h_AN];
+                    Rn = ncn[Gc_AN][h_AN];
+                    wan2 = WhatSpecies[Gh_AN];
+                    TNO2 = Spe_Total_CNO[wan2];
+                    p_vec[                    h_AN] = Gh_AN;
+                    p_vec[(FNAN[Gc_AN]+1)*1 + h_AN] = atv_ijk[Rn][1];
+                    p_vec[(FNAN[Gc_AN]+1)*2 + h_AN] = atv_ijk[Rn][2];
+                    p_vec[(FNAN[Gc_AN]+1)*3 + h_AN] = atv_ijk[Rn][3];
+                    p_vec[(FNAN[Gc_AN]+1)*4 + h_AN] = wan2;
+                    p_vec[(FNAN[Gc_AN]+1)*5 + h_AN] = TNO2;
+                }
+                fwrite(p_vec,sizeof(int), (FNAN[Gc_AN]+1)*6, fp);
+                free(p_vec);
+
+                /****************************************************
+                                       Uele
+                ****************************************************/
+
+                fwrite(Uele,sizeof(double),1,fp);
+
+                /****************************************************
+                                    Kohn-Sham Hamiltonian
+                ****************************************************/
+
+                for (spin=0; spin<=SpinP_switch; spin++) {
+                    for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++) {
+                        Gh_AN = natn[Gc_AN][h_AN];
+                        wan2 = WhatSpecies[Gh_AN];
+                        TNO2 = Spe_Total_CNO[wan2];
+                        for (i=0; i<TNO1; i++) {
+                            fwrite(CH[spin][Mc_AN][h_AN][i],sizeof(double),TNO2,fp);
+                        }
+                    }
+                }
+
+                if (SpinP_switch==3) {
+                    for (spin=0; spin<SpinP_switch; spin++) {
+                        for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++) {
+                            Gh_AN = natn[Gc_AN][h_AN];
+                            wan2 = WhatSpecies[Gh_AN];
+                            TNO2 = Spe_Total_CNO[wan2];
+                            for (i=0; i<TNO1; i++) {
+                                fwrite(iHNL[spin][Mc_AN][h_AN][i],sizeof(double),TNO2,fp);
+                            }
+                        }
+                    }
+                }
+
+                fclose(fp);
+
+                po = 1;
+
+            }
+            else {
+                printf("Failed in saving the restart file %s\n",fileHKS);
+                /* openmx gives up to save the restart file. */
+                po = 1;
+            }
+
+        } while (po==0);
+    }
 
 }
 
@@ -691,86 +699,86 @@ void Output_HKS(int MD_iter, double *Uele, double *****CH )
 
 void Output_Charge_Density(int MD_iter)
 {
-  int i,spin,BN;
-  int numprocs,myid;
-  double *TmpRho;
-  FILE *fp;
-  char file_check[YOUSO10];
-  char fileCD0[YOUSO10];
-  char fileCD1[YOUSO10];
-  char fileCD2[YOUSO10];
+    int i,spin,BN;
+    int numprocs,myid;
+    double *TmpRho;
+    FILE *fp;
+    char file_check[YOUSO10];
+    char fileCD0[YOUSO10];
+    char fileCD1[YOUSO10];
+    char fileCD2[YOUSO10];
 
-  /* MPI */
-  MPI_Comm_size(mpi_comm_level1,&numprocs);
-  MPI_Comm_rank(mpi_comm_level1,&myid);
+    /* MPI */
+    MPI_Comm_size(mpi_comm_level1,&numprocs);
+    MPI_Comm_rank(mpi_comm_level1,&myid);
 
-  /* allocation of array */
-  TmpRho = (double*)malloc(sizeof(double)*My_NumGridB_AB); 
+    /* allocation of array */
+    TmpRho = (double*)malloc(sizeof(double)*My_NumGridB_AB);
 
-  /* save numprocs, Ngrid1, Ngrid2, and Ngrid3 */
+    /* save numprocs, Ngrid1, Ngrid2, and Ngrid3 */
 
-  if (myid==Host_ID){
+    if (myid==Host_ID) {
 
-    sprintf(file_check,"%s%s_rst/%s.crst_check",filepath,filename,filename);
+        sprintf(file_check,"%s%s_rst/%s.crst_check",filepath,filename,filename);
 
-    if ((fp = fopen(file_check,"w")) != NULL){
-      fprintf(fp,"%d %d %d %d",numprocs,Ngrid1,Ngrid2,Ngrid3);
-      fclose(fp);
-    }
-    else{
-      printf("Failure of saving %s\n",file_check);
-    }
-  }
-
-  /****************************************************
-                    output data 
-  ****************************************************/
-
-  for (spin=0; spin<=SpinP_switch; spin++){
-
-    /* store data to TmpRho */
-
-    if (spin<=1){
-      for (BN=0; BN<My_NumGridB_AB; BN++){
-        TmpRho[BN] = Density_Grid_B[spin][BN] - ADensity_Grid_B[BN];
-      }
-    }
-    else{
-      for (BN=0; BN<My_NumGridB_AB; BN++){
-        TmpRho[BN] = Density_Grid_B[spin][BN];
-      }
-    } 
-
-    /* shift the index of stored data */
-
-    for (i=(Extrapolated_Charge_History-2); 0<=i; i--){
- 
-      sprintf(fileCD1,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i);
-      sprintf(fileCD2,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i+1);
-
-      if ((fp = fopen(fileCD1,"rb")) != NULL){
-	fclose(fp);
-	rename(fileCD1,fileCD2); 
-      }
-    } 
-
-    /* save current data */
-
-    sprintf(fileCD0,"%s%s_rst/%s.crst%i_%i_0",filepath,filename,filename,spin,myid);
-
-    if ((fp = fopen(fileCD0,"wb")) != NULL){
-
-      fwrite(TmpRho,sizeof(double),My_NumGridB_AB,fp);
-      fclose(fp);
-    }
-    else{
-      printf("Could not open a file %s\n",fileCD0);
+        if ((fp = fopen(file_check,"w")) != NULL) {
+            fprintf(fp,"%d %d %d %d",numprocs,Ngrid1,Ngrid2,Ngrid3);
+            fclose(fp);
+        }
+        else {
+            printf("Failure of saving %s\n",file_check);
+        }
     }
 
-  } /* spin */
+    /****************************************************
+                      output data
+    ****************************************************/
 
-  /* freeing of array */
-  free(TmpRho);
+    for (spin=0; spin<=SpinP_switch; spin++) {
+
+        /* store data to TmpRho */
+
+        if (spin<=1) {
+            for (BN=0; BN<My_NumGridB_AB; BN++) {
+                TmpRho[BN] = Density_Grid_B[spin][BN] - ADensity_Grid_B[BN];
+            }
+        }
+        else {
+            for (BN=0; BN<My_NumGridB_AB; BN++) {
+                TmpRho[BN] = Density_Grid_B[spin][BN];
+            }
+        }
+
+        /* shift the index of stored data */
+
+        for (i=(Extrapolated_Charge_History-2); 0<=i; i--) {
+
+            sprintf(fileCD1,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i);
+            sprintf(fileCD2,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i+1);
+
+            if ((fp = fopen(fileCD1,"rb")) != NULL) {
+                fclose(fp);
+                rename(fileCD1,fileCD2);
+            }
+        }
+
+        /* save current data */
+
+        sprintf(fileCD0,"%s%s_rst/%s.crst%i_%i_0",filepath,filename,filename,spin,myid);
+
+        if ((fp = fopen(fileCD0,"wb")) != NULL) {
+
+            fwrite(TmpRho,sizeof(double),My_NumGridB_AB,fp);
+            fclose(fp);
+        }
+        else {
+            printf("Could not open a file %s\n",fileCD0);
+        }
+
+    } /* spin */
+
+    /* freeing of array */
+    free(TmpRho);
 }
 
 
@@ -782,91 +790,94 @@ void Output_Charge_Density(int MD_iter)
 
 int Input_Charge_Density(int MD_iter, double *extpln_coes)
 {
-  int spin,i,BN,ret;
-  int numprocs,myid;
-  FILE *fp;
-  char fileCD[YOUSO10];
-  char file_check[YOUSO10];
-  double *tmp_array;
-  int i_vec[10];
+    int spin,i,BN,ret;
+    int numprocs,myid;
+    FILE *fp;
+    char fileCD[YOUSO10];
+    char file_check[YOUSO10];
+    double *tmp_array;
+    int i_vec[10];
 
-  /* MPI */
-  MPI_Comm_size(mpi_comm_level1,&numprocs);
-  MPI_Comm_rank(mpi_comm_level1,&myid);
+    /* MPI */
+    MPI_Comm_size(mpi_comm_level1,&numprocs);
+    MPI_Comm_rank(mpi_comm_level1,&myid);
 
-  /* check consistency in the number of grids */
+    /* check consistency in the number of grids */
 
-  sprintf(file_check,"%s%s_rst/%s.crst_check",filepath,filename,filename);
+    sprintf(file_check,"%s%s_rst/%s.crst_check",filepath,filename,filename);
 
-  i_vec[1] = 0; i_vec[2] = 0; i_vec[3] = 0;       
-  if ((fp = fopen(file_check,"r")) != NULL){
-    fscanf(fp,"%d %d %d %d",&i_vec[0],&i_vec[1],&i_vec[2],&i_vec[3]);
-    fclose(fp);
-  }
-
-  /* read files */
-
-  if ( i_vec[1]==Ngrid1 && i_vec[2]==Ngrid2 && i_vec[3]==Ngrid3 ){
-
-    /* allocation of array */
-
-    tmp_array = (double*)malloc(sizeof(double)*My_NumGridB_AB);
-
-    /* read data and extrapolate data */
-
-    for (spin=0; spin<=SpinP_switch; spin++){
-      for (i=0; i<Extrapolated_Charge_History; i++){
-
-	sprintf(fileCD,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i);
-
-	if ((fp = fopen(fileCD,"rb")) != NULL){
-
-	  fread(tmp_array,sizeof(double),My_NumGridB_AB,fp);
-	  fclose(fp);
-
-	  if (i==0){
-
-	    if (spin<=1){
-	      for (BN=0; BN<My_NumGridB_AB; BN++){
-		Density_Grid_B[spin][BN] = ADensity_Grid_B[BN] + extpln_coes[i]*tmp_array[BN];
-	      }
-	    }
-	    else{
-	      for (BN=0; BN<My_NumGridB_AB; BN++){
-		Density_Grid_B[spin][BN] = extpln_coes[i]*tmp_array[BN];
-	      }
-	    }
-
-	  }
-
-	  else{
-	    for (BN=0; BN<My_NumGridB_AB; BN++){
-	      Density_Grid_B[spin][BN] += extpln_coes[i]*tmp_array[BN];
-	    }
-	  }
-
-	}
-	else{
-	  /* printf("Could not open a file %s\n",fileCD); */
-	}
-      }
+    i_vec[1] = 0;
+    i_vec[2] = 0;
+    i_vec[3] = 0;
+    if ((fp = fopen(file_check,"r")) != NULL) {
+        fscanf(fp,"%d %d %d %d",&i_vec[0],&i_vec[1],&i_vec[2],&i_vec[3]);
+        fclose(fp);
     }
 
-    /* MPI: from the partitions B to D */
+    /* read files */
 
-    Density_Grid_Copy_B2D();  
+    if ( i_vec[1]==Ngrid1 && i_vec[2]==Ngrid2 && i_vec[3]==Ngrid3 ) {
 
-    /* free */
-    free(tmp_array);
+        /* allocation of array */
 
-    /* ret1 */
-    ret = 1;
-  }
+        tmp_array = (double*)malloc(sizeof(double)*My_NumGridB_AB);
 
-  else{
-    if (myid==0) printf("Failed (3) in reading the restart files\n"); fflush(stdout);     
-    ret = 0;
-  }
+        /* read data and extrapolate data */
 
-  return ret;  
+        for (spin=0; spin<=SpinP_switch; spin++) {
+            for (i=0; i<Extrapolated_Charge_History; i++) {
+
+                sprintf(fileCD,"%s%s_rst/%s.crst%i_%i_%i",filepath,filename,filename,spin,myid,i);
+
+                if ((fp = fopen(fileCD,"rb")) != NULL) {
+
+                    fread(tmp_array,sizeof(double),My_NumGridB_AB,fp);
+                    fclose(fp);
+
+                    if (i==0) {
+
+                        if (spin<=1) {
+                            for (BN=0; BN<My_NumGridB_AB; BN++) {
+                                Density_Grid_B[spin][BN] = ADensity_Grid_B[BN] + extpln_coes[i]*tmp_array[BN];
+                            }
+                        }
+                        else {
+                            for (BN=0; BN<My_NumGridB_AB; BN++) {
+                                Density_Grid_B[spin][BN] = extpln_coes[i]*tmp_array[BN];
+                            }
+                        }
+
+                    }
+
+                    else {
+                        for (BN=0; BN<My_NumGridB_AB; BN++) {
+                            Density_Grid_B[spin][BN] += extpln_coes[i]*tmp_array[BN];
+                        }
+                    }
+
+                }
+                else {
+                    /* printf("Could not open a file %s\n",fileCD); */
+                }
+            }
+        }
+
+        /* MPI: from the partitions B to D */
+
+        Density_Grid_Copy_B2D();
+
+        /* free */
+        free(tmp_array);
+
+        /* ret1 */
+        ret = 1;
+    }
+
+    else {
+        if (myid==0) printf("Failed (3) in reading the restart files\n");
+        fflush(stdout);
+        ret = 0;
+    }
+
+    return ret;
 }
