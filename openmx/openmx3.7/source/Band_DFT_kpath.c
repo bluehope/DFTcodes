@@ -82,7 +82,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
     double ****Dummy_ImNL;
     dcomplex **H,**S,**C,**TmpM;
     dcomplex Ctmp1,Ctmp2;
-    float ****EigenVal;
+    double ****EigenVal;
     int ii,ij,ik;
     double u2,v2,uv,vu,tmp;
     double dum,sumE,kRn,si,co;
@@ -173,13 +173,13 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
         spinsize=1;
     }
 
-    EigenVal = (float****)malloc(sizeof(float***)*(nkpath+1));
+    EigenVal = (double****)malloc(sizeof(double***)*(nkpath+1));
     for (ik=0; ik<=nkpath; ik++) {
-        EigenVal[ik] = (float***)malloc(sizeof(float**)*(n_perk[ik]+1));
+        EigenVal[ik] = (double***)malloc(sizeof(double**)*(n_perk[ik]+1));
         for (i_perk=0; i_perk<=n_perk[ik]; i_perk++) {
-            EigenVal[ik][i_perk] = (float**)malloc(sizeof(float*)*spinsize);
+            EigenVal[ik][i_perk] = (double**)malloc(sizeof(double*)*spinsize);
             for (spin=0; spin<spinsize; spin++) {
-                EigenVal[ik][i_perk][spin] = (float*)malloc(sizeof(float)*(n+2));
+                EigenVal[ik][i_perk][spin] = (double*)malloc(sizeof(double)*(n+2));
             }
         }
     }
@@ -338,7 +338,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
 
             /* S * M1 */
 
-            #pragma omp parallel for shared(n,S,M1)
+            #pragma omp parallel for shared(n,S,M1) private(i1,j1)
 
             for (i1=1; i1<=n; i1++) {
                 for (j1=1; j1<=n; j1++) {
@@ -400,7 +400,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
 
                 if (spin==0) {
 
-                    #pragma omp parallel for shared(n,S)
+                    #pragma omp parallel for shared(n,S) private(Ctmp1,Ctmp2,i1,j1)
 
                     for (i1=1; i1<=n; i1++) {
                         for (j1=i1+1; j1<=n; j1++) {
@@ -414,7 +414,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
 
                 /* H * U * M1 */
 
-                #pragma omp parallel for shared(n,H,S,C)
+                #pragma omp parallel for shared(n,H,S,C) private(i1,j1,l)
 
                 for (i1=1; i1<=n; i1++) {
 
@@ -469,7 +469,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
 
                 /* M1 * U^+ H * U * M1 */
 
-                #pragma omp parallel for shared(n,H,S,C)
+                #pragma omp parallel for shared(n,H,S,C) private(i1,j1,l)
 
                 for (i1=1; i1<=n; i1++) {
 
@@ -522,7 +522,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
 
                 /* H to C */
 
-                #pragma omp parallel for shared(n,C,H)
+                #pragma omp parallel for shared(n,C,H) private(i1,j1)
 
                 for (i1=1; i1<=n; i1++) {
                     for (j1=1; j1<=n; j1++) {
@@ -555,7 +555,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
                 EigenBand_lapack(C,ko[spin],n,n,0);
 
                 for (l=1; l<=n; l++) {
-                    EigenVal[ik][i_perk][spin][l-1] = (float)ko[spin][l];
+                    EigenVal[ik][i_perk][spin][l-1] = ko[spin][l];
                 }
 
             } /* if (0<=kloop) */
@@ -595,7 +595,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
                 if (s1<=kloop && kloop<=e1)  ID1 = ID;
             }
 
-            MPI_Bcast(&EigenVal[ik][i_perk][spin][0], n+1, MPI_FLOAT, ID1, mpi_comm_level1);
+            MPI_Bcast(&EigenVal[ik][i_perk][spin][0], n+1, MPI_DOUBLE, ID1, mpi_comm_level1);
 
         } /* kloop */
     } /* spin */
@@ -652,7 +652,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
                     fprintf(fp_Band,"%d %lf %lf %lf\n", n,k1,k2,k3);
 
                     for (l=0; l<n; l++) {
-                        fprintf(fp_Band,"%lf ",EigenVal[ik][i_perk][spin][l]);
+                        fprintf(fp_Band,"%18.15f ",EigenVal[ik][i_perk][spin][l]);
                     }
                     fprintf(fp_Band  ,"\n");
                 }
@@ -754,7 +754,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
     double *****Dummy_ImNL;
     dcomplex **H,**S,**C,**TmpM;
     dcomplex Ctmp1,Ctmp2;
-    float ***EigenVal;
+    double ***EigenVal;
     int ii,ij,ik;
     int *ik_list,*i_perk_list,*arpo;
     double u2,v2,uv,vu,tmp;
@@ -853,11 +853,11 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
     printf("myid=%2d n2=%2d\n",myid,n2);
     */
 
-    EigenVal = (float***)malloc(sizeof(float**)*(nkpath+1));
+    EigenVal = (double***)malloc(sizeof(double**)*(nkpath+1));
     for (ik=0; ik<=nkpath; ik++) {
-        EigenVal[ik] = (float**)malloc(sizeof(float*)*(n_perk[ik]+1));
+        EigenVal[ik] = (double**)malloc(sizeof(double*)*(n_perk[ik]+1));
         for (i_perk=0; i_perk<=n_perk[ik]; i_perk++) {
-            EigenVal[ik][i_perk] = (float*)malloc(sizeof(float)*n2);
+            EigenVal[ik][i_perk] = (double*)malloc(sizeof(double)*n2);
         }
     }
 
@@ -1004,7 +1004,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
 
             /* S * M1  */
 
-            #pragma omp parallel for shared(n,S,M1)
+            #pragma omp parallel for shared(n,S,M1) private(i1,j1)
 
             for (i1=1; i1<=n; i1++) {
                 for (j1=1; j1<=n; j1++) {
@@ -1075,7 +1075,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
 
             /* transpose S */
 
-            #pragma omp parallel for shared(n,S)
+            #pragma omp parallel for shared(n,S) private(Ctmp1,Ctmp2,i1,j1)
 
             for (i1=1; i1<=n; i1++) {
                 for (j1=i1+1; j1<=n; j1++) {
@@ -1088,7 +1088,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
 
             /* H * U * M1 */
 
-            #pragma omp parallel for shared(n,H,S,C)
+            #pragma omp parallel for shared(n,H,S,C) private(i1,j1,l)
 
             for (i1=1; i1<=2*n; i1++) {
                 for (j1=1; j1<=n; j1++) {
@@ -1117,7 +1117,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
 
             /* M1 * U^+ H * U * M1 */
 
-            #pragma omp parallel for shared(n,H,S,C)
+            #pragma omp parallel for shared(n,H,S,C) private(i1,j1,l)
 
             for (i1=1; i1<=n; i1++) {
                 for (j1=1; j1<=2*n; j1++) {
@@ -1145,7 +1145,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
 
             /* H to C */
 
-            #pragma omp parallel for shared(n,H,C)
+            #pragma omp parallel for shared(n,H,C) private(i1,j1)
 
             for (i1=1; i1<=2*n; i1++) {
                 for (j1=1; j1<=2*n; j1++) {
@@ -1185,7 +1185,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
             EigenBand_lapack(C,ko,n1,n1,0);
 
             for (l=1; l<=n1; l++) {
-                EigenVal[ik][i_perk][l-1] = (float)ko[l];
+                EigenVal[ik][i_perk][l-1] = ko[l];
             }
 
         } /* if (0<=kloop) */
@@ -1223,7 +1223,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
             if (s1<=kloop && kloop<=e1)  ID1 = ID;
         }
 
-        MPI_Bcast(&EigenVal[ik][i_perk][0], 2*n+1, MPI_FLOAT, ID1, mpi_comm_level1);
+        MPI_Bcast(&EigenVal[ik][i_perk][0], 2*n+1, MPI_DOUBLE, ID1, mpi_comm_level1);
 
     } /* kloop */
 
@@ -1277,7 +1277,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
                 fprintf(fp_Band,"%d %lf %lf %lf\n", 2*n,k1,k2,k3);
 
                 for (l=0; l<2*n; l++) {
-                    fprintf(fp_Band,"%lf ",EigenVal[ik][i_perk][l]);
+                    fprintf(fp_Band,"%18.15f ",EigenVal[ik][i_perk][l]);
                 }
                 fprintf(fp_Band  ,"\n");
             }

@@ -25,134 +25,134 @@
 
 
 void neb_run(char *argv[], MPI_Comm mpi_commWD, int index_images, double ***neb_atom_coordinates,
-             int *WhatSpecies_NEB, int *Spe_WhatAtom_NEB, char **SpeName_NEB) 
+             int *WhatSpecies_NEB, int *Spe_WhatAtom_NEB, char **SpeName_NEB)
 {
-  int i,j,MD_iter; 
-  int numprocs,myid;
-  double TStime,TEtime;
-  static char fileMemory[YOUSO10]; 
+    int i,j,MD_iter;
+    int numprocs,myid;
+    double TStime,TEtime;
+    static char fileMemory[YOUSO10];
 
-  MPI_COMM_WORLD1 = mpi_commWD;
-  mpi_comm_level1 = mpi_commWD;
-  MPI_Comm_size(MPI_COMM_WORLD1,&numprocs);
-  MPI_Comm_rank(MPI_COMM_WORLD1,&myid);
-  NUMPROCS_MPI_COMM_WORLD = numprocs;
-  MYID_MPI_COMM_WORLD = myid;
-  Num_Procs = numprocs;
+    MPI_COMM_WORLD1 = mpi_commWD;
+    mpi_comm_level1 = mpi_commWD;
+    MPI_Comm_size(MPI_COMM_WORLD1,&numprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD1,&myid);
+    NUMPROCS_MPI_COMM_WORLD = numprocs;
+    MYID_MPI_COMM_WORLD = myid;
+    Num_Procs = numprocs;
 
-  /* for measuring elapsed time */
+    /* for measuring elapsed time */
 
-  dtime(&TStime);
+    dtime(&TStime);
 
-  /* allocation of CompTime */
+    /* allocation of CompTime */
 
-  CompTime = (double**)malloc(sizeof(double*)*numprocs); 
-  for (i=0; i<numprocs; i++){
-    CompTime[i] = (double*)malloc(sizeof(double)*20); 
-    for (j=0; j<20; j++) CompTime[i][j] = 0.0;
-  }
+    CompTime = (double**)malloc(sizeof(double*)*numprocs);
+    for (i=0; i<numprocs; i++) {
+        CompTime[i] = (double*)malloc(sizeof(double)*20);
+        for (j=0; j<20; j++) CompTime[i][j] = 0.0;
+    }
 
-  Init_List_YOUSO();
-  remake_headfile = 0;
-  ScaleSize = 1.2; 
-  
-  /****************************************************
-                    Read the input file
-  ****************************************************/
+    Init_List_YOUSO();
+    remake_headfile = 0;
+    ScaleSize = 1.2;
 
-  MPI_Comm_size(MPI_COMM_WORLD1,&numprocs);
-  MPI_Comm_rank(MPI_COMM_WORLD1,&myid);
+    /****************************************************
+                      Read the input file
+    ****************************************************/
 
-  init_alloc_first();
+    MPI_Comm_size(MPI_COMM_WORLD1,&numprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD1,&myid);
 
-  CompTime[myid][1] = readfile(argv);
-  MPI_Barrier(MPI_COMM_WORLD1);
+    init_alloc_first();
 
-  /* initialize PrintMemory routine */
+    CompTime[myid][1] = readfile(argv);
+    MPI_Barrier(MPI_COMM_WORLD1);
 
-  sprintf(fileMemory,"%s%s.memory%i",filepath,filename,myid);
-  PrintMemory(fileMemory,0,"init"); 
-  PrintMemory_Fix();
+    /* initialize PrintMemory routine */
 
-  /* initialize */
+    sprintf(fileMemory,"%s%s.memory%i",filepath,filename,myid);
+    PrintMemory(fileMemory,0,"init");
+    PrintMemory_Fix();
 
-  init();
+    /* initialize */
 
-  /* for DFTD-vdW by okuno */
-  if(dftD_switch==1) DFTDvdW_init();
+    init();
 
-  /****************************************************
-                     SCF-DFT calculations
-  ****************************************************/
+    /* for DFTD-vdW by okuno */
+    if(dftD_switch==1) DFTDvdW_init();
 
-  MD_iter = 1;
+    /****************************************************
+                       SCF-DFT calculations
+    ****************************************************/
 
-  CompTime[myid][2] += truncation(MD_iter,1);
-  CompTime[myid][3] += DFT(MD_iter,(MD_iter-1)%orbitalOpt_per_MDIter+1);
+    MD_iter = 1;
 
-  /****************************************************
-   store the total energy, coordinates, and gradients
-  ****************************************************/
+    CompTime[myid][2] += truncation(MD_iter,1);
+    CompTime[myid][3] += DFT(MD_iter,(MD_iter-1)%orbitalOpt_per_MDIter+1);
 
-  /* total energy */
-  neb_atom_coordinates[index_images][0][0] = Utot;     
+    /****************************************************
+     store the total energy, coordinates, and gradients
+    ****************************************************/
 
-  /* atomic coordinates */
+    /* total energy */
+    neb_atom_coordinates[index_images][0][0] = Utot;
 
-  for (i=1; i<=atomnum; i++){
-    neb_atom_coordinates[index_images][i][1] = Gxyz[i][1];
-    neb_atom_coordinates[index_images][i][2] = Gxyz[i][2];
-    neb_atom_coordinates[index_images][i][3] = Gxyz[i][3];
-  }
- 
-  /* gradients on atoms */
+    /* atomic coordinates */
 
-  for (i=1; i<=atomnum; i++){
-    neb_atom_coordinates[index_images][i][17] = Gxyz[i][17];
-    neb_atom_coordinates[index_images][i][18] = Gxyz[i][18];
-    neb_atom_coordinates[index_images][i][19] = Gxyz[i][19];
-  }
+    for (i=1; i<=atomnum; i++) {
+        neb_atom_coordinates[index_images][i][1] = Gxyz[i][1];
+        neb_atom_coordinates[index_images][i][2] = Gxyz[i][2];
+        neb_atom_coordinates[index_images][i][3] = Gxyz[i][3];
+    }
 
-  /****************************************************
-    store WhatSpecies_NEB, Spe_WhatAtom_NEB, 
-    and SpeName_NEB 
-  ****************************************************/
+    /* gradients on atoms */
 
-  for (i=1; i<=atomnum; i++){
-    WhatSpecies_NEB[i] = WhatSpecies[i];
-  }
+    for (i=1; i<=atomnum; i++) {
+        neb_atom_coordinates[index_images][i][17] = Gxyz[i][17];
+        neb_atom_coordinates[index_images][i][18] = Gxyz[i][18];
+        neb_atom_coordinates[index_images][i][19] = Gxyz[i][19];
+    }
 
-  for (i=0; i<SpeciesNum; i++){
-    Spe_WhatAtom_NEB[i] = Spe_WhatAtom[i];
-  }
+    /****************************************************
+      store WhatSpecies_NEB, Spe_WhatAtom_NEB,
+      and SpeName_NEB
+    ****************************************************/
 
-  for (i=0; i<SpeciesNum; i++){
-    sprintf(SpeName_NEB[i],"%s",SpeName[i]);
-  }
+    for (i=1; i<=atomnum; i++) {
+        WhatSpecies_NEB[i] = WhatSpecies[i];
+    }
 
-  /****************************************************
-               finalize the calculation
-  ****************************************************/
+    for (i=0; i<SpeciesNum; i++) {
+        Spe_WhatAtom_NEB[i] = Spe_WhatAtom[i];
+    }
 
-  /* elapsed time */
+    for (i=0; i<SpeciesNum; i++) {
+        sprintf(SpeName_NEB[i],"%s",SpeName[i]);
+    }
 
-  dtime(&TEtime);
-  CompTime[myid][0] = TEtime - TStime;
-  Output_CompTime();
-  for (i=0; i<numprocs; i++){
-    free(CompTime[i]);
-  }
-  free(CompTime);
+    /****************************************************
+                 finalize the calculation
+    ****************************************************/
 
-  /* merge log files */
+    /* elapsed time */
 
-  Merge_LogFile(argv[1]);
+    dtime(&TEtime);
+    CompTime[myid][0] = TEtime - TStime;
+    Output_CompTime();
+    for (i=0; i<numprocs; i++) {
+        free(CompTime[i]);
+    }
+    free(CompTime);
 
-  /* print memory */
+    /* merge log files */
 
-  PrintMemory("total",0,"sum");
+    Merge_LogFile(argv[1]);
 
-  /* free arrays */
+    /* print memory */
 
-  Free_Arrays(0);
+    PrintMemory("total",0,"sum");
+
+    /* free arrays */
+
+    Free_Arrays(0);
 }

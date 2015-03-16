@@ -1,7 +1,9 @@
 
 #ifndef ___dcomplex_definition___
-typedef struct { double r,i; } dcomplex;
-#define ___dcomplex_definition___ 
+typedef struct {
+    double r,i;
+} dcomplex;
+#define ___dcomplex_definition___
 #endif
 
 
@@ -14,14 +16,14 @@ typedef struct { double r,i; } dcomplex;
 #endif
 
 
-int  TRAN_output_hks; 
+int  TRAN_output_hks;
 int  TRAN_output_TranMain;
 char TRAN_hksoutfilename[YOUSO10];
 char TRAN_hksfilename[2][YOUSO10];
 
 
 int *TRAN_region;
-int *TRAN_Original_Id; 
+int *TRAN_Original_Id;
 
 
 
@@ -33,7 +35,7 @@ int TRAN_grid_bound[2];
 int TRAN_grid_bound_e[2];       /* not used */
 double TRAN_grid_bound_diff[2]; /* not used */
 int TRAN_Kspace_grid2;
-int TRAN_Kspace_grid3; 
+int TRAN_Kspace_grid3;
 int TRAN_TKspace_grid2;
 int TRAN_TKspace_grid3;
 int TRAN_integration;
@@ -41,7 +43,7 @@ int TRAN_Poisson_flag;
 int TRAN_FFTE_CpyNum;
 int TRAN_SCF_Iter_Band;
 double TRAN_Poisson_Gpara_Scaling;
- 
+
 double ScaleSize_e[2];
 int SpinP_switch_e[2], atomnum_e[2], SpeciesNum_e[2], Max_FSNAN_e[2];
 int TCpyCell_e[2], Matomnum_e[2], MatomnumF_e[2], MatomnumS_e[2];
@@ -58,7 +60,7 @@ double **Gxyz_e[2];
 
 double *****OLP_e[2];
 double *****H_e[2];
-double ******DM_e[2]; 
+double ******DM_e[2];
 
 double *dDen_Grid_e[2];
 double *dVHart_Grid_e[2];
@@ -106,17 +108,17 @@ int NUM_c;
 int tran_omega_n_scf; /* # of freq. to calculate density */
 dcomplex *tran_omega_scf;
 dcomplex *tran_omega_weight_scf;
-int *tran_integ_method_scf; 
+int *tran_integ_method_scf;
 
 int tran_surfgreen_iteration_max;
-double tran_surfgreen_eps; 
+double tran_surfgreen_eps;
 
 int tran_num_poles;
 
 
 /* square path */
 double tran_square_path_ene[4];
-int tran_square_path_ene_fix[4]; 
+int tran_square_path_ene_fix[4];
 int tran_square_path_div[4];
 double tran_square_path_bias_expandenergy; /* for NEGF */
 int tran_square_path_bias_div;    /* for NEGF */
@@ -130,7 +132,7 @@ int tran_thermalarc_path_bias_div;    /* for NEGF */
 
 
 int tran_line_path_div;
-char **tran_line_path_string; 
+char **tran_line_path_string;
 
 int    tran_transmission_on;
 double tran_transmission_energyrange[3];
@@ -138,7 +140,7 @@ int    tran_transmission_energydiv;
 
 int    tran_transmission_iv_on;
 double tran_transmission_iv_energyrange[3];
-int tran_transmission_iv_energydiv; 
+int tran_transmission_iv_energydiv;
 
 double tran_dos_energyrange[3];
 int    tran_dos_energydiv;
@@ -148,7 +150,7 @@ int    TRAN_dos_Kspace_grid2,TRAN_dos_Kspace_grid3;
 
 
 dcomplex **tran_transmission;
-dcomplex **tran_transmission_iv; 
+dcomplex **tran_transmission_iv;
 
 
 int tran_bias_apply;      /* =1:NEGF  =0:no bias voltage */

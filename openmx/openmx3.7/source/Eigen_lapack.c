@@ -28,11 +28,13 @@ static void Eigen_HH(double **ac, double *ko, int n, int EVmax);
 void Eigen_lapack(double **a, double *ko, int n, int EVmax)
 {
 
-    Eigen_HH(a, ko, n, EVmax);
-
     /*
-    Eigen_lapack_x(a, ko, n, EVmax);
+    Eigen_HH(a, ko, n, EVmax);
     */
+
+
+    Eigen_lapack_x(a, ko, n, EVmax);
+
 
     /*
     Eigen_HHQR(a, ko, n, EVmax);
@@ -57,7 +59,7 @@ void Eigen_lapack_x(double **a, double *ko, int n0, int EVmax)
       output: ko[n];    eigenvalues
     */
 
-    char *name="Eigen_lapack";
+    char *name="Eigen_lapack_x";
 
     char  *JOBZ="V";
     char  *RANGE="I";
@@ -67,7 +69,7 @@ void Eigen_lapack_x(double **a, double *ko, int n0, int EVmax)
     INTEGER LDA=n0;
     double VL,VU; /* dummy */
     INTEGER IL,IU;
-    double ABSTOL=1.0e-13;
+    double ABSTOL=LAPACK_ABSTOL;
     INTEGER M;
 
     double *A,*Z;
@@ -125,9 +127,12 @@ void Eigen_lapack_x(double **a, double *ko, int n0, int EVmax)
         ko[i]= ko[i-1];
     }
 
+    /*
     if (INFO>0) {
-        printf("\n%s: error in dsyevx_, info=%d\n\n",name,INFO);
+      printf("\n%s: error in dsyevx_, info=%d\n\n",name,INFO);
     }
+    */
+
     if (INFO<0) {
         printf("%s: info=%d\n",name,INFO);
         exit(10);
@@ -154,7 +159,7 @@ void Eigen_lapack_d(double **a, double *ko, int n0, int EVmax)
       output: ko[n];    eigenvalues
     */
 
-    static char *name="Eigen_lapack";
+    static char *name="Eigen_lapack_d";
 
     char  *JOBZ="V";
     char  *UPLO="L";
@@ -163,7 +168,7 @@ void Eigen_lapack_d(double **a, double *ko, int n0, int EVmax)
     INTEGER LDA=n;
     double VL,VU; /* dummy */
     INTEGER IL,IU;
-    double ABSTOL=1.0e-13;
+    double ABSTOL=LAPACK_ABSTOL;
     INTEGER M;
 
     double *A;
@@ -219,9 +224,12 @@ void Eigen_lapack_d(double **a, double *ko, int n0, int EVmax)
         ko[i]= ko[i-1];
     }
 
+    /*
     if (INFO>0) {
-        printf("\n%s: error in dsyevd_, info=%d\n\n",name,INFO);
+       printf("\n%s: error in dsyevd_, info=%d\n\n",name,INFO);
     }
+    */
+
     if (INFO<0) {
         printf("%s: info=%d\n",name,INFO);
         exit(10);
@@ -245,7 +253,7 @@ void Eigen_lapack_r(double **a, double *ko, int n0, int EVmax)
       output: ko[n];    eigenvalues
     */
 
-    static char *name="Eigen_lapack";
+    static char *name="Eigen_lapack_r";
 
     char  *JOBZ="V";
     char  *RANGE="I";
@@ -255,7 +263,7 @@ void Eigen_lapack_r(double **a, double *ko, int n0, int EVmax)
     INTEGER LDA=n;
     double VL,VU; /* dummy */
     INTEGER IL,IU;
-    double ABSTOL=1.0e-13;
+    double ABSTOL=LAPACK_ABSTOL;
     INTEGER M;
 
     double *A,*Z;
@@ -316,9 +324,12 @@ void Eigen_lapack_r(double **a, double *ko, int n0, int EVmax)
         ko[i]= ko[i-1];
     }
 
+    /*
     if (INFO>0) {
-        printf("\n%s: error in dsyevr_, info=%d\n\n",name,INFO);
+       printf("\n%s: error in dsyevr_, info=%d\n\n",name,INFO);
     }
+    */
+
     if (INFO<0) {
         printf("%s: info=%d\n",name,INFO);
         exit(10);
@@ -350,7 +361,7 @@ void Eigen_HH(double **ac, double *ko, int n, int EVmax)
 
     ***********************************************************************/
 
-    double ABSTOL=1.0e-13;
+    double ABSTOL=LAPACK_ABSTOL;
     double **ad,*D,*E,
            *b1,*u,*uu,
            *p,*q,*s,*c,
@@ -804,7 +815,7 @@ void Eigen_HHQR(double **ac, double *ko, int n, int EVmax)
 
     ***********************************************************************/
 
-    double ABSTOL=1.0e-13;
+    double ABSTOL=LAPACK_ABSTOL;
 
     double **ad,**aq,**b,
            *b1,*u,*uu,
