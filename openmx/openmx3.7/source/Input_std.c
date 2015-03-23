@@ -2132,16 +2132,40 @@ void Input_std(char *file)
             kpoint_changeunit(tv,Band_UnitCell,MO_Nkpoint,MO_kpoint);
         }
     }
+    /* selective MO out bluehope*/
+    if (MO_fileout == 1){
+        input_logical("MO.selective",&MO_selective,0);
+        if (2<=level_stdout) {
+            printf("<Input_std> MO.selective %d\n",MO_selective);
+        }
+        if(MO_selective == 1){
+            if(fp=input_find("<MO.selection")){
+                for(i=1;i<=atomnum; i++){
+                    fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
 
+                    if (2<=level_stdout) {
+                        printf("<Input_std> MO_selection %2d %d\n",
+                                i,MO_selection[i][1]);
+                    }
+                } 
+                if(!input_last("MO.selection>")){
+                    /*format error*/
+                    printf("Format error for MO.selection\n");
+                    po++;
+                } 
+            }
+        }
+
+    }
     /****************************************************
-                    OutData_bin_flag
-    ****************************************************/
+      OutData_bin_flag
+     ****************************************************/
 
     input_logical("OutData.bin.flag",&OutData_bin_flag,0); /* default=off */
 
     /****************************************************
-             for output of contracted orbitals
-    ****************************************************/
+      for output of contracted orbitals
+     ****************************************************/
 
     input_logical("CntOrb.fileout",&CntOrb_fileout,0);
     if ((!(Cnt_switch==1 && RCnt_switch==1)) && CntOrb_fileout==1) {
@@ -2171,8 +2195,8 @@ void Input_std(char *file)
     }
 
     /****************************************************
-                   external electric field
-    ****************************************************/
+      external electric field
+     ****************************************************/
 
     r_vec[0]=0.0;
     r_vec[1]=0.0;
@@ -2184,19 +2208,19 @@ void Input_std(char *file)
         E_Field_switch = 1;
 
         /*******************************************
-                     unit transformation
+          unit transformation
 
-            V/m = J/C/m
-                = 1/(4.35975*10^{-18}) Hatree
-              *(1/(1.602177*10^{-19}) e )^{-1}
-                  *(1/(0.5291772*10^{-10}) a0 )^{-1}
-                = 0.1944688 * 10^{-11} Hartree/e/a0
+          V/m = J/C/m
+          = 1/(4.35975*10^{-18}) Hatree
+         *(1/(1.602177*10^{-19}) e )^{-1}
+         *(1/(0.5291772*10^{-10}) a0 )^{-1}
+         = 0.1944688 * 10^{-11} Hartree/e/a0
 
-           input unit:  GV/m = 10^9 V/m
-           used unit:   Hartree/e/a0
+         input unit:  GV/m = 10^9 V/m
+         used unit:   Hartree/e/a0
 
-           GV/m = 0.1944688 * 10^{-2} Hartree/e/a0
-        *******************************************/
+         GV/m = 0.1944688 * 10^{-2} Hartree/e/a0
+         *******************************************/
 
         length = sqrt( Dot_Product(tv[1], tv[1]) );
         x = E_Field[0]*tv[1][1]/length;

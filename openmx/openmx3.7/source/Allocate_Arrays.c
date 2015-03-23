@@ -388,7 +388,10 @@ void Allocate_Arrays(int wherefrom)
         for (i=0; i<(MO_Nkpoint+1); i++) {
             MO_kpoint[i] = (double*)malloc(sizeof(double)*4);
         }
-
+        MO_selection = (int**)malloc(sizeof(int*)*(atomnum+1));
+        for (i=0; i<(atomnum+1); i++){
+            MO_selection[i] = (int*)malloc(sizeof(int)*2);
+        }
         break;
 
     case 6:
