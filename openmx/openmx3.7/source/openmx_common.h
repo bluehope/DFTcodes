@@ -702,6 +702,15 @@ double **MO_kpoint;
 int **MO_selection;
 
 /*******************************************************
+ int ***MO_basis_selection
+ wave fuction output basis selection
+  size: MO_basis_selection[SpeciesNum][Spe_MaxL_Basis+1][Spe_Num_Basis]
+  allocation: call as Allocate_Arrays(5) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int ***MO_basis_selection ;
+
+/*******************************************************
  double **Spe_PAO_XV;
   radial mesh (x=log(r)) for PAO
   size: Spe_PAO_XV[List_YOUSO[18]]

@@ -1722,6 +1722,14 @@ void array0()
 
         free(OrbPol_flag);
     }
+    /* arrays for MO selective output  */
+    for (i=0; i<SpeciesNum; i++) {
+        for (l=0; l<(Spe_MaxL_Basis[i]+1); l++) {
+            free(MO_basis_selection[i][l]);
+        }
+        free(MO_basis_selection[i]);
+    }
+    free(MO_basis_selection);
 
     /* arrays for DFTD-vdW okuno */
     if(dftD_switch==1) {

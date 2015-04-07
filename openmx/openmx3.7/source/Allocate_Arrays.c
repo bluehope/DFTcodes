@@ -392,6 +392,16 @@ void Allocate_Arrays(int wherefrom)
         for (i=0; i<(atomnum+1); i++){
             MO_selection[i] = (int*)malloc(sizeof(int)*2);
         }
+        
+        MO_basis_selection =  (int***)malloc(sizeof(int**)*SpeciesNum);
+        for (i=0; i<SpeciesNum; i++) {
+            printf("Spe_MaxL_Basis %d %d\n",i,Spe_MaxL_Basis[i]);
+            MO_basis_selection[i] = (int**)malloc(sizeof(int*)*(Spe_MaxL_Basis[i]+1));
+            for (l=0; l<(Spe_MaxL_Basis[i]+1); l++) {
+                printf("MO_basis_selection %d %d\n",i,l);
+                MO_basis_selection[i][l] = (int*)malloc(sizeof(int)*Spe_Num_Basis[i][l]);
+            }
+        }
         break;
 
     case 6:

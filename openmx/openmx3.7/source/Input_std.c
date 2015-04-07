@@ -2134,11 +2134,11 @@ void Input_std(char *file)
     }
     /* selective MO out bluehope*/
     if (MO_fileout == 1){
-        input_logical("MO.selective",&MO_selective,0);
+        input_int("MO.selective",&MO_selective,0);
         if (2<=level_stdout) {
             printf("<Input_std> MO.selective %d\n",MO_selective);
         }
-        if(MO_selective == 1){
+        if(MO_selective >= 1){
             if(fp=input_find("<MO.selection")){
                 for(i=1;i<=atomnum; i++){
                     fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
@@ -2154,8 +2154,45 @@ void Input_std(char *file)
                     po++;
                 } 
             }
-        }
+            if (MO_selective == 2) {
 
+                if (fp=input_find("<MO.basis")) {
+
+                    /* initialize the U-values */
+                    for (i=0; i<SpeciesNum; i++) {
+                        for (l=0; l<=Spe_MaxL_Basis[i]; l++) {
+                            for (mul=0; mul<Spe_Num_Basis[i][l]; mul++) {
+                                MO_basis_selection[i][l][mul]=0.0 ;
+                            }
+                        }
+                    }
+
+                    /* read the U-values from the '.dat' file  */    /* --- MJ */
+                    for (i=0; i<SpeciesNum; i++) {
+                        fscanf(fp,"%s",Species);
+                        if (2<=level_stdout) {
+                            printf("MO.basis %s\n",Species);
+                        }
+                        j = Species2int(Species);
+                        for (l=0; l<=Spe_MaxL_Basis[j]; l++) {
+                            for (mul=0; mul<Spe_Num_Basis[j][l]; mul++) {
+                                fscanf(fp,"%s %d", buf, &MO_basis_selection[j][l][mul]) ;
+                                if (2<=level_stdout) {
+                                    printf("MO.basis %s %s %d\n",Species,buf,MO_basis_selection[j][l][mul]);
+                                }
+                            }
+                        }
+                    }
+
+                    if (! input_last("MO.basis>") ) {
+                        /* format error */
+                        printf("Format error for MO.basis\n");
+                        po++;
+                    }
+
+                }   /*  if (fp=input_find("<MO.basis"))  */
+            }
+        }
     }
     /****************************************************
       OutData_bin_flag
