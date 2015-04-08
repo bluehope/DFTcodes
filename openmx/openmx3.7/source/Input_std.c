@@ -2167,7 +2167,7 @@ void Input_std(char *file)
                         }
                     }
 
-                    /* read the U-values from the '.dat' file  */    /* --- MJ */
+                    /* read the MO basis on off from the '.dat' file  */
                     for (i=0; i<SpeciesNum; i++) {
                         fscanf(fp,"%s",Species);
                         if (2<=level_stdout) {
