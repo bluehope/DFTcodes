@@ -2133,26 +2133,26 @@ void Input_std(char *file)
         }
     }
     /* selective MO out bluehope*/
-    if (MO_fileout == 1){
+    if (MO_fileout == 1) {
         input_int("MO.selective",&MO_selective,0);
         if (2<=level_stdout) {
             printf("<Input_std> MO.selective %d\n",MO_selective);
         }
-        if(MO_selective >= 1){
-            if(fp=input_find("<MO.selection")){
-                for(i=1;i<=atomnum; i++){
+        if(MO_selective >= 1) {
+            if(fp=input_find("<MO.selection")) {
+                for(i=1; i<=atomnum; i++) {
                     fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
 
                     if (2<=level_stdout) {
                         printf("<Input_std> MO_selection %2d %d\n",
-                                i,MO_selection[i][1]);
+                               i,MO_selection[i][1]);
                     }
-                } 
-                if(!input_last("MO.selection>")){
+                }
+                if(!input_last("MO.selection>")) {
                     /*format error*/
                     printf("Format error for MO.selection\n");
                     po++;
-                } 
+                }
             }
             if (MO_selective == 2) {
 
@@ -2232,8 +2232,8 @@ void Input_std(char *file)
     }
 
     /****************************************************
-      external electric field
-     ****************************************************/
+                   external electric field
+    ****************************************************/
 
     r_vec[0]=0.0;
     r_vec[1]=0.0;
@@ -2245,19 +2245,19 @@ void Input_std(char *file)
         E_Field_switch = 1;
 
         /*******************************************
-          unit transformation
+                     unit transformation
 
-          V/m = J/C/m
-          = 1/(4.35975*10^{-18}) Hatree
-         *(1/(1.602177*10^{-19}) e )^{-1}
-         *(1/(0.5291772*10^{-10}) a0 )^{-1}
-         = 0.1944688 * 10^{-11} Hartree/e/a0
+            V/m = J/C/m
+                = 1/(4.35975*10^{-18}) Hatree
+              *(1/(1.602177*10^{-19}) e )^{-1}
+                  *(1/(0.5291772*10^{-10}) a0 )^{-1}
+                = 0.1944688 * 10^{-11} Hartree/e/a0
 
-         input unit:  GV/m = 10^9 V/m
-         used unit:   Hartree/e/a0
+           input unit:  GV/m = 10^9 V/m
+           used unit:   Hartree/e/a0
 
-         GV/m = 0.1944688 * 10^{-2} Hartree/e/a0
-         *******************************************/
+           GV/m = 0.1944688 * 10^{-2} Hartree/e/a0
+        *******************************************/
 
         length = sqrt( Dot_Product(tv[1], tv[1]) );
         x = E_Field[0]*tv[1][1]/length;
