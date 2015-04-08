@@ -739,20 +739,20 @@ static void Band_DFT_MO_Col(
                             wan1 = WhatSpecies[Gc_AN];
                             n = 0;
                             //selection
-                            if(1>=MO_selective && 0==MO_selection[Gc_AN][1]){
+                            if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
                                 continue; //skip output
                             }
 
                             for (l=0; l<=Supported_MaxL; l++) {
                                 for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
                                     for (m=0; m<(2*l+1); m++) {
-                                        if(2==MO_selective){
-                                            if(0==MO_basis_selection[wan1][l][mul]){
+                                        if(2==MO_selective) {
+                                            if(0==MO_basis_selection[wan1][l][mul]) {
                                                 continue;
                                             }
                                         }
                                         //if (l==0 && mul==0 && m==0)
-                                        if (0==n){
+                                        if (0==n) {
                                             fprintf(fp_EV,"%4d %3s %s %s",
                                                     Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
                                             n++;
@@ -1671,28 +1671,28 @@ static void Band_DFT_MO_NonCol(
                     i1 = 1;
 
                     for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
-                        
+
                         wan1 = WhatSpecies[Gc_AN];
                         n = 0;
                         //selection
-                        if(1>=MO_selective && 0==MO_selection[Gc_AN][1]){
+                        if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
                             continue; //skip output
                         }
 
                         for (l=0; l<=Supported_MaxL; l++) {
                             for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
-                                if(2==MO_selective){
-                                    if(0==MO_basis_selection[wan1][l][mul]){
+                                if(2==MO_selective) {
+                                    if(0==MO_basis_selection[wan1][l][mul]) {
                                         continue;
                                     }
                                 }
                                 for (m=0; m<(2*l+1); m++) {
                                     //if (l==0 && mul==0 && m==0)
-                                    if (0==n){
+                                    if (0==n) {
                                         fprintf(fp_EV,"%4d %3s %s %s",
                                                 Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
                                         n++;
-                                    }else
+                                    } else
                                         fprintf(fp_EV,"         %s %s",
                                                 Name_Multiple[mul],Name_Angular[l][m]);
 

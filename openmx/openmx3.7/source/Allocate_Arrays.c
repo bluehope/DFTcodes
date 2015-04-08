@@ -389,10 +389,10 @@ void Allocate_Arrays(int wherefrom)
             MO_kpoint[i] = (double*)malloc(sizeof(double)*4);
         }
         MO_selection = (int**)malloc(sizeof(int*)*(atomnum+1));
-        for (i=0; i<(atomnum+1); i++){
+        for (i=0; i<(atomnum+1); i++) {
             MO_selection[i] = (int*)malloc(sizeof(int)*2);
         }
-        
+
         MO_basis_selection =  (int***)malloc(sizeof(int**)*SpeciesNum);
         for (i=0; i<SpeciesNum; i++) {
             printf("Spe_MaxL_Basis %d %d\n",i,Spe_MaxL_Basis[i]);
