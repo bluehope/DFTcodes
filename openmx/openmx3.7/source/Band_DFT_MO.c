@@ -64,6 +64,7 @@ static void Band_DFT_MO_Col(
     int GA_AN,Anum,nhomos,nlumos;
     int ii,ij,ik,Rn,AN;
     int num0,num1,mul,m,wan1,Gc_AN;
+    int nsel;
     int LB_AN,GB_AN,Bnum;
     double time0,tmp,av_num;
     double snum_i,snum_j,snum_k,k1,k2,k3,sum,sumi,Num_State,FermiF;
@@ -737,10 +738,10 @@ static void Band_DFT_MO_Col(
                         for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
 
                             wan1 = WhatSpecies[Gc_AN];
-                            n = 0;
-                            //selection
-                            if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
-                                continue; //skip output
+                            nsel = 0;
+                            /* selection */
+                            if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
+                                continue; /*skip output */
                             }
 
                             for (l=0; l<=Supported_MaxL; l++) {
@@ -751,11 +752,11 @@ static void Band_DFT_MO_Col(
                                                 continue;
                                             }
                                         }
-                                        //if (l==0 && mul==0 && m==0)
-                                        if (0==n) {
+                                        /* if (l==0 && mul==0 && m==0) */
+                                        if (0==nsel) {
                                             fprintf(fp_EV,"%4d %3s %s %s",
                                                     Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
-                                            n++;
+                                            nsel++;
                                         }
                                         else
                                             fprintf(fp_EV,"         %s %s",
@@ -880,7 +881,7 @@ static void Band_DFT_MO_NonCol(
     int ii,ij,ik,MaxN;
     int wan1,mul,Gc_AN,num0,num1;
     int LB_AN,GB_AN,Bnum;
-
+    int nsel;
     double time0,tmp,av_num;
     double snum_i,snum_j,snum_k,k1,k2,k3,sum,sumi,Num_State,FermiF;
     double x,Dnum,Dnum2,AcP,ChemP_MAX,ChemP_MIN;
@@ -1673,25 +1674,25 @@ static void Band_DFT_MO_NonCol(
                     for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
 
                         wan1 = WhatSpecies[Gc_AN];
-                        n = 0;
-                        //selection
-                        if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
-                            continue; //skip output
+                        nsel = 0;
+                        /*selection */
+                        if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
+                            continue; /*skip output */
                         }
 
                         for (l=0; l<=Supported_MaxL; l++) {
                             for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
-                                if(2==MO_selective) {
-                                    if(0==MO_basis_selection[wan1][l][mul]) {
-                                        continue;
-                                    }
-                                }
                                 for (m=0; m<(2*l+1); m++) {
-                                    //if (l==0 && mul==0 && m==0)
-                                    if (0==n) {
+                                    if(2==MO_selective) {
+                                        if(0==MO_basis_selection[wan1][l][mul]) {
+                                            continue;
+                                        }
+                                    }
+                                    /* if (l==0 && mul==0 && m==0) */
+                                    if (0==nsel) {
                                         fprintf(fp_EV,"%4d %3s %s %s",
                                                 Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
-                                        n++;
+                                        nsel++;
                                     } else
                                         fprintf(fp_EV,"         %s %s",
                                                 Name_Multiple[mul],Name_Angular[l][m]);
