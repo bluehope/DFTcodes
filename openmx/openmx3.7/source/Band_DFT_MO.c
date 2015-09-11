@@ -64,7 +64,7 @@ static void Band_DFT_MO_Col(
     int GA_AN,Anum,nhomos,nlumos;
     int ii,ij,ik,Rn,AN;
     int num0,num1,mul,m,wan1,Gc_AN;
-    int nsel;
+    int nsel,skip_output;
     int LB_AN,GB_AN,Bnum;
     double time0,tmp,av_num;
     double snum_i,snum_j,snum_k,k1,k2,k3,sum,sumi,Num_State,FermiF;
@@ -739,40 +739,42 @@ static void Band_DFT_MO_Col(
 
                             wan1 = WhatSpecies[Gc_AN];
                             nsel = 0;
-                            /* selection */
-                            if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
-                                continue; /*skip output */
-                            }
 
                             for (l=0; l<=Supported_MaxL; l++) {
                                 for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
                                     for (m=0; m<(2*l+1); m++) {
+                                        /* selection */
+                                        skip_output = 0;
+                                        if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
+                                            skip_output = 1; /*skip output */
+                                        }
                                         if(2==MO_selective) {
                                             if(0==MO_basis_selection[wan1][l][mul]) {
-                                                continue;
+                                                skip_output = 1; /*skip output */
                                             }
                                         }
                                         /* if (l==0 && mul==0 && m==0) */
-                                        if (0==nsel) {
-                                            fprintf(fp_EV,"%4d %3s %s %s",
-                                                    Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
-                                            nsel++;
-                                        }
-                                        else
-                                            fprintf(fp_EV,"         %s %s",
-                                                    Name_Multiple[mul],Name_Angular[l][m]);
-
-                                        for (j=1; j<=num0; j++) {
-
-                                            j1 = num0*(i-1) + j;
-
-                                            if (0<i1 && j1<=n) {
-                                                fprintf(fp_EV,"  %8.5f",C[spin][j1][i1].r);
-                                                fprintf(fp_EV,"  %8.5f",C[spin][j1][i1].i);
+                                        if(1!=skip_output) {
+                                            if (0==nsel) {
+                                                fprintf(fp_EV,"%4d %3s %s %s",
+                                                        Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
+                                                nsel++;
                                             }
-                                        }
-                                        fprintf(fp_EV,"\n");
+                                            else
+                                                fprintf(fp_EV,"         %s %s",
+                                                        Name_Multiple[mul],Name_Angular[l][m]);
 
+                                            for (j=1; j<=num0; j++) {
+
+                                                j1 = num0*(i-1) + j;
+
+                                                if (0<i1 && j1<=n) {
+                                                    fprintf(fp_EV,"  %8.5f",C[spin][j1][i1].r);
+                                                    fprintf(fp_EV,"  %8.5f",C[spin][j1][i1].i);
+                                                }
+                                            }
+                                            fprintf(fp_EV,"\n");
+                                        }
                                         i1++;
                                     }
                                 }
@@ -881,7 +883,7 @@ static void Band_DFT_MO_NonCol(
     int ii,ij,ik,MaxN;
     int wan1,mul,Gc_AN,num0,num1;
     int LB_AN,GB_AN,Bnum;
-    int nsel;
+    int nsel,skip_output;
     double time0,tmp,av_num;
     double snum_i,snum_j,snum_k,k1,k2,k3,sum,sumi,Num_State,FermiF;
     double x,Dnum,Dnum2,AcP,ChemP_MAX,ChemP_MIN;
@@ -1675,43 +1677,46 @@ static void Band_DFT_MO_NonCol(
 
                         wan1 = WhatSpecies[Gc_AN];
                         nsel = 0;
-                        /*selection */
-                        if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
-                            continue; /*skip output */
-                        }
 
                         for (l=0; l<=Supported_MaxL; l++) {
                             for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
                                 for (m=0; m<(2*l+1); m++) {
+                                    /*selection */
+                                    skip_output = 0;
+                                    if(1<=MO_selective && 0==MO_selection[Gc_AN][1]) {
+                                        skip_output = 1;  /*skip output */
+                                    }
                                     if(2==MO_selective) {
                                         if(0==MO_basis_selection[wan1][l][mul]) {
-                                            continue;
+                                            skip_output = 1; /*skip output */
                                         }
                                     }
                                     /* if (l==0 && mul==0 && m==0) */
-                                    if (0==nsel) {
-                                        fprintf(fp_EV,"%4d %3s %s %s",
-                                                Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
-                                        nsel++;
-                                    } else
-                                        fprintf(fp_EV,"         %s %s",
-                                                Name_Multiple[mul],Name_Angular[l][m]);
+                                    if(1 != skip_output) {
+                                        if (0==nsel) {
+                                            fprintf(fp_EV,"%4d %3s %s %s",
+                                                    Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
+                                            nsel++;
+                                        } else
+                                            fprintf(fp_EV,"         %s %s",
+                                                    Name_Multiple[mul],Name_Angular[l][m]);
 
-                                    for (j=1; j<=num0; j++) {
+                                        for (j=1; j<=num0; j++) {
 
-                                        j1 = num0*(i-1) + j;
+                                            j1 = num0*(i-1) + j;
 
-                                        if (0<i1 && j1<=2*n) {
-                                            fprintf(fp_EV,"  %8.5f",H[i1][j1].r);
-                                            fprintf(fp_EV,"  %8.5f",H[i1][j1].i);
-                                            fprintf(fp_EV,"  %8.5f",H[i1+n][j1].r);
-                                            fprintf(fp_EV,"  %8.5f",H[i1+n][j1].i);
+                                            if (0<i1 && j1<=2*n) {
+                                                fprintf(fp_EV,"  %8.5f",H[i1][j1].r);
+                                                fprintf(fp_EV,"  %8.5f",H[i1][j1].i);
+                                                fprintf(fp_EV,"  %8.5f",H[i1+n][j1].r);
+                                                fprintf(fp_EV,"  %8.5f",H[i1+n][j1].i);
+                                            }
                                         }
-                                    }
 
-                                    fprintf(fp_EV,"\n");
-                                    if (i1==-1)  fprintf(fp_EV,"\n");
-                                    if (i1==0)   fprintf(fp_EV,"\n");
+                                        fprintf(fp_EV,"\n");
+                                        if (i1==-1)  fprintf(fp_EV,"\n");
+                                        if (i1==0)   fprintf(fp_EV,"\n");
+                                    }
 
                                     i1++;
                                 }
