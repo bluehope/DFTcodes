@@ -1299,7 +1299,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     VVi_r = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
     for (spin1=0; spin1<=SpinP_switch; spin1++) {
         VVi_r[spin1] = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
-        for (spin2=0; spin2<=1; spin2++) {
+        for (spin2=0; spin2<=SpinP_switch; spin2++) {
             VVi_r[spin1][spin2] = (double**)malloc(sizeof(double*)*F_TNumOrbs3);
             for (i=0; i<F_TNumOrbs3; i++) {
                 VVi_r[spin1][spin2][i] = (double*)malloc(sizeof(double)*F_TNumOrbs3);
@@ -1310,7 +1310,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     VVi_i = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
     for (spin1=0; spin1<=SpinP_switch; spin1++) {
         VVi_i[spin1] = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
-        for (spin2=0; spin2<=1; spin2++) {
+        for (spin2=0; spin2<=SpinP_switch; spin2++) {
             VVi_i[spin1][spin2] = (double**)malloc(sizeof(double*)*F_TNumOrbs3);
             for (i=0; i<F_TNumOrbs3; i++) {
                 VVi_i[spin1][spin2][i] = (double*)malloc(sizeof(double)*F_TNumOrbs3);
