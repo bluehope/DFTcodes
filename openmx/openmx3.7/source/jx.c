@@ -106,6 +106,11 @@ int main(int argc, char *argv[])
     static int l,n,n2,n1,i1,j1,l1;
     static double sum,sumi,sum1;
 
+    /* for each K-point output*/
+    int all_kpoint_output; /* 0: no printout for each k-points, 1:printout for each k-points */
+    char all_kpoint_output_fname[256];
+    FILE *out; /* kpoin j out*/
+
     /* MPI initialize */
 
     MPI_Status stat;
@@ -445,6 +450,19 @@ int main(int argc, char *argv[])
             }
             else {
 
+                /* get all_kpoint_output */
+                all_kpoint_output = 0;
+                printf(" Print all k-grids J value?  off:0  on:1\n");
+                scanf("%d",&all_kpoint_output);
+                if(0 < all_kpoint_output) {
+                    printf("all k-grids output mode:on  output file name: jx-kpoints_%d_%d.csv\n",
+                           First_Atom,Second_Atom);
+                } else {
+                    printf("all k-grids output mode:off\n");
+                }
+                fflush(stdout);
+
+
                 /****************************************************
                                       calculation of J
                 ****************************************************/
@@ -610,7 +628,18 @@ int main(int argc, char *argv[])
                     }
                 }
 
-
+                /* print all kpoint */
+                if(0 < all_kpoint_output) {
+                    sprintf(all_kpoint_output_fname,"jx-kpoints_%d_%d.csv",First_Atom,Second_Atom);
+                    if(!((out = fopen(all_kpoint_output_fname,"w")) == NULL)) {
+                        fprintf(stderr,"k1,k2,k3,JrTk,JiTk\n");
+                        for (i=0; i<T_knum; i++) {
+                            fprintf(out,"%f,%f,%f,%f,%f\n",
+                                    T_KGrids1[i], T_KGrids2[i], T_KGrids3[i], JrTk[i], JiTk[i]);
+                        }
+                        fclose(out);
+                    }
+                }
                 for (i=0; i<T_knum; i++) {
                     Jr += JrTk[i];
                 }
