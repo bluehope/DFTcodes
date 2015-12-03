@@ -429,6 +429,18 @@ int main(int argc, char *argv[])
                 else {
                     printf(" ******* exit \n");
                 }
+                /* get all_kpoint_output */
+                all_kpoint_output = 0;
+                printf(" Print all k-grids J value?  off:0  on:1\n");
+                scanf("%d",&all_kpoint_output);
+                if(0 < all_kpoint_output) {
+                    printf("all k-grids output mode:on  output file name: jx-kpoints_%d_%d.csv\n",
+                           atmij[1],atmij[2]);
+                } else {
+                    printf("all k-grids output mode:off\n");
+                }
+                fflush(stdout);
+
             }
 
             MPI_Bcast(atmij, 3, MPI_INT, 0, comm1);
@@ -450,17 +462,7 @@ int main(int argc, char *argv[])
             }
             else {
 
-                /* get all_kpoint_output */
-                all_kpoint_output = 0;
-                printf(" Print all k-grids J value?  off:0  on:1\n");
-                scanf("%d",&all_kpoint_output);
-                if(0 < all_kpoint_output) {
-                    printf("all k-grids output mode:on  output file name: jx-kpoints_%d_%d.csv\n",
-                           First_Atom,Second_Atom);
-                } else {
-                    printf("all k-grids output mode:off\n");
-                }
-                fflush(stdout);
+
 
 
                 /****************************************************
