@@ -281,17 +281,20 @@ int main(int argc, char *argv[])
 
         for (i=0; i<=(knum_i-1); i++) {
             if (knum_i==1) k1 = 0.0;
-            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);
+            else           k1 = ((double)i)/(2.0*(snum_i-1));
+            /*else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);*/
             KGrids1[i]=k1;
         }
         for (i=0; i<=(knum_j-1); i++) {
             if (knum_j==1) k1 = 0.0;
-            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_j);
+            else           k1 = ((double)i)/(2.0*(snum_j-1));
+            /*else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);*/
             KGrids2[i]=k1;
         }
         for (i=0; i<=(knum_k-1); i++) {
             if (knum_k==1) k1 = 0.0;
-            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_k);
+            else           k1 = ((double)i)/(2.0*(snum_k-1));
+            /*else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);*/
             KGrids3[i]=k1;
         }
 
