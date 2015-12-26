@@ -107,6 +107,10 @@ int main(int argc, char *argv[])
     static double sum,sumi,sum1;
 
     /* for each K-point output*/
+    FILE *custom_kpoints_fp;
+    int custom_kpoints_num;
+    int custom_kpoints;
+    static double *custom_KGrids1,*custom_KGrids2,*custom_KGrids3;
     int all_kpoint_output; /* 0: no printout for each k-points, 1:printout for each k-points */
     char all_kpoint_output_fname[256];
     FILE *out; /* kpoin j out*/
@@ -199,23 +203,68 @@ int main(int argc, char *argv[])
 
         do {
             if (myid==Host_ID) {
-                printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
-                scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
-                printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
+                Nk[1] = 0;
+                Nk[2] = 0;
+                Nk[3] = 0;
+                printf(" Custom k-grids? 0: no 1: yes (will read kpoint.csv) \n");
+                scanf("%d",&custom_kpoints);
+                printf("input custom_kpoints %d\n",custom_kpoints);
+                if (0 == custom_kpoints) {
+                    printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
+                    scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
+                    printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
+                } else if(1 == custom_kpoints) {
+                    /* custom kpoints  */
+                    printf(" Reading kpoint.csv\n");
+
+                    if(custom_kpoints_fp=fopen("kpoint.csv","r")) {
+                        /* check kpoint.csv */
+                        custom_kpoints_num = 0;
+                        fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
+
+                        T_knum = 0;
+                        while(0<fscanf(custom_kpoints_fp, "%lf,%lf,%lf",&k1,&k2,&k3) ) {
+                            T_knum++;
+                            printf("%d :%lf,%lf,%lf\n",T_knum,k1,k2,k3);
+
+                        }
+                        if(custom_kpoints_num == T_knum) {
+                            printf(" Reading kpoint.csv finished: %d k-grids\n",
+                                   custom_kpoints_num);
+                        } else {
+                            printf(" Reading kpoint.csv finished: %d k-grids but only %d k-grids\n",
+                                   custom_kpoints_num,T_knum);
+                        }
+                        fclose(custom_kpoints_fp);
+                    }
+                }
             }
             MPI_Bcast(Nk, 4, MPI_INT, 0, comm1);
             knum_i=Nk[1];
             knum_j=Nk[2];
             knum_k=Nk[3];
-
-
-            if ( knum_i<=0 || knum_j<=0 || knum_k<=0 ) {
-                printf("invalid number\n");
-                knum_switch = 0;
+            knum_switch = 0;
+            /* custom kpoints  */
+            MPI_Bcast(&custom_kpoints_num, 1, MPI_INT, 0, comm1);
+            MPI_Bcast(&T_knum, 1, MPI_INT, 0, comm1);
+            MPI_Bcast(&custom_kpoints , 1, MPI_INT, 0, comm1);
+            if( 0 == custom_kpoints ) {
+                if ( knum_i<=0 || knum_j<=0 || knum_k<=0 ) {
+                    printf("invalid number\n");
+                    knum_switch = 0;
+                }
+                else {
+                    knum_switch = 1;
+                }
+            } else if(1 == custom_kpoints) {
+                if((custom_kpoints_num != T_knum) || T_knum <= 0 ) {
+                    printf("invalid kpoint.csv input custom_kpoints_num %d T_knum %d\n",
+                           custom_kpoints_num,T_knum  );
+                } else {
+                    knum_switch = 1;
+                }
             }
-            else {
-                knum_switch = 1;
-            }
+
         } while(knum_switch==0);
 
         /****************************************************
@@ -355,11 +404,14 @@ int main(int argc, char *argv[])
         ************************************/
 
 
-        T_knum = 0;
-        for (i=0; i<=(knum_i-1); i++) {
-            for (j=0; j<=(knum_j-1); j++) {
-                for (k=0; k<=(knum_k-1); k++) {
-                    T_knum++;
+
+        if(0 == custom_kpoints) {
+            T_knum = 0;
+            for (i=0; i<=(knum_i-1); i++) {
+                for (j=0; j<=(knum_j-1); j++) {
+                    for (k=0; k<=(knum_k-1); k++) {
+                        T_knum++;
+                    }
                 }
             }
         }
@@ -373,23 +425,54 @@ int main(int argc, char *argv[])
         arpo = (int*)malloc(sizeof(int)*numprocs);
 
         /* set T_KGrids1,2,3 and T_k_op */
+        if(0 == custom_kpoints) {
+            T_knum = 0;
+            for (i=0; i<=(knum_i-1); i++) {
+                for (j=0; j<=(knum_j-1); j++) {
+                    for (k=0; k<=(knum_k-1); k++) {
 
-        T_knum = 0;
-        for (i=0; i<=(knum_i-1); i++) {
-            for (j=0; j<=(knum_j-1); j++) {
-                for (k=0; k<=(knum_k-1); k++) {
+                        T_KGrids1[T_knum] = KGrids1[i];
+                        T_KGrids2[T_knum] = KGrids2[j];
+                        T_KGrids3[T_knum] = KGrids3[k];
+                        JrTk[T_knum]=0.0;
+                        JiTk[T_knum]=0.0;
 
-                    T_KGrids1[T_knum] = KGrids1[i];
-                    T_KGrids2[T_knum] = KGrids2[j];
-                    T_KGrids3[T_knum] = KGrids3[k];
-                    JrTk[T_knum]=0.0;
-                    JiTk[T_knum]=0.0;
-
-                    T_knum++;
+                        T_knum++;
+                    }
                 }
             }
-        }
+        } else if(1== custom_kpoints) {
+            /* custom kpoints  */
+            custom_KGrids1 = (double*)malloc(sizeof(double)*T_knum);
+            custom_KGrids2 = (double*)malloc(sizeof(double)*T_knum);
+            custom_KGrids3 = (double*)malloc(sizeof(double)*T_knum);
 
+            custom_kpoints_fp=fopen("kpoint.csv","r");
+            T_knum = 0;
+            fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
+            while(0<fscanf(custom_kpoints_fp, "%lf,%lf,%lf",&k1,&k2,&k3) ) {
+                custom_KGrids1[T_knum] = k1;
+                custom_KGrids2[T_knum] = k2;
+                custom_KGrids3[T_knum] = k3;
+                T_knum++;
+            }
+            fclose(custom_kpoints_fp);
+            if( T_knum != custom_kpoints_num)
+                return -1;
+
+            T_knum = 0;
+            for(T_knum = 0; T_knum < custom_kpoints_num; T_knum++) {
+                T_KGrids1[T_knum] = custom_KGrids1[T_knum];
+                T_KGrids2[T_knum] = custom_KGrids2[T_knum];
+                T_KGrids3[T_knum] = custom_KGrids3[T_knum];
+
+                JrTk[T_knum]=0.0;
+                JiTk[T_knum]=0.0;
+            }
+            free(custom_KGrids1);
+            free(custom_KGrids2);
+            free(custom_KGrids3);
+        }
         /****  allocate k-point  into proccessors *****/
 
         if (T_knum<=myid) {
@@ -428,21 +511,23 @@ int main(int argc, char *argv[])
 
                 if (atmij[1] > 0) {
                     printf(" Atom:i,j = %d, %d \n",atmij[1], atmij[2]);
+
+                    /* get all_kpoint_output */
+                    all_kpoint_output = 0;
+                    printf(" Print all k-grids J value?  off:0  on:1\n");
+                    scanf("%d",&all_kpoint_output);
+                    if(0 < all_kpoint_output) {
+                        printf("all k-grids output mode:on  output file name: jx-kpoints_%d_%d.csv\n",
+                               atmij[1],atmij[2]);
+                        printf("k1,k2,k3,JrTk,JiTk\n");
+                    } else {
+                        printf("all k-grids output mode:off\n");
+                    }
+                    fflush(stdout);
                 }
                 else {
                     printf(" ******* exit \n");
                 }
-                /* get all_kpoint_output */
-                all_kpoint_output = 0;
-                printf(" Print all k-grids J value?  off:0  on:1\n");
-                scanf("%d",&all_kpoint_output);
-                if(0 < all_kpoint_output) {
-                    printf("all k-grids output mode:on  output file name: jx-kpoints_%d_%d.csv\n",
-                           atmij[1],atmij[2]);
-                } else {
-                    printf("all k-grids output mode:off\n");
-                }
-                fflush(stdout);
 
             }
 
@@ -451,10 +536,10 @@ int main(int argc, char *argv[])
             First_Atom  = atmij[1];
             Second_Atom = atmij[2];
 
-            if      (First_Atom==0 && Second_Atom==0) {
+            if (First_Atom==0 && Second_Atom==0) {
                 end_switch = 1;
                 MPI_Finalize();
-                exit(1);
+                exit(0);
             }
             else if (First_Atom==0 && Second_Atom!=0 ||
                      First_Atom!=0 && Second_Atom==0) {
@@ -487,6 +572,8 @@ int main(int argc, char *argv[])
                         MPI_Bcast(&arpo[ID], 1, MPI_INT, ID, comm1);
                     }
                     if (myid==Host_ID) {
+                        fprintf(stderr,"%.2f%% ",100.0*(double)(kloop+1)/(double)num_kloop0);
+                        fflush(stderr);
                     }
 
                     kloop = arpo[myid];
@@ -621,15 +708,23 @@ int main(int argc, char *argv[])
 
 
                 MPI_Barrier(comm1);
-                kloop=0;
-                for (i=0; i<=(knum_i-1); i++) {
-                    for (j=0; j<=(knum_j-1); j++) {
-                        for (k=0; k<=(knum_k-1); k++) {
-                            ID1 = Tkmesh2ID[kloop];
-                            MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                            MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                            kloop++;
+                if(0 == custom_kpoints) {
+                    kloop=0;
+                    for (i=0; i<=(knum_i-1); i++) {
+                        for (j=0; j<=(knum_j-1); j++) {
+                            for (k=0; k<=(knum_k-1); k++) {
+                                ID1 = Tkmesh2ID[kloop];
+                                MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
+                                MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
+                                kloop++;
+                            }
                         }
+                    }
+                } else if(1== custom_kpoints) {
+                    for (kloop=0; kloop < T_knum; kloop++) {
+                        ID1 = Tkmesh2ID[kloop];
+                        MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
+                        MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
                     }
                 }
 
@@ -637,7 +732,6 @@ int main(int argc, char *argv[])
                 if(0 < all_kpoint_output) {
                     sprintf(all_kpoint_output_fname,"jx-kpoints_%d_%d.csv",First_Atom,Second_Atom);
                     if(!((out = fopen(all_kpoint_output_fname,"w")) == NULL)) {
-                        fprintf(stderr,"k1,k2,k3,JrTk,JiTk\n");
                         for (i=0; i<T_knum; i++) {
                             fprintf(out,"%f,%f,%f,%f,%f\n",
                                     T_KGrids1[i], T_KGrids2[i], T_KGrids3[i], JrTk[i], JiTk[i]);
@@ -648,7 +742,8 @@ int main(int argc, char *argv[])
                 for (i=0; i<T_knum; i++) {
                     Jr += JrTk[i];
                 }
-                Jr = Jr/(double)(knum_i*knum_j*knum_k);
+                //Jr = Jr/(double)(knum_i*knum_j*knum_k);
+                Jr = Jr/(double)(T_knum);
                 if (myid==Host_ID) {
                     printf("\n J_ij between %ith atom and %ith atom is %15.12f cm^{-1}\n",
                            First_Atom, Second_Atom, Jr);
@@ -733,7 +828,7 @@ int main(int argc, char *argv[])
 
     MPI_Finalize();
 
-    exit(1);
+    exit(0);
 }
 
 
@@ -2439,4 +2534,3 @@ void dtime(double *t)
       printf("dtime: %lf\n",*t);
     */
 }
-
