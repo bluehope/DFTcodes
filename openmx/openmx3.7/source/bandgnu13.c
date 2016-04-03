@@ -421,8 +421,10 @@ main(int argc, char **argv)
         fprintf(fp,"\n");
     }
 
-
-    fprintf(fp,"pause -1");
+    fprintf(fp,"pause -1\n");
+    fprintf(fp,"set terminal postscript eps size 3.5,2.62 enhanced color font 'Helvetica,20' linewidth 2\n");
+    fprintf(fp,"set output '%s_band.eps' \n",fname);
+    fprintf(fp,"replot\n");
 
     fclose(fp);
 
