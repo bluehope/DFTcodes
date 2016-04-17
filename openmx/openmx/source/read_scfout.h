@@ -2,7 +2,7 @@
  int atomnun;
   the number of total atoms
 *******************************************************/
-int atomnum;
+int atomnum;   
 
 /*******************************************************
  int Catomnun;
@@ -20,11 +20,11 @@ int Latomnum;
  int Ratomnun;
   the number of atoms in the left lead
 *******************************************************/
-int Ratomnum;
+int Ratomnum;   
 
 /*******************************************************
  int SpinP_switch;
-  0: non-spin polarized
+  0: non-spin polarized 
   1: spin polarized
 *******************************************************/
 int SpinP_switch;
@@ -66,28 +66,28 @@ double Total_SpinS;
 double E_Temp;
 
 /*******************************************************
- int *Total_NumOrbs;
+ int *Total_NumOrbs; 
  the number of atomic orbitals in each atom
   size: Total_NumOrbs[atomnum+1]
 *******************************************************/
 int *Total_NumOrbs;
 
 /*******************************************************
- int *FNAN;
+ int *FNAN; 
  the number of first neighboring atoms of each atom
   size: FNAN[atomnum+1]
 *******************************************************/
 int *FNAN;
 
 /*******************************************************
- int **natn;
+ int **natn; 
   grobal index of neighboring atoms of an atom ct_AN
   size: natn[atomnum+1][FNAN[ct_AN]+1]
 *******************************************************/
 int **natn;
 
 /*******************************************************
- int **ncn;
+ int **ncn; 
   grobal index for cell of neighboring atoms of
   an atom ct_AN
   size: ncn[atomnum+1][FNAN[ct_AN]+1]
@@ -96,7 +96,7 @@ int **ncn;
 
 /*******************************************************
  double **atv;
-  x,y,and z-components of translation vector of
+  x,y,and z-components of translation vector of  
   periodically copied cells
   size: atv[TCpyCell+1][4];
 *******************************************************/
@@ -118,7 +118,7 @@ double tv[4][4];
 /*******************************************************
  double rtv[4][4]:
   reciprocal unit cell vectors in Bohr^{-1}
-
+  
   note:
    tv_i \dot rtv_j = 2PI * Kronecker's delta_{ij}
 *******************************************************/
@@ -137,7 +137,7 @@ double **Gxyz;
            [atomnum+1]
            [FNAN[ct_AN]+1]
            [Total_NumOrbs[ct_AN]]
-           [Total_NumOrbs[h_AN]]
+           [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double *****Hks;
 
@@ -145,13 +145,13 @@ double *****Hks;
  double *****iHks;
   imaginary Kohn-Sham matrix elements of basis orbitals
   for alpha-alpha, beta-beta, and alpha-beta spin matrices
-  of which contributions come from spin-orbit coupling
+  of which contributions come from spin-orbit coupling 
   and Hubbard U effective potential.
   size: iHks[3]
             [atomnum+1]
             [FNAN[ct_AN]+1]
             [Total_NumOrbs[ct_AN]]
-            [Total_NumOrbs[h_AN]]
+            [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double *****iHks;
 
@@ -161,7 +161,7 @@ double *****iHks;
   size: OLP[atomnum+1]
            [FNAN[ct_AN]+1]
            [Total_NumOrbs[ct_AN]]
-           [Total_NumOrbs[h_AN]]
+           [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double ****OLP;
 
@@ -171,7 +171,7 @@ double ****OLP;
   size: OLPpox[atomnum+1]
               [FNAN[ct_AN]+1]
               [Total_NumOrbs[ct_AN]]
-              [Total_NumOrbs[h_AN]]
+              [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double ****OLPpox;
 
@@ -181,7 +181,7 @@ double ****OLPpox;
   size: OLPpoy[atomnum+1]
               [FNAN[ct_AN]+1]
               [Total_NumOrbs[ct_AN]]
-              [Total_NumOrbs[h_AN]]
+              [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double ****OLPpoy;
 
@@ -191,7 +191,7 @@ double ****OLPpoy;
   size: OLPpoz[atomnum+1]
               [FNAN[ct_AN]+1]
               [Total_NumOrbs[ct_AN]]
-              [Total_NumOrbs[h_AN]]
+              [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double ****OLPpoz;
 
@@ -202,7 +202,7 @@ double ****OLPpoz;
           [atomnum+1]
           [FNAN[ct_AN]+1]
           [Total_NumOrbs[ct_AN]]
-          [Total_NumOrbs[h_AN]]
+          [Total_NumOrbs[h_AN]] 
 *******************************************************/
 double *****DM;
 

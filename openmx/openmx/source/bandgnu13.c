@@ -22,7 +22,8 @@
 #define MAXBUF 1024
 #define fp_bsize         1048576     /* buffer size for setvbuf */
 
-/* #define DEBUG */
+/* #define DEBUG  */
+
 #ifdef DEBUG
 #undef DEBUG
 #endif
@@ -207,6 +208,7 @@ main(int argc, char **argv)
     for (j=0; j<(nkpath+1); j++) {
         kline[j]=(double*)malloc(sizeof(double)*(m_perpath+1));
     }
+
 #ifdef DEBUG
     printf("<kpath end>\n");
 #endif
@@ -421,10 +423,8 @@ main(int argc, char **argv)
         fprintf(fp,"\n");
     }
 
-    fprintf(fp,"pause -1\n");
-    fprintf(fp,"set terminal postscript eps size 3.5,2.62 enhanced color font 'Helvetica,20' linewidth 2\n");
-    fprintf(fp,"set output '%s_band.eps' \n",fname);
-    fprintf(fp,"replot\n");
+
+    fprintf(fp,"pause -1");
 
     fclose(fp);
 

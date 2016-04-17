@@ -5,8 +5,8 @@
 
   Log of Force.c:
 
-     22/Nov/2001  Released by T.Ozaki
-     18/Apr/2013  Force3() modified by A.M.Ito
+     22/Nov/2001  Released by T. Ozaki
+     18/Apr/2013  Force3() modified by A.M. Ito
 
 ***********************************************************************/
 
@@ -21,10 +21,9 @@
 #define  measure_time   0
 
 
-static void dH_U_full(
-    int Mc_AN, int h_AN, int q_AN,
-    double *****OLP, double ****v_eff,
-    double ***Hx, double ***Hy, double ***Hz);
+static void dH_U_full(int Mc_AN, int h_AN, int q_AN,
+                      double *****OLP, double ****v_eff,
+                      double ***Hx, double ***Hy, double ***Hz);
 
 static void dH_U_NC_full(int Mc_AN, int h_AN, int q_AN,
                          double *****OLP, dcomplex *****NC_v_eff,
@@ -209,7 +208,7 @@ double Force(double *****H0,
 
     /* iDM0 */
 
-    if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || Constraint_NCS_switch==1
+    if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || 1<=Constraint_NCS_switch
             || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1 ) {
 
         size_iDM0 = 0;
@@ -263,7 +262,7 @@ double Force(double *****H0,
         PrintMemory("Force: Hy",sizeof(dcomplex)*List_YOUSO[7]*List_YOUSO[7],NULL);
         PrintMemory("Force: Hz",sizeof(dcomplex)*List_YOUSO[7]*List_YOUSO[7],NULL);
         PrintMemory("Force: CDM0",sizeof(double)*size_CDM0,NULL);
-        if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || Constraint_NCS_switch==1
+        if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || 1<=Constraint_NCS_switch
                 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) {
             PrintMemory("Force: iDM0",sizeof(double)*size_iDM0,NULL);
         }
@@ -300,7 +299,7 @@ double Force(double *****H0,
       iDM to iDM0
     ****************************************************/
 
-    if ( SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1 && SpinP_switch==3) || Constraint_NCS_switch==1
+    if ( SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1 && SpinP_switch==3) || 1<=Constraint_NCS_switch
             || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) {
 
         for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++) {
@@ -497,7 +496,7 @@ double Force(double *****H0,
      iDM0
     ****************************************************/
 
-    if ( SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1 && SpinP_switch==3) || Constraint_NCS_switch==1
+    if ( SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1 && SpinP_switch==3) || 1<=Constraint_NCS_switch
             || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) {
 
         /***********************************
@@ -662,7 +661,7 @@ double Force(double *****H0,
         }
 
     } /* if ( SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1 && SpinP_switch==3)
-     || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) */
+     || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) */
 
     /****************************************************
                         #1 of force
@@ -690,7 +689,7 @@ double Force(double *****H0,
     for (BN_AB=0; BN_AB<My_NumGridB_AB; BN_AB++) {
         tot_den = ADensity_Grid_B[BN_AB] + ADensity_Grid_B[BN_AB];
         if (PCC_switch==1) {
-            tot_den += PCCDensity_Grid_B[BN_AB]*2.0;
+            tot_den += PCCDensity_Grid_B[0][BN_AB] + PCCDensity_Grid_B[1][BN_AB];
         }
         RefVxc_Grid_B[BN_AB] = XC_Ceperly_Alder(tot_den,XC_P_switch);
     }
@@ -700,7 +699,7 @@ double Force(double *****H0,
     Data_Grid_Copy_B2C_2( Vxc_Grid_B,     Vxc_Grid     );
     Data_Grid_Copy_B2C_2( Density_Grid_B, Density_Grid );
 
-    #pragma omp parallel shared(myid,Spe_Atomic_PCC,Spe_VPS_RV,Spe_VPS_XV,Spe_Num_Mesh_VPS,Spe_PAO_RV,Spe_Atomic_Den,Spe_PAO_XV,Spe_Num_Mesh_PAO,time_per_atom,level_stdout,GridVol,Vxc_Grid,RefVxc_Grid,SpinP_switch,F_Vxc_flag,PCC_switch,dVHart_Grid,F_dVHart_flag,Gxyz,atv,MGridListAtom,CellListAtom,GridListAtom,GridN_Atom,WhatSpecies,M2G,Matomnum) private(OMPID,Nthrds,Nprocs,Mc_AN,Stime_atom,Etime_atom,Gc_AN,Cwan,sumx,sumy,sumz,Nc,GNc,GRc,MNc,Cxyz,x,y,z,dx,dy,dz,r,r2,tmp0,tmp1,tmp2,xx)
+    #pragma omp parallel shared(myid,Spe_OpenCore_flag,Spe_Atomic_PCC,Spe_VPS_RV,Spe_VPS_XV,Spe_Num_Mesh_VPS,Spe_PAO_RV,Spe_Atomic_Den,Spe_PAO_XV,Spe_Num_Mesh_PAO,time_per_atom,level_stdout,GridVol,Vxc_Grid,RefVxc_Grid,SpinP_switch,F_Vxc_flag,PCC_switch,dVHart_Grid,F_dVHart_flag,Gxyz,atv,MGridListAtom,CellListAtom,GridListAtom,GridN_Atom,WhatSpecies,M2G,Matomnum) private(OMPID,Nthrds,Nprocs,Mc_AN,Stime_atom,Etime_atom,Gc_AN,Cwan,sumx,sumy,sumz,Nc,GNc,GRc,MNc,Cxyz,x,y,z,dx,dy,dz,r,r2,tmp0,tmp1,tmp2,xx)
     {
 
         /* get info. on OpenMP */
@@ -764,8 +763,20 @@ double Force(double *****H0,
                         tmp0 = 0.5*F_Vxc_flag*Dr_KumoF( Spe_Num_Mesh_VPS[Cwan], xx, r,
                                                         Spe_VPS_XV[Cwan], Spe_VPS_RV[Cwan], Spe_Atomic_PCC[Cwan]);
 
-                        if (SpinP_switch==0) tmp2 = 2.0*Vxc_Grid[0][MNc];
-                        else                 tmp2 = Vxc_Grid[0][MNc] + Vxc_Grid[1][MNc];
+                        if (SpinP_switch==0) {
+                            tmp2 = 2.0*Vxc_Grid[0][MNc];
+                        }
+                        else {
+                            if (Spe_OpenCore_flag[Cwan]==0) {
+                                tmp2 = Vxc_Grid[0][MNc] + Vxc_Grid[1][MNc];
+                            }
+                            else if (Spe_OpenCore_flag[Cwan]==1) {
+                                tmp2 = 2.0*Vxc_Grid[0][MNc];
+                            }
+                            else if (Spe_OpenCore_flag[Cwan]==-1) {
+                                tmp2 = 2.0*Vxc_Grid[1][MNc];
+                            }
+                        }
 
                         tmp1 = tmp2*tmp0/r;
                         sumx -= tmp1*dx;
@@ -920,7 +931,7 @@ double Force(double *****H0,
             }
         }
 
-        if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+        if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
                 && (Hub_U_occupation==1 || Hub_U_occupation==2)
                 && SpinP_switch!=3 ) {
 
@@ -949,7 +960,7 @@ double Force(double *****H0,
             }
         }
 
-        if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+        if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
                 && (Hub_U_occupation==1 || Hub_U_occupation==2)
                 && SpinP_switch==3 ) {
 
@@ -1012,7 +1023,7 @@ double Force(double *****H0,
                 ian = Spe_Total_CNO[Hwan];
 
                 if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                         || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) )
+                                         || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) )
                     start_q_AN = 0;
                 else
                     start_q_AN = h_AN;
@@ -1042,7 +1053,7 @@ double Force(double *****H0,
                              counting the occupation number
                         ****************************************************/
 
-                        if ( (Hub_U_switch==1 && F_U_flag==1) || Constraint_NCS_switch==1
+                        if ( (Hub_U_switch==1 && F_U_flag==1) || 1<=Constraint_NCS_switch
                                 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1 ) {
 
                             /* full treatment and collinear case */
@@ -1213,13 +1224,14 @@ double Force(double *****H0,
                                     }
                                 }
                             }
-                        }
+
+                        } /* if F_Kin_flag */
 
                         /****************************************************
                                               \sum rho*dH
                         ****************************************************/
 
-                        /* spin non-polarization */
+                        /* non-spin polarization */
 
                         if (SpinP_switch==0) {
 
@@ -1268,7 +1280,7 @@ double Force(double *****H0,
                         /* spin non-collinear with spin-orbit coupling or with LDA+U */
 
                         else if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                                      || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) ) {
+                                                      || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) ) {
 
                             for (i=0; i<Spe_Total_CNO[Hwan]; i++) {
                                 for (j=0; j<Spe_Total_CNO[Qwan]; j++) {
@@ -1347,7 +1359,7 @@ double Force(double *****H0,
         }
         free(Hz);
 
-        if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+        if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
                 && (Hub_U_occupation==1 || Hub_U_occupation==2)
                 && SpinP_switch!=3 ) {
 
@@ -1376,7 +1388,7 @@ double Force(double *****H0,
             free(HUz);
         }
 
-        if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+        if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
                 && (Hub_U_occupation==1 || Hub_U_occupation==2)
                 && SpinP_switch==3 ) {
 
@@ -1572,12 +1584,13 @@ double Force(double *****H0,
         }
     }
 
-    /****************************************************
-     If the dual representation for the occupation number
-     the LDA+U method, the following force term is added.
-    ****************************************************/
+    /****************************************************************
+     In case that the dual representation is used for evaluation of
+     the occupation number in the LDA+U method, the following force
+     term is added.
+    ****************************************************************/
 
-    if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+    if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
             && (Hub_U_occupation==1 || Hub_U_occupation==2)
             && SpinP_switch!=3 ) {
 
@@ -1606,7 +1619,7 @@ double Force(double *****H0,
         }
     }
 
-    if ( (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+    if ( (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
             && F_U_flag==1 && Hub_U_occupation==2) {
 
         if (myid==Host_ID)  printf("  Force calculation for LDA_U with dual\n");
@@ -2012,7 +2025,7 @@ double Force(double *****H0,
             }
         }
 
-    } /* if ( (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+    } /* if ( (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
        && F_U_flag==1 && Hub_U_occupation==2) */
 
     /****************************************************
@@ -2025,7 +2038,7 @@ double Force(double *****H0,
      freeing of arrays:
     ****************************************************/
 
-    if (   (Hub_U_switch==1 || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+    if (   (Hub_U_switch==1 || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
             && (Hub_U_occupation==1 || Hub_U_occupation==2)
             && SpinP_switch!=3 ) {
 
@@ -2114,7 +2127,7 @@ double Force(double *****H0,
     free(Rcv_CDM0_Size);
 
     /* iDM0 */
-    if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || Constraint_NCS_switch==1
+    if ( SO_switch==1 || (Hub_U_switch==1 && SpinP_switch==3) || 1<=Constraint_NCS_switch
             || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1 ) {
 
         for (k=0; k<2; k++) {
@@ -2316,7 +2329,6 @@ void Force3()
                 }
             }/* Nc */
 
-
             /***********************************
                       calc dDen_Grid
             ***********************************/
@@ -2411,7 +2423,6 @@ void Force3()
                     }/* spin */
                 }/* Nog */
             }/* h_AN */
-
 
             /***********************************
                        calc force #3
@@ -2592,9 +2603,11 @@ void Force3()
             }
 
             /* gather sumx, sumy, and sumz into Gxyz[Gc_AN][17,18,19] */
-            ai_sh_sum[OMPID*3] = sumx*GridVol;
+
+            ai_sh_sum[OMPID*3  ] = sumx*GridVol;
             ai_sh_sum[OMPID*3+1] = sumy*GridVol;
             ai_sh_sum[OMPID*3+2] = sumz*GridVol;
+
             #pragma omp barrier
             #pragma omp master
             {
@@ -3124,7 +3137,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
     ****************************************************/
 
     int Mc_AN,Gc_AN,Cwan,i,j,h_AN,q_AN,Mq_AN,start_q_AN;
-    int jan,kl,kl1,Qwan,Gq_AN,Gh_AN,Mh_AN,Hwan,ian;
+    int jan,kl,km,kl1,Qwan,Gq_AN,Gh_AN,Mh_AN,Hwan,ian;
     int l1,l2,l3,l,LL,Mul1,tno0,ncp,so;
     int tno1,tno2,size1,size2,n,kk,num,po,po1,po2;
     int numprocs,myid,tag=999,ID,IDS,IDR;
@@ -3416,7 +3429,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                 free(tmp_array2);
 
                 /*****************************************************************
-                                         multiplying overlap integrals
+                                       multiplying overlap integrals
                 *****************************************************************/
 
                 for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++) {
@@ -3503,7 +3516,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                             /* spin non-collinear with spin-orbit coupling or with LDA+U */
 
                             else if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                                          || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
+                                                          || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
 
                                 if (q_AN==h_AN) {
 
@@ -3735,7 +3748,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
 
     dtime(&stime);
 
-    #pragma omp parallel shared(time_per_atom,Gxyz,CDM0,SpinP_switch,SO_switch,Hub_U_switch,F_U_flag,Constraint_NCS_switch,Zeeman_NCS_switch,Zeeman_NCO_switch,DS_NL,RMI1,FNAN,Spe_Total_CNO,WhatSpecies,F_G2M,natn,M2G,Matomnum,List_YOUSO) private(Hx0,Hy0,Hz0,Hx1,Hy1,Hz1,OMPID,Nthrds,Nprocs,Mc_AN,Stime_atom,Etime_atom,dEx,dEy,dEz,Gc_AN,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,kl1,i,j,kk,pref)
+    #pragma omp parallel shared(time_per_atom,Gxyz,CDM0,SpinP_switch,SO_switch,Hub_U_switch,F_U_flag,Constraint_NCS_switch,Zeeman_NCS_switch,Zeeman_NCO_switch,DS_NL,RMI1,FNAN,Spe_Total_CNO,WhatSpecies,F_G2M,natn,M2G,Matomnum,List_YOUSO,F_NL_flag) private(Hx0,Hy0,Hz0,Hx1,Hy1,Hz1,OMPID,Nthrds,Nprocs,Mc_AN,Stime_atom,Etime_atom,dEx,dEy,dEz,Gc_AN,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,kl1,i,j,kk,pref)
     {
 
         /* allocation of array */
@@ -3861,7 +3874,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                     /* spin non-collinear with spin-orbit coupling or with LDA+U */
 
                     else if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                                  || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
+                                                  || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
 
                         if (q_AN==h_AN) {
 
@@ -3968,9 +3981,11 @@ void Force_HNL(double *****CDM0, double *****iDM0)
 
             /* force from #4B */
 
-            Gxyz[Gc_AN][41] += dEx;
-            Gxyz[Gc_AN][42] += dEy;
-            Gxyz[Gc_AN][43] += dEz;
+            if (F_NL_flag==1) {
+                Gxyz[Gc_AN][41] += dEx;
+                Gxyz[Gc_AN][42] += dEy;
+                Gxyz[Gc_AN][43] += dEz;
+            }
 
             /* timing */
             dtime(&Etime_atom);
@@ -4145,7 +4160,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
             }
 
             /*****************************************
-                             send the data
+                          send the data
             *****************************************/
 
             /* if (S_comm_flag==1) then, send data to IDS */
@@ -4293,7 +4308,8 @@ void Force_HNL(double *****CDM0, double *****iDM0)
             for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++) {
 
                 if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                         || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1) )
+                                         || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)
+                        || (Solver==5 || Solver==8) )
                     start_q_AN = 0;
                 else
                     start_q_AN = h_AN;
@@ -4310,7 +4326,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                 }
             }
 
-            #pragma omp parallel shared(ODNloop,OneD2h_AN,OneD2q_AN,Mc_AN,Gc_AN,dEx_threads,dEy_threads,dEz_threads,CDM0,SpinP_switch,SO_switch,Hub_U_switch,Constraint_NCS_switch,Zeeman_NCS_switch,Zeeman_NCO_switch,DS_NL,RMI1,Spe_Total_CNO,WhatSpecies,F_G2M,natn,FNAN,List_YOUSO) private(OMPID,Nthrds,Nprocs,Hx,Hy,Hz,i,j,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,Nloop,pref)
+            #pragma omp parallel shared(ODNloop,OneD2h_AN,OneD2q_AN,Mc_AN,Gc_AN,dEx_threads,dEy_threads,dEz_threads,CDM0,SpinP_switch,SO_switch,Hub_U_switch,Constraint_NCS_switch,Zeeman_NCS_switch,Zeeman_NCO_switch,DS_NL,RMI1,Spe_Total_CNO,WhatSpecies,F_G2M,natn,FNAN,List_YOUSO,Solver,F_NL_flag,F_U_flag) private(OMPID,Nthrds,Nprocs,Hx,Hy,Hz,i,j,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,km,Nloop,pref)
             {
 
                 /* allocation of arrays */
@@ -4366,6 +4382,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                     Qwan = WhatSpecies[Gq_AN];
                     jan = Spe_Total_CNO[Qwan];
                     kl = RMI1[Mc_AN][h_AN][q_AN];
+                    km = RMI1[Mc_AN][q_AN][h_AN];
 
                     if (0<=kl) {
 
@@ -4377,17 +4394,22 @@ void Force_HNL(double *****CDM0, double *****iDM0)
 
                         if (SpinP_switch==0) {
 
-                            if (q_AN==h_AN) pref = 2.0;
-                            else            pref = 4.0;
+                            if (Solver==5 || Solver==8) {
+                                pref = 2.0;
+                            }
+                            else {
+                                if (q_AN==h_AN) pref = 2.0;
+                                else            pref = 4.0;
+                            }
 
                             for (i=0; i<ian; i++) {
                                 for (j=0; j<jan; j++) {
-
                                     dEx_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*Hx[0][i][j].r;
                                     dEy_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*Hy[0][i][j].r;
                                     dEz_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*Hz[0][i][j].r;
                                 }
                             }
+
                         }
 
                         /* collinear spin polarized or non-colliear without SO and LDA+U */
@@ -4395,8 +4417,13 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                         else if (SpinP_switch==1 || (SpinP_switch==3 && SO_switch==0 && Hub_U_switch==0
                                                      && Constraint_NCS_switch==0 && Zeeman_NCS_switch==0 && Zeeman_NCO_switch==0)) {
 
-                            if (q_AN==h_AN) pref = 1.0;
-                            else            pref = 2.0;
+                            if (Solver==5 || Solver==8) {
+                                pref = 1.0;
+                            }
+                            else {
+                                if (q_AN==h_AN) pref = 1.0;
+                                else            pref = 2.0;
+                            }
 
                             for (i=0; i<ian; i++) {
                                 for (j=0; j<jan; j++) {
@@ -4415,12 +4442,7 @@ void Force_HNL(double *****CDM0, double *****iDM0)
                         /* spin non-collinear with spin-orbit coupling or with LDA+U */
 
                         else if ( SpinP_switch==3 && (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-                                                      || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
-
-                            /*
-                            if (q_AN==h_AN) pref = 1.0;
-                            else            pref = 2.0;
-                            */
+                                                      || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1 || Zeeman_NCO_switch==1)) {
 
                             pref = 1.0;
 
@@ -4492,17 +4514,19 @@ void Force_HNL(double *****CDM0, double *****iDM0)
             dEy = 0.0;
             dEz = 0.0;
 
-            for (Nloop=0; Nloop<Nthrds0; Nloop++) {
-                dEx += dEx_threads[Nloop];
-                dEy += dEy_threads[Nloop];
-                dEz += dEz_threads[Nloop];
+            if (F_NL_flag==1) {
+                for (Nloop=0; Nloop<Nthrds0; Nloop++) {
+                    dEx += dEx_threads[Nloop];
+                    dEy += dEy_threads[Nloop];
+                    dEz += dEz_threads[Nloop];
+                }
+
+                /* force from #4B */
+
+                Gxyz[Gc_AN][41] += dEx;
+                Gxyz[Gc_AN][42] += dEy;
+                Gxyz[Gc_AN][43] += dEz;
             }
-
-            /* force from #4B */
-
-            Gxyz[Gc_AN][41] += dEx;
-            Gxyz[Gc_AN][42] += dEy;
-            Gxyz[Gc_AN][43] += dEz;
 
             if (2<=level_stdout) {
                 printf("<Force>  force(HNL3) myid=%2d  Mc_AN=%2d Gc_AN=%2d  %15.12f %15.12f %15.12f\n",
@@ -4577,7 +4601,7 @@ void Force4B(double *****CDM0)
               by the projector expansion of VNA
     ****************************************************/
 
-    int Mc_AN,Gc_AN,Cwan,i,j,h_AN,q_AN,Mq_AN;
+    int Mc_AN,Gc_AN,Cwan,i,j,h_AN,q_AN,start_q_AN,Mq_AN;
     int jan,kl,Qwan,Gq_AN,Gh_AN,Mh_AN,Hwan,ian;
     int l1,l2,l3,l,LL,Mul1,Num_RVNA,tno0,ncp;
     int tno1,tno2,size1,size2,n,kk,num,po,po1,po2;
@@ -4590,7 +4614,7 @@ void Force4B(double *****CDM0)
     int Original_Mc_AN;
 
     double rcutA,rcutB,rcut;
-    double dEx,dEy,dEz,ene;
+    double dEx,dEy,dEz,ene,pref;
     double Stime_atom, Etime_atom;
     double **HVNAx,**HVNAy,**HVNAz;
     int *VNA_List;
@@ -5540,12 +5564,18 @@ void Force4B(double *****CDM0)
 
             /* one-dimensionalize the h_AN and q_AN loops */
 
-            OneD2h_AN = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*(FNAN[Gc_AN]+2)/2);
-            OneD2q_AN = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*(FNAN[Gc_AN]+2)/2);
+            OneD2h_AN = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*(FNAN[Gc_AN]+2));
+            OneD2q_AN = (int*)malloc(sizeof(int)*(FNAN[Gc_AN]+1)*(FNAN[Gc_AN]+2));
 
             ODNloop = 0;
             for (h_AN=0; h_AN<=FNAN[Gc_AN]; h_AN++) {
-                for (q_AN=h_AN; q_AN<=FNAN[Gc_AN]; q_AN++) {
+
+                if ( Solver==5 || Solver==8 )
+                    start_q_AN = 0;
+                else
+                    start_q_AN = h_AN;
+
+                for (q_AN=start_q_AN; q_AN<=FNAN[Gc_AN]; q_AN++) {
 
                     kl = RMI1[Mc_AN][h_AN][q_AN];
 
@@ -5557,7 +5587,7 @@ void Force4B(double *****CDM0)
                 }
             }
 
-            #pragma omp parallel shared(ODNloop,OneD2h_AN,OneD2q_AN,Mc_AN,Gc_AN,dEx_threads,dEy_threads,dEz_threads,CDM0,SpinP_switch,CntHVNA2,HVNA2,DS_VNA,Cnt_switch,RMI1,Spe_Total_CNO,WhatSpecies,F_G2M,natn,FNAN,List_YOUSO) private(OMPID,Nthrds,Nprocs,HVNAx,HVNAy,HVNAz,i,j,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,Nloop)
+            #pragma omp parallel shared(ODNloop,OneD2h_AN,OneD2q_AN,Mc_AN,Gc_AN,dEx_threads,dEy_threads,dEz_threads,CDM0,SpinP_switch,CntHVNA2,HVNA2,DS_VNA,Cnt_switch,RMI1,Spe_Total_CNO,WhatSpecies,F_G2M,natn,FNAN,List_YOUSO,Solver) private(OMPID,Nthrds,Nprocs,HVNAx,HVNAy,HVNAz,i,j,h_AN,Gh_AN,Mh_AN,Hwan,ian,q_AN,Gq_AN,Mq_AN,Qwan,jan,kl,Nloop,pref)
             {
 
                 /* allocation of arrays */
@@ -5618,19 +5648,19 @@ void Force4B(double *****CDM0)
 
                         if (SpinP_switch==0) {
 
+                            if (Solver==5 || Solver==8) {
+                                pref = 2.0;
+                            }
+                            else {
+                                if (q_AN==h_AN) pref = 2.0;
+                                else            pref = 4.0;
+                            }
+
                             for (i=0; i<ian; i++) {
                                 for (j=0; j<jan; j++) {
-                                    if (q_AN==h_AN) {
-                                        dEx_threads[OMPID] += 2.0*CDM0[0][Mh_AN][kl][i][j]*HVNAx[i][j];
-                                        dEy_threads[OMPID] += 2.0*CDM0[0][Mh_AN][kl][i][j]*HVNAy[i][j];
-                                        dEz_threads[OMPID] += 2.0*CDM0[0][Mh_AN][kl][i][j]*HVNAz[i][j];
-                                    }
-                                    else {
-                                        dEx_threads[OMPID] += 4.0*CDM0[0][Mh_AN][kl][i][j]*HVNAx[i][j];
-                                        dEy_threads[OMPID] += 4.0*CDM0[0][Mh_AN][kl][i][j]*HVNAy[i][j];
-                                        dEz_threads[OMPID] += 4.0*CDM0[0][Mh_AN][kl][i][j]*HVNAz[i][j];
-                                    }
-
+                                    dEx_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*HVNAx[i][j];
+                                    dEy_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*HVNAy[i][j];
+                                    dEz_threads[OMPID] += pref*CDM0[0][Mh_AN][kl][i][j]*HVNAz[i][j];
                                 }
                             }
                         }
@@ -5639,24 +5669,22 @@ void Force4B(double *****CDM0)
 
                         else {
 
+                            if (Solver==5 || Solver==8) {
+                                pref = 1.0;
+                            }
+                            else {
+                                if (q_AN==h_AN) pref = 1.0;
+                                else            pref = 2.0;
+                            }
+
                             for (i=0; i<ian; i++) {
                                 for (j=0; j<jan; j++) {
-                                    if (q_AN==h_AN) {
-                                        dEx_threads[OMPID] += (   CDM0[0][Mh_AN][kl][i][j]
-                                                                  + CDM0[1][Mh_AN][kl][i][j] )*HVNAx[i][j];
-                                        dEy_threads[OMPID] += (   CDM0[0][Mh_AN][kl][i][j]
-                                                                  + CDM0[1][Mh_AN][kl][i][j] )*HVNAy[i][j];
-                                        dEz_threads[OMPID] += (   CDM0[0][Mh_AN][kl][i][j]
-                                                                  + CDM0[1][Mh_AN][kl][i][j] )*HVNAz[i][j];
-                                    }
-                                    else {
-                                        dEx_threads[OMPID] += 2.0*(   CDM0[0][Mh_AN][kl][i][j]
-                                                                      + CDM0[1][Mh_AN][kl][i][j] )*HVNAx[i][j];
-                                        dEy_threads[OMPID] += 2.0*(   CDM0[0][Mh_AN][kl][i][j]
-                                                                      + CDM0[1][Mh_AN][kl][i][j] )*HVNAy[i][j];
-                                        dEz_threads[OMPID] += 2.0*(   CDM0[0][Mh_AN][kl][i][j]
-                                                                      + CDM0[1][Mh_AN][kl][i][j] )*HVNAz[i][j];
-                                    }
+                                    dEx_threads[OMPID] += pref*(   CDM0[0][Mh_AN][kl][i][j]
+                                                                   + CDM0[1][Mh_AN][kl][i][j] )*HVNAx[i][j];
+                                    dEy_threads[OMPID] += pref*(   CDM0[0][Mh_AN][kl][i][j]
+                                                                   + CDM0[1][Mh_AN][kl][i][j] )*HVNAy[i][j];
+                                    dEz_threads[OMPID] += pref*(   CDM0[0][Mh_AN][kl][i][j]
+                                                                   + CDM0[1][Mh_AN][kl][i][j] )*HVNAz[i][j];
                                 }
                             }
                         }
@@ -6228,7 +6256,7 @@ void dHNL(int where_flag,
            ( SpinP_switch==3
              &&
              (SO_switch==1 || (Hub_U_switch==1 && F_U_flag==1)
-           || Constraint_NCS_switch==1 || Zeeman_NCS_switch==1
+           || 1<=Constraint_NCS_switch || Zeeman_NCS_switch==1
                || Zeeman_NCO_switch==1)
              &&
              q_AN==0

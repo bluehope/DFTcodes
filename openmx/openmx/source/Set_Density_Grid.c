@@ -1282,7 +1282,7 @@ void diagonalize_nc_density()
        Density_Grid in the partition B
     ************************************/
 
-    #pragma omp parallel shared(Density_Grid_B,My_NumGridB_AB) private(OMPID,Nthrds,BN,Re11,Re22,Re12,Im12,Nup,Ndown,theta,phi)
+    #pragma omp parallel shared(Density_Grid_B,My_NumGridB_AB) private(OMPID,Nthrds,BN,Re11,Re22,Re12,Im12,Nup,Ndown,theta,phi) default(none)
     {
 
         /* get info. on OpenMP */
@@ -1313,7 +1313,7 @@ void diagonalize_nc_density()
        Density_Grid in the partition D
     ************************************/
 
-    #pragma omp parallel shared(Density_Grid_D,My_NumGridD) private(OMPID,Nthrds,DN,Re11,Re22,Re12,Im12,Nup,Ndown,theta,phi)
+    #pragma omp parallel shared(Density_Grid_D,My_NumGridD) private(OMPID,Nthrds,DN,Re11,Re22,Re12,Im12,Nup,Ndown,theta,phi) default(none)
     {
 
         /* get info. on OpenMP */

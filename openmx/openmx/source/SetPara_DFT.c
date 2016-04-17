@@ -215,6 +215,63 @@ void SetPara_DFT()
 
     if (atomnum<2000) CellNN_flag = 0;
 
+    /***************************************************
+             Cube-file data for NBO analysis
+                           added by T. Ohwaki
+    ***************************************************/
+
+    if (NBO_switch!=0) {
+
+        j = 0;
+        for (i=1; i<=atomnum; i++) {
+            wanA  = WhatSpecies[i];
+            j  = j + Spe_Total_CNO[wanA];
+        }
+        Size_Total_Matrix = j;
+
+        NHOs_Coef = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
+        for (i=0; i<=SpinP_switch; i++) {
+            NHOs_Coef[i] = (double***)malloc(sizeof(double**)*Size_Total_Matrix);
+            for (j=0; j<Size_Total_Matrix; j++) {
+                NHOs_Coef[i][j] = (double**)malloc(sizeof(double*)*(atomnum+1));
+                for (k=0; k<=atomnum; k++) {
+                    NHOs_Coef[i][j][k] = (double*)malloc(sizeof(double)*List_YOUSO[7]);
+                    for (l=0; l<List_YOUSO[7]; l++) {
+                        NHOs_Coef[i][j][k][l] = 0.0;
+                    }
+                }
+            }
+        }
+
+        NBOs_Coef_b = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
+        for (i=0; i<=SpinP_switch; i++) {
+            NBOs_Coef_b[i] = (double***)malloc(sizeof(double**)*Size_Total_Matrix);
+            for (j=0; j<Size_Total_Matrix; j++) {
+                NBOs_Coef_b[i][j] = (double**)malloc(sizeof(double*)*(atomnum+1));
+                for (k=0; k<=atomnum; k++) {
+                    NBOs_Coef_b[i][j][k] = (double*)malloc(sizeof(double)*List_YOUSO[7]);
+                    for (l=0; l<List_YOUSO[7]; l++) {
+                        NBOs_Coef_b[i][j][k][l] = 0.0;
+                    }
+                }
+            }
+        }
+
+        NBOs_Coef_a = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
+        for (i=0; i<=SpinP_switch; i++) {
+            NBOs_Coef_a[i] = (double***)malloc(sizeof(double**)*Size_Total_Matrix);
+            for (j=0; j<Size_Total_Matrix; j++) {
+                NBOs_Coef_a[i][j] = (double**)malloc(sizeof(double*)*(atomnum+1));
+                for (k=0; k<=atomnum; k++) {
+                    NBOs_Coef_a[i][j][k] = (double*)malloc(sizeof(double)*List_YOUSO[7]);
+                    for (l=0; l<List_YOUSO[7]; l++) {
+                        NBOs_Coef_a[i][j][k][l] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 
@@ -477,7 +534,7 @@ void Read_PAO(int spe, char *file)
                         if      (j==0) Spe_PAO_XV[spe][i] = dum;
                         else if (j==1) Spe_PAO_RV[spe][i] = dum;
                         else if (j==2) {
-                            Spe_Atomic_Den[spe][i+1]    = dum;
+                            Spe_Atomic_Den[spe][i+1]  = dum;
                             Spe_Atomic_Den2[spe][i+1] = dum;
                         }
                     }
@@ -556,7 +613,7 @@ void Read_VPS(int spe, char *file)
     int m,n,k,t,i,j,L,ii,jj,NVPS,LVPS,tmp0,maxL,po;
     int number_vps,local_part_vps,charge_pcc_calc;
     double te,ve,VPS_Rcut,dum,dum0,dum1,r,dumping;
-    double VNA_width,rmin,rmax,Sr,Dr,sum,dx;
+    double VNA_width,rmin,rmax,Sr,Dr,sum,dx,dif;
     double *Vcore,**TmpVNL,**TmpMat;
     double **phi,*phi2,*pe;
     int numprocs,myid;
@@ -614,7 +671,7 @@ void Read_VPS(int spe, char *file)
 
         /* set zero */
         for (i=0; i<Spe_Num_Mesh_PAO[spe]; i++) {
-            Spe_Atomic_Den[spe][i+1]    = 0.0;
+            Spe_Atomic_Den[spe][i+1]  = 0.0;
             Spe_Atomic_Den2[spe][i+1] = 0.0;
         }
 
@@ -625,6 +682,7 @@ void Read_VPS(int spe, char *file)
     input_double("total.electron",&te,(double)dum0);
     input_double("valence.electron",&ve,(double)0.0);
     Spe_Core_Charge[spe] = ve + dum0 - te;
+
     input_int("grid.num.output",&Spe_Num_Mesh_VPS[spe],0);
 
     if (List_YOUSO[22]<=(Spe_Num_Mesh_VPS[spe]+2)) {
@@ -769,6 +827,23 @@ void Read_VPS(int spe, char *file)
                         }
                     } /* j */
 
+                    /* applying SO factor */
+
+                    if ( VPS_j_dependency[spe]==1 && SO_factor_flag==1 ) {
+                        for (j=0; j<Spe_Num_RVPS[spe]; j++) {
+
+                            LVPS = Spe_VPS_List[spe][j+1];
+                            dum0 = Spe_VNL[0][spe][j][i];
+                            dum1 = Spe_VNL[1][spe][j][i];
+
+                            sum = 0.5*(dum0 + dum1);
+                            dif = 0.5*(dum0 - dum1);
+
+                            Spe_VNL[0][spe][j][i] = sum + SO_factor[spe][LVPS]*dif;
+                            Spe_VNL[1][spe][j][i] = sum - SO_factor[spe][LVPS]*dif;
+                        }
+                    }
+
                     /* j-averaging for a scalar relativistic treatment */
                     if ( VPS_j_dependency[spe]==1 && SO_switch==0 ) {
                         for (j=0; j<Spe_Num_RVPS[spe]; j++) {
@@ -777,7 +852,6 @@ void Read_VPS(int spe, char *file)
                             Spe_VNL[0][spe][j][i] = ( (double)(LVPS+1)*TmpVNL[0][j]
                                                       +(double)LVPS*TmpVNL[1][j] )/( (double)(2*LVPS+1) );
                         }
-
                     }
 
                 } /* i */
@@ -991,7 +1065,8 @@ void Read_VPS(int spe, char *file)
 
         if (Spe_WhatAtom[spe]!=0) {
             for (i=0; i<Spe_Num_Mesh_PAO[spe]; i++) {
-                Spe_Atomic_Den[spe][i+1]    = Spe_Atomic_Den[spe][i+1]*(Spe_Core_Charge[spe]/sum);
+
+                Spe_Atomic_Den[spe][i+1]  = Spe_Atomic_Den[spe][i+1]*(Spe_Core_Charge[spe]/sum);
 
                 Spe_Atomic_Den2[spe][i+1] = Spe_Atomic_Den2[spe][i+1]*(Spe_Core_Charge[spe]/sum)
                                             +  KumoF( Spe_Num_Mesh_VPS[spe], Spe_PAO_XV[spe][i],
@@ -1032,7 +1107,6 @@ void Read_VPS(int spe, char *file)
             2.0*Spe_VH_Atom[spe][Spe_Num_Mesh_VPS[spe]]
             - Spe_VH_Atom[spe][Spe_Num_Mesh_VPS[spe]-1];
 
-
         /* the nearest point to Spe_Atom_Cut1[spe] */
 
         dum = 1000.0;
@@ -1053,6 +1127,7 @@ void Read_VPS(int spe, char *file)
         if (1.0e-15<Spe_Core_Charge[spe]) {
 
             dum = -Vcore[ii]/Spe_VH_Atom[spe][ii+1];
+
             for (i=0; i<(Spe_Num_Mesh_VPS[spe]+2); i++) {
                 Spe_VH_Atom[spe][i] *= dum;
             }
@@ -1069,11 +1144,6 @@ void Read_VPS(int spe, char *file)
                 Spe_Vna[spe][i] = 0.0;
             else
                 Spe_Vna[spe][i] = dumping*(Vcore[i] + Spe_VH_Atom[spe][i+1]);
-
-            /*
-            printf("%2d %15.12f %15.12f %15.12f %15.12f\n",
-                    spe,r,Vcore[i],Spe_VH_Atom[spe][i],Spe_Vna[spe][i]);
-            */
 
         }
     }
@@ -1424,6 +1494,7 @@ double V_Hart_atom(int spe, double R)
     Outside = 4.0*PI*Outside;
 
     result = Inside + Outside;
+
     return result;
 }
 
@@ -1751,7 +1822,6 @@ void Set_Comp2Real()
             Comp2Real[L][i][L+2*j]  = Complex(0.0, -1.0/sqrt(2.0));
         }
     }
-
 
 }
 

@@ -1,15 +1,15 @@
-static char Version_OpenMX[30] = "3.7.10"; /* version of OpenMX */
-
+static char Version_OpenMX[30] = "3.8"; /* version of OpenMX */ 
+   
 #define PI              3.1415926535897932384626
 #define BYTESIZE        8                        /* Don't change!! */
-#define kB              0.00008617251324000000   /* eV/K           */
+#define kB              0.00008617251324000000   /* eV/K           */          
 #define BohrR           0.529177249              /* Angstrom       */
-#define eV2Hartree      27.2113845
+#define eV2Hartree      27.2113845                
 #define electron_mass                 0.000910938291 /* [10^{-27} kg] */
 #define unified_atomic_mass_unit      1.660538921    /* [10^{-27} kg] */
-
+ 
 #define NYOUSO       60        /* # of YOUSO                                      */
-/* #define YOUSO1                 # of atoms in the system                        */
+/* #define YOUSO1                 # of atoms in the system                        */ 
 /* #define YOUSO2                 # of atoms in hopping cluster                   */
 /* #define YOUSO3                 maximum # of recursion levels for GEVP          */
 /* #define YOUSO4                 # of 1D-copied cells                            */
@@ -46,6 +46,7 @@ static char Version_OpenMX[30] = "3.7.10"; /* version of OpenMX */
 #define YOUSO36      14           /* max L in Comp2Real array                       */
 /* #define YOUSO37                max # of charge states in LESP                  */
 /* #define YOUSO38                max # of previous steps in k-space Pulay mixing */
+/* #define YOUSO39                max # of previous steps in h-space Pulay mixing */
 
 #define Supported_MaxL      4        /* supported max angular momentum for basis orbital */
 
@@ -55,11 +56,14 @@ static char Version_OpenMX[30] = "3.7.10"; /* version of OpenMX */
 #define FineGL_Mesh       1500       /* # of grids in fine Gauss-Legendre quadrature */
 
 #define Threshold_OLP_Eigen  1.0e-9  /* threshold for cutting off eigenvalues of OLP */
-#define fp_bsize         1048576     /* buffer size for setvbuf */
+#define fp_bsize         2097152     /* buffer size for setvbuf */
 #define Shift_K_Point     1.0e-6     /* disturbance for stabilization of eigenvalue routine */
 #define LAPACK_ABSTOL     6.0e-15    /* absolute error tolerance for lapack routines */
 
 #define Host_ID             0        /* ID of the host CPU in MPI */
+
+
+int Temp_MD_iter;
 
 
 typedef float     Type_DS_VNA;          /* type of DS_VNA */
@@ -71,19 +75,17 @@ typedef float     Type_Orbs_Grid;       /* type of Orbs_Grid */
 
 #ifndef ___INTEGER_definition___
 typedef int INTEGER; /* for fortran integer */
-#define ___INTEGER_definition___
+#define ___INTEGER_definition___ 
 #endif
 
 #ifndef ___dcomplex_definition___
-typedef struct {
-    double r,i;
-} dcomplex;
-#define ___dcomplex_definition___
+typedef struct { double r,i; } dcomplex;
+#define ___dcomplex_definition___ 
 #endif
 
 /* FFT radix */
 static int NfundamentalNum=4;
-static int fundamentalNum[4]= {2,3,5,7};
+static int fundamentalNum[4]={2,3,5,7};
 
 #ifndef __sqr_definition___
 #define sqr(x)   ( (x)*(x) )
@@ -94,21 +96,17 @@ static int fundamentalNum[4]= {2,3,5,7};
 
 #ifndef ___MPI_Comm_definition___
 typedef int MPI_Comm;
-#define ___MPI_Comm_definition___
+#define ___MPI_Comm_definition___ 
 #endif
 
 #ifndef ___MPI_Status_definition___
-typedef struct MPIStatus {
-    int i;
-}  MPI_Status;
-#define ___MPI_Status_definition___
+typedef struct MPIStatus{int i;}  MPI_Status;  
+#define ___MPI_Status_definition___ 
 #endif
 
 #ifndef ___MPI_Request_definition___
-typedef struct MPIRequest {
-    int i;
-} MPI_Request;
-#define ___MPI_Request_definition___
+typedef struct MPIRequest{int i;} MPI_Request;  
+#define ___MPI_Request_definition___ 
 #endif
 
 #else
@@ -127,7 +125,7 @@ MPI_Comm  MPI_COMM_WORLD1;
 
 #ifndef ___logical_definition___
 typedef long int logical;
-#define ___logical_definition___
+#define ___logical_definition___ 
 #endif
 
 typedef long int integer;
@@ -140,9 +138,9 @@ typedef short ftnint;
 /*****************************************************************************
                              once allocated arrays
 *****************************************************************************/
-
+ 
 /*******************************************************
- char **SpeName;
+ char **SpeName; 
  character symbol of species
   size: SpeName[SpeciesNum][YOUSO10]
   allocation: call as Allocate_Arrays(0) in Input_std.c
@@ -151,7 +149,7 @@ typedef short ftnint;
 char **SpeName;
 
 /*******************************************************
- char **SpeBasis;
+ char **SpeBasis; 
  character symbol of a basis set assigned to species
   size: SpeBasis[SpeciesNum][YOUSO10]
   allocation: call as Allocate_Arrays(0) in Input_std.c
@@ -160,7 +158,7 @@ char **SpeName;
 char **SpeBasis;
 
 /*******************************************************
- char **SpeBasisName;
+ char **SpeBasisName; 
  file name of a basis set assigned to species
   size: SpeBasisName[SpeciesNum][YOUSO10]
   allocation: call as Allocate_Arrays(0) in Input_std.c
@@ -169,7 +167,7 @@ char **SpeBasis;
 char **SpeBasisName;
 
 /*******************************************************
-  char **SpeVPS;
+  char **SpeVPS; 
   file name of pseudo potentials set assigned to species
   size: SpeBasisVPS[SpeciesNum][YOUSO10]
   allocation: call as Allocate_Arrays(0) in Input_std.c
@@ -178,8 +176,8 @@ char **SpeBasisName;
 char **SpeVPS;
 
 /*******************************************************
- double *Spe_AtomicMass;
- atomic mass of each species, where hydrogen is 1.
+ double *Spe_AtomicMass; 
+ atomic mass of each species, where hydrogen is 1.  
   size: Spe_AtomicMass[SpeciesNum]
   allocation: call as Allocate_Arrays(0) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
@@ -187,7 +185,7 @@ char **SpeVPS;
 double *Spe_AtomicMass;
 
 /*******************************************************
- int *Spe_MaxL_Basis;
+ int *Spe_MaxL_Basis; 
  the maximum "l" component of used atomic orbitals inv
  each species
   size: Spe_MaxL_Basis[SpeciesNum]
@@ -197,7 +195,7 @@ double *Spe_AtomicMass;
 int *Spe_MaxL_Basis;
 
 /*******************************************************
- int **Spe_Num_Basis;
+ int **Spe_Num_Basis; 
  the number of multiplicity of primitive radial parts
  for each "l" component in an species
   size: Spe_Num_Basis[SpeciesNum][6]
@@ -207,7 +205,7 @@ int *Spe_MaxL_Basis;
 int **Spe_Num_Basis;
 
 /*******************************************************
- int **Spe_Num_CBasis;
+ int **Spe_Num_CBasis; 
  the number of multiplicity of contracted radial parts
  for each "l" component in an species
   size: Spe_Num_CBasis[SpeciesNum][6]
@@ -219,12 +217,21 @@ int **Spe_Num_CBasis;
 /*******************************************************
  double **EH0_scaling;
   scaling factors to vanish Ecore plus EH0
-  at the cutoff radius
+  at the cutoff radius  
   size: EH0_scaling[SpeciesNum][SpeciesNum]
   allocation: call as Allocate_Arrays(0) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
 double **EH0_scaling;
+
+/*******************************************************
+ double **SO_factor;
+  scaling factors of spin-orbit coupling
+  size: SO_factor[SpeciesNum][4]
+  allocation: call as Allocate_Arrays(0) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double **SO_factor;
 
 /*******************************************************
  double ***Hub_U_Basis          --- added by MJ
@@ -245,10 +252,10 @@ double ***Hub_U_Basis ;      /* --- added by MJ  */
 int *OrbPol_flag ;          /* --- added by MJ and TO  */
 
 /*******************************************************
- double **Gxyz;
+ double **Gxyz; 
  atomic global coordinates, velocities, and gradients of
  the total energy with respect to the atomic coordinates
-  size: Gxyz[atomnum+1][YOUSO26]
+  size: Gxyz[atomnum+4][YOUSO26]
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
@@ -256,8 +263,8 @@ double **Gxyz;
 
 /********************************************************
  double ***GxyzHistoryIn;
-  atomic global coordinates and history
-  size GxyzHistoryIn[M_GDIIS_HISTORY+1][atomnum+1][4];
+  History of atomic global coordinates
+  size GxyzHistoryIn[M_GDIIS_HISTORY+1][atomnum+4][4];
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
@@ -265,8 +272,8 @@ double ***GxyzHistoryIn;
 
 /********************************************************
  double ***GxyzHistoryR;
-  atomic global coordinates and history
-  size GxyzHistoryR[M_GDIIS_HISTORY+1][atomnum+1][4];
+  History of residual global coordinates
+  size GxyzHistoryR[M_GDIIS_HISTORY+1][atomnum+4][4];
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
@@ -291,7 +298,7 @@ double **His_Gxyz;
 int **atom_Fixed_XYZ;
 
 /*******************************************************
- double **Cell_Gxyz;
+ double **Cell_Gxyz; 
  atomic global coordinates spanned
  by the unit cell vectors
   size: Cell_Gxyz[atomnum+1][4]
@@ -301,7 +308,7 @@ int **atom_Fixed_XYZ;
 double **Cell_Gxyz;
 
 /*******************************************************
- double *InitN_USpin;
+ double *InitN_USpin; 
   the number of the upspin electon of initial atoms
   size: InitN_USpin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -310,7 +317,7 @@ double **Cell_Gxyz;
 double *InitN_USpin;
 
 /*******************************************************
- double *InitN_DSpin;
+ double *InitN_DSpin; 
   the number of the upspin electon of initial atoms
   size: InitN_DSpin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -319,7 +326,16 @@ double *InitN_USpin;
 double *InitN_DSpin;
 
 /*******************************************************
- double *Angle0_Spin;
+ double *InitMagneticMoment; 
+  initial magnetic moment of each atom
+  size: InitMagneticMoment[atomnum+1]
+  allocation: call as Allocate_Arrays(1) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double *InitMagneticMoment;
+
+/*******************************************************
+ double *Angle0_Spin; 
   angle of theta for atomic projected spin moment
   size: Angle0_Spin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -328,7 +344,7 @@ double *InitN_DSpin;
 double *Angle0_Spin;
 
 /*******************************************************
- double *Angle1_Spin;
+ double *Angle1_Spin; 
   angle of phi for atomic projected spin moment
   size: Angle1_Spin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -337,7 +353,7 @@ double *Angle0_Spin;
 double *Angle1_Spin;
 
 /*******************************************************
- double *InitAngle0_Spin;
+ double *InitAngle0_Spin; 
   initial angle of theta for atomic projected spin moment
   size: InitAngle0_Spin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -346,7 +362,7 @@ double *Angle1_Spin;
 double *InitAngle0_Spin;
 
 /*******************************************************
- double *InitAngle1_Spin;
+ double *InitAngle1_Spin; 
   initial angle of phi for atomic projected spin moment
   size: InitAngle1_Spin[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -355,7 +371,7 @@ double *InitAngle0_Spin;
 double *InitAngle1_Spin;
 
 /*******************************************************
- double *Angle0_Orbital;
+ double *Angle0_Orbital; 
   angle of theta for atomic projected orbital moment
   size: Angle0_Orbital[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -364,7 +380,7 @@ double *InitAngle1_Spin;
 double *Angle0_Orbital;
 
 /*******************************************************
- double *Angle1_Orbital;
+ double *Angle1_Orbital; 
   angle of phi for atomic projected orbital moment
   size: Angle1_Orbital[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -382,7 +398,7 @@ double *Angle1_Orbital;
 double *OrbitalMoment;
 
 /*******************************************************
- int *Constraint_SpinAngle;
+ int *Constraint_SpinAngle; 
   flag for constraining the spin angle of atomic projected spin
   size: Constraint_SpinAngle[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -391,7 +407,7 @@ double *OrbitalMoment;
 int *Constraint_SpinAngle;
 
 /*******************************************************
- double *InitAngle0_Orbital;
+ double *InitAngle0_Orbital; 
   initial angle of theta for atomic projected orbital moment
   size: InitAngle0_Orbital[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -400,7 +416,7 @@ int *Constraint_SpinAngle;
 double *InitAngle0_Orbital;
 
 /*******************************************************
- double *InitAngle1_Orbital;
+ double *InitAngle1_Orbital; 
   initial angle of phi for atomic projected orbital moment
   size: InitAngle1_Orbital[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -419,8 +435,8 @@ double *InitAngle1_Orbital;
 double **Orbital_Moment_XYZ;
 
 /*******************************************************
- int *Constraint_OrbitalAngle;
-  flag for constraining the orbital moment angle of atomic
+ int *Constraint_OrbitalAngle; 
+  flag for constraining the orbital moment angle of atomic 
   projected orbital moment
   size: Constraint_OrbitalAngle[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -429,8 +445,8 @@ double **Orbital_Moment_XYZ;
 int *Constraint_OrbitalAngle;
 
 /*******************************************************
- int *WhatSpecies;
- array to specify species for each atom in the system
+ int *WhatSpecies; 
+ array to specify species for each atom in the system 
   size: WhatSpecies[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
@@ -438,7 +454,7 @@ int *Constraint_OrbitalAngle;
 int *WhatSpecies;
 
 /*******************************************************
- int *GridN_Atom;
+ int *GridN_Atom; 
  the number of grids overlaping to each atom
   size: GridN_Atom[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -447,7 +463,7 @@ int *WhatSpecies;
 int *GridN_Atom;
 
 /*******************************************************
- double *NormK;
+ double *NormK; 
  radial grid values in the reciprocal space
   size: NormK[Ngrid_NormK+1]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -456,7 +472,7 @@ int *GridN_Atom;
 double *NormK;
 
 /*******************************************************
- double *Spe_Atom_Cut1;
+ double *Spe_Atom_Cut1; 
  cutoff radius of atomic orbitals for each species
   size: Spe_Atom_Cut1[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -465,7 +481,7 @@ double *NormK;
 double *Spe_Atom_Cut1;
 
 /*******************************************************
- double *Spe_Core_Charge;
+ double *Spe_Core_Charge; 
  effective core charge of each species
   size: Spe_Core_Charge[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -474,7 +490,7 @@ double *Spe_Atom_Cut1;
 double *Spe_Core_Charge;
 
 /*******************************************************
- int *TGN_EH0;
+ int *TGN_EH0; 
  the number of 3D grids for calculating EH0 in
  Correction_Energy.c
   size: TGN_EH0[SpeciesNum]
@@ -484,7 +500,7 @@ double *Spe_Core_Charge;
 int *TGN_EH0;
 
 /*******************************************************
- double *dv_EH0;
+ double *dv_EH0; 
  the volume of a grid for calculating EH0 in
  Correction_Energy.c
   size: dv_EH0[SpeciesNum]
@@ -494,7 +510,7 @@ int *TGN_EH0;
 double *dv_EH0;
 
 /*******************************************************
- int *Spe_Num_Mesh_VPS;
+ int *Spe_Num_Mesh_VPS; 
  the number of grids for pseudo potentials
   size: Spe_Num_Mesh_VPS[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -503,7 +519,7 @@ double *dv_EH0;
 int *Spe_Num_Mesh_VPS;
 
 /*******************************************************
- int *Spe_Num_Mesh_PAO;
+ int *Spe_Num_Mesh_PAO; 
  the number of grids for atomic orbitals
   size: Spe_Num_Mesh_PAO[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -512,7 +528,7 @@ int *Spe_Num_Mesh_VPS;
 int *Spe_Num_Mesh_PAO;
 
 /*******************************************************
- int *Spe_Total_VPS_Pro;
+ int *Spe_Total_VPS_Pro; 
  the total number of projector in KB nonlocal potentials
   size: Spe_Total_VPS_Pro[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -521,7 +537,7 @@ int *Spe_Num_Mesh_PAO;
 int *Spe_Total_VPS_Pro;
 
 /*******************************************************
- int *Spe_Num_RVPS;
+ int *Spe_Num_RVPS; 
  the number of radial projectors in KB nonlocal potentials
   size: Spe_Num_RVPS[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -530,7 +546,7 @@ int *Spe_Total_VPS_Pro;
 int *Spe_Num_RVPS;
 
 /*******************************************************
- int *Spe_PAO_LMAX;
+ int *Spe_PAO_LMAX; 
  the maximum "l" component of atomic orbitals stored
  in the file of each species
   size: Spe_PAO_LMAX[SpeciesNum]
@@ -540,7 +556,7 @@ int *Spe_Num_RVPS;
 int *Spe_PAO_LMAX;
 
 /*******************************************************
- int *Spe_PAO_Mul;
+ int *Spe_PAO_Mul; 
  the multiplicity of radial wave functions for each "l"
  component of atomic orbitals stored in the file of each
  species
@@ -551,7 +567,7 @@ int *Spe_PAO_LMAX;
 int *Spe_PAO_Mul;
 
 /*******************************************************
- int *Spe_WhatAtom;
+ int *Spe_WhatAtom; 
  atomic number in the periodic table for each species
   size: Spe_WhatAtom[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -560,7 +576,7 @@ int *Spe_PAO_Mul;
 int *Spe_WhatAtom;
 
 /*******************************************************
- int *Spe_Total_NO;
+ int *Spe_Total_NO; 
  the number of primitive atomic orbitals in a species
   size: Spe_Total_NO[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -569,7 +585,7 @@ int *Spe_WhatAtom;
 int *Spe_Total_NO;
 
 /*******************************************************
- int *Spe_Total_CNO;
+ int *Spe_Total_CNO; 
  the number of contracted atomic orbitals in a species
   size: Spe_Total_CNO[SpeciesNum]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -578,7 +594,7 @@ int *Spe_Total_NO;
 int *Spe_Total_CNO;
 
 /*******************************************************
- int *FNAN;
+ int *FNAN; 
  the number of first neighboring atoms
   size: FNAN[atomnum+1]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -587,7 +603,7 @@ int *Spe_Total_CNO;
 int *FNAN;
 
 /*******************************************************
- int *SNAN;
+ int *SNAN; 
  the number of second neighboring atoms
   size: SNAN[atomnum+1]
   allocation: call as Allocate_Arrays(2) in readfile.c
@@ -596,7 +612,7 @@ int *FNAN;
 int *SNAN;
 
 /*******************************************************
- int **natn;
+ int **natn; 
   grobal index number of neighboring atoms of an atom ct_AN
   size: natn[atomnum+1][Max_FSNAN*ScaleSize+1]
   allocation: call as Allocate_Arrays(3) in truncation.c
@@ -605,7 +621,7 @@ int *SNAN;
 int **natn;
 
 /*******************************************************
- int **ncn;
+ int **ncn; 
   grobal index number for cell of neighboring atoms of
   an atom ct_AN
   size: ncn[atomnum+1][Max_FSNAN*ScaleSize+1]
@@ -615,7 +631,7 @@ int **natn;
 int **ncn;
 
 /*******************************************************
- double **Dis;
+ double **Dis; 
   distance to neighboring atoms of an atom ct_AN
   size: Dis[atomnum+1][Max_FSNAN*ScaleSize+1]
   allocation: call as Allocate_Arrays(3) in truncation.c
@@ -712,7 +728,7 @@ int ***MO_basis_selection ;
 
 /*******************************************************
  double **Spe_PAO_XV;
-  radial mesh (x=log(r)) for PAO
+  radial mesh (x=log(r)) for PAO 
   size: Spe_PAO_XV[List_YOUSO[18]]
                   [List_YOUSO[21]]
   allocation: call as Allocate_Arrays(6) in SetPara_DFT.c
@@ -722,7 +738,7 @@ double **Spe_PAO_XV;
 
 /*******************************************************
  double **Spe_PAO_RV;
-  logarithmic radial mesh (r=exp(r)) for PAO
+  logarithmic radial mesh (r=exp(r)) for PAO 
   size: Spe_PAO_XV[List_YOUSO[18]]
                   [List_YOUSO[21]]
   allocation: call as Allocate_Arrays(6) in SetPara_DFT.c
@@ -732,7 +748,7 @@ double **Spe_PAO_RV;
 
 /*******************************************************
  double **Spe_Atomic_Den;
-  atomic charge densities on radial mesh of PAO
+  atomic charge densities on radial mesh of PAO 
   size: Spe_Atomic_Den[List_YOUSO[18]]
                       [List_YOUSO[21]]
   allocation: call as Allocate_Arrays(6) in SetPara_DFT.c
@@ -742,8 +758,8 @@ double **Spe_Atomic_Den;
 
 /*******************************************************
  double **Spe_Atomic_Den2;
-  atomic charge densities+PCC charge on radial mesh of PAO,
-  where both the edges are extended by adding one more.
+  atomic charge densities+PCC charge on radial mesh of PAO, 
+  where both the edges are extended by adding one more. 
   size: Spe_Atomic_Den[List_YOUSO[18]]
                       [List_YOUSO[21]+2]
   allocation: call as Allocate_Arrays(6) in SetPara_DFT.c
@@ -753,7 +769,7 @@ double **Spe_Atomic_Den2;
 
 /*******************************************************
  double ****Spe_PAO_RWF;
-  radial parts of basis orbitals on radial mesh of PAO
+  radial parts of basis orbitals on radial mesh of PAO 
   size: Spe_PAO_RWF[List_YOUSO[18]]
                    [List_YOUSO[25]+1]
                    [List_YOUSO[24]]
@@ -778,7 +794,7 @@ double ****Spe_RF_Bessel;
 
 /*******************************************************
  double **Spe_VPS_XV;
-  radial mesh (x=log(r)) for VPS
+  radial mesh (x=log(r)) for VPS 
   size: Spe_VPS_XV[List_YOUSO[18]]
                   [List_YOUSO[22]]
   allocation: call as Allocate_Arrays(7) in SetPara_DFT.c
@@ -788,7 +804,7 @@ double **Spe_VPS_XV;
 
 /*******************************************************
  double **Spe_VPS_XV;
-  logarithmic radial mesh (r=exp(x)) for VPS
+  logarithmic radial mesh (r=exp(x)) for VPS 
   size: Spe_VPS_RV[List_YOUSO[18]]
                   [List_YOUSO[22]]
   allocation: call as Allocate_Arrays(7) in SetPara_DFT.c
@@ -878,13 +894,13 @@ int **Spe_VPS_List;
 double ****Spe_NLRF_Bessel;
 
 /*****************************************************************************
-                   allocated arrays at every MD step
+                   allocated arrays at every MD step 
 *****************************************************************************/
 
 /*******************************************************
  int ***GListTAtoms1;
   grid index (local for ct_AN) overlaping between
-  two orbitals
+  two orbitals 
   size: GListTAtoms1[Matomnum+1]
                     [FNAN[Gc_AN]+1]
                     [NumOLG[Mc_AN][h_AN]]
@@ -896,7 +912,7 @@ int ***GListTAtoms1;
 /*******************************************************
  int ***GListTAtoms2;
   grid index (local for h_AN) overlaping between
-  two orbitals
+  two orbitals 
   size: GListTAtoms2[Matomnum+1]
                     [FNAN[Gc_AN]+1]
                     [NumOLG[Mc_AN][h_AN]]
@@ -906,7 +922,7 @@ int ***GListTAtoms1;
 int ***GListTAtoms2;
 
 /*******************************************************
- int **GridListAtom;
+ int **GridListAtom; 
   neighboring grid points of an atom Mc_AN
   size: GridListAtom[Matomnum+1][Max_GridN_Atom*ScaleSize+1]
   allocation: allocate in UCell_Box() of truncation.c
@@ -915,7 +931,7 @@ int ***GListTAtoms2;
 int **GridListAtom;
 
 /*******************************************************
- int **CellListAtom;
+ int **CellListAtom; 
   cell number of neighboring grid points of an atom Mc_AN
   size: CellListAtom[Matomnum+1][Max_GridN_Atom*ScaleSize+1]
   allocation: allocate in UCell_Box() of truncation.c
@@ -924,7 +940,7 @@ int **GridListAtom;
 int **CellListAtom;
 
 /*******************************************************
- int **MGridListAtom;
+ int **MGridListAtom; 
   neighboring grid points (medium variable) of an atom Mc_AN
   size: MGridListAtom[Matomnum+1][Max_GridN_Atom*ScaleSize+1]
   allocation: allocate in UCell_Box() of truncation.c
@@ -933,7 +949,7 @@ int **CellListAtom;
 int **MGridListAtom;
 
 /*******************************************************
- double **Density_Grid;
+ double **Density_Grid; 
   electron densities on grids in the partition C
   size: Density_Grid[2 or 4][My_NumGridC]
   allocation: allocate in truncation.c
@@ -942,7 +958,7 @@ int **MGridListAtom;
 double **Density_Grid;
 
 /*******************************************************
- double **Density_Grid_B;
+ double **Density_Grid_B; 
   electron densities on grids in the partition B
   size: Density_Grid[2 or 4][My_NumGridB_AB]
   allocation: allocate in truncation.c
@@ -951,7 +967,7 @@ double **Density_Grid;
 double **Density_Grid_B;
 
 /*******************************************************
- double **Density_Grid_D;
+ double **Density_Grid_D; 
   electron densities on grids in the partition D
   size: Density_Grid[2 or 4][My_NumGridD]
   allocation: allocate in truncation.c
@@ -960,7 +976,7 @@ double **Density_Grid_B;
 double **Density_Grid_D;
 
 /*******************************************************
- double *ADensity_Grid_B;
+ double *ADensity_Grid_B; 
   superposed atomic density on grids in the partition B
   size: ADensity_Grid_B[My_NumGridB_AB]
   allocation: allocate in truncation.c
@@ -969,27 +985,27 @@ double **Density_Grid_D;
 double *ADensity_Grid_B;
 
 /*******************************************************
- double *PCCDensity_Grid_B;
-  electron densities by the superposition of partial
+ double **PCCDensity_Grid_B; 
+  electron densities by the superposition of partial 
   core correction densities on grids in the partition B
-  size: PCCDensity_Grid[My_NumGridB_AB]
+  size: PCCDensity_Grid[2][My_NumGridB_AB]
   allocation: allocate in truncation.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
-double *PCCDensity_Grid_B;
+double **PCCDensity_Grid_B;
 
 /*******************************************************
- double *PCCDensity_Grid_D;
-  electron densities by the superposition of partial
+ double **PCCDensity_Grid_D; 
+  electron densities by the superposition of partial 
   core correction densities on grids in the partition D
-  size: PCCDensity_Grid[My_NumGridD]
+  size: PCCDensity_Grid[2][My_NumGridD]
   allocation: allocate in truncation.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
-double *PCCDensity_Grid_D;
+double **PCCDensity_Grid_D;
 
 /*******************************************************
- double **Vxc_Grid;
+ double **Vxc_Grid; 
   exchange-correlation potentials on grids in the partition C
   size: Vxc_Grid[2 or 4][My_NumGridC]
   allocation: allocate in truncation.c
@@ -998,7 +1014,7 @@ double *PCCDensity_Grid_D;
 double **Vxc_Grid;
 
 /*******************************************************
- double **Vxc_Grid_B;
+ double **Vxc_Grid_B; 
   exchange-correlation potentials on grids in the partition B
   size: Vxc_Grid_B[2 or 4][My_NumGridB]
   allocation: allocate in truncation.c
@@ -1007,7 +1023,7 @@ double **Vxc_Grid;
 double **Vxc_Grid_B;
 
 /*******************************************************
- double **Vxc_Grid_D;
+ double **Vxc_Grid_D; 
   exchange-correlation potentials on grids in the partition D
   size: Vxc_Grid_D[2 or 4][My_NumGridD]
   allocation: allocate in truncation.c
@@ -1016,7 +1032,7 @@ double **Vxc_Grid_B;
 double **Vxc_Grid_D;
 
 /*******************************************************
- double *RefVxc_Grid;
+ double *RefVxc_Grid; 
   exchange-correlation potentials on grids in the partition C
   for the reference charge density
   size: RefVxc_Grid[My_NumGridC]
@@ -1026,7 +1042,7 @@ double **Vxc_Grid_D;
 double *RefVxc_Grid;
 
 /*******************************************************
- double *RefVxc_Grid_B;
+ double *RefVxc_Grid_B; 
   exchange-correlation potentials on grids in the partition B
   for the reference charge density
   size: RefVxc_Grid[My_NumGridB_AB]
@@ -1036,7 +1052,7 @@ double *RefVxc_Grid;
 double *RefVxc_Grid_B;
 
 /*******************************************************
- double *VNA_Grid;
+ double *VNA_Grid; 
   neutral atom potential on grids in the partition C
   size: VNA_Grid[My_NumGridC]
   allocation: allocate in truncation.c
@@ -1045,7 +1061,7 @@ double *RefVxc_Grid_B;
 double *VNA_Grid;
 
 /*******************************************************
- double *VNA_Grid_B;
+ double *VNA_Grid_B; 
   neutral atom potential on grids in the partition B
   size: VNA_Grid[My_NumGridB_AB]
   allocation: allocate in truncation.c
@@ -1054,7 +1070,7 @@ double *VNA_Grid;
 double *VNA_Grid_B;
 
 /*******************************************************
- double *VEF_Grid;
+ double *VEF_Grid; 
   potential on grids in the partition C by external electric field
   size: VEF_Grid[My_NumGridC]
   allocation: allocate in truncation.c
@@ -1063,7 +1079,7 @@ double *VNA_Grid_B;
 double *VEF_Grid;
 
 /*******************************************************
- double *VEF_Grid_B;
+ double *VEF_Grid_B; 
   potential on grids in the partition B by external electric field
   size: VEF_Grid_B[My_NumGridB_AB]
   allocation: allocate in truncation.c
@@ -1072,7 +1088,7 @@ double *VEF_Grid;
 double *VEF_Grid_B;
 
 /*******************************************************
- double *dVHart_Grid;
+ double *dVHart_Grid; 
   Hartree potential of the differential
   electron density on grids in the partition C
   size: dVHart_Grid[My_NumGridC]
@@ -1082,7 +1098,7 @@ double *VEF_Grid_B;
 double *dVHart_Grid;
 
 /*******************************************************
- double *dVHart_Grid_B;
+ double *dVHart_Grid_B; 
   Hartree potential of the differential
   electron density on grids in the partition B
   size: dVHart_Grid[My_Max_NumGridB]
@@ -1092,7 +1108,7 @@ double *dVHart_Grid;
 double *dVHart_Grid_B;
 
 /*******************************************************
- double **Vpot_Grid;
+ double **Vpot_Grid; 
   Kohn-Sham effective potentials on grids in the partition C
   size: Vpot_Grid[2 or 4][My_NumGridC]
   allocation: allocate in truncation.c
@@ -1101,7 +1117,7 @@ double *dVHart_Grid_B;
 double **Vpot_Grid;
 
 /*******************************************************
- double **Vpot_Grid_B;
+ double **Vpot_Grid_B; 
   Kohn-Sham effective potentials on grids in the partition B
   size: Vpot_Grid[2 or 4][My_NumGridB_AB]
   allocation: allocate in truncation.c
@@ -1151,7 +1167,7 @@ Type_Orbs_Grid ****Orbs_Grid_FNAN;
           [Matomnum+1]
           [FNAN[Gc_AN]+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Hwan]]
+          [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1165,7 +1181,7 @@ double *****H0;
              [Matomnum+1]
              [FNAN[Gc_AN]+1]
              [Spe_Total_CNO[Cwan]]
-             [Spe_Total_CNO[Hwan]]
+             [Spe_Total_CNO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1179,7 +1195,7 @@ double *****CntH0;
            [Matomnum+1]
            [FNAN[Gc_AN]+1]
            [Spe_Total_NO[Cwan]]
-           [Spe_Total_NO[Hwan]]
+           [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1193,7 +1209,7 @@ double *****HNL;
             [Matomnum+MatomnumF+MatomnumS+1]
             [FNAN[Gc_AN]+1]
             [Spe_Total_NO[Cwan]]
-            [Spe_Total_NO[Hwan]]
+            [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1208,7 +1224,7 @@ double *****iHNL;
                [Matomnum+MatomnumF+MatomnumS+1]
                [FNAN[Gc_AN]+1]
                [Spe_Total_CNO[Cwan]]
-               [Spe_Total_CNO[Hwan]]
+               [Spe_Total_CNO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1224,7 +1240,7 @@ double *****iCntHNL;
              [Matomnum+1]
              [FNAN[Gc_AN]+1]
              [Spe_Total_NO[Cwan]]
-             [Spe_Total_NO[Hwan]]
+             [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1238,7 +1254,7 @@ double *****OLP_L;
            [Matomnum+MatomnumF+MatomnumS+1]
            [FNAN[Gc_AN]+1]
            [Spe_Total_NO[Cwan]]
-           [Spe_Total_NO[Hwan]]
+           [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1252,7 +1268,7 @@ double *****OLP;
               [Matomnum+MatomnumF+MatomnumS+1]
               [FNAN[Gc_AN]+1]
               [Spe_Total_CNO[Cwan]]
-              [Spe_Total_CNO[Hwan]]
+              [Spe_Total_CNO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1266,7 +1282,7 @@ double *****CntOLP;
          [Matomnum+MatomnumF+MatomnumS+1]
          [FNAN[Gc_AN]+1]
          [Spe_Total_NO[Cwan]]
-         [Spe_Total_NO[Hwan]]
+         [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1280,12 +1296,76 @@ double *****H;
             [Matomnum+MatomnumF+MatomnumS+1]
             [FNAN[Gc_AN]+1]
             [Spe_Total_CNO[Cwan]]
-            [Spe_Total_CNO[Hwan]]
+            [Spe_Total_CNO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
 *******************************************************/
 double *****CntH;
+
+/*******************************************************
+ double ******HisH1;
+  historical matrix elements corresponding to "H" in
+  the Kohn-Sham matrix elements
+  size: HisH1[List_YOUSO[39]]
+             [SpinP_switch+1]
+             [Matomnum+1]
+             [FNAN[Gc_AN]+1]
+             [Spe_Total_NO[Cwan]]
+             [Spe_Total_NO[Hwan]] 
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ******HisH1;
+
+/*******************************************************
+ double ******HisH2;
+  historical matrix elements corresponding to "iHNL" in
+  the Kohn-Sham matrix elements
+  size: HisH2[List_YOUSO[39]]
+             [SpinP_switch]
+             [Matomnum+1]
+             [FNAN[Gc_AN]+1]
+             [Spe_Total_NO[Cwan]]
+             [Spe_Total_NO[Hwan]] 
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ******HisH2;
+
+/*******************************************************
+ double ******ResidualH1;
+  historical matrix elements corresponding to "H" in
+  the Kohn-Sham matrix elements
+  size: ResidualH1[List_YOUSO[39]]
+                  [SpinP_switch+1]
+                  [Matomnum+1]
+                  [FNAN[Gc_AN]+1]
+                  [Spe_Total_NO[Cwan]]
+                  [Spe_Total_NO[Hwan]] 
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ******ResidualH1;
+
+/*******************************************************
+ double ******ResidualH2;
+  residual matrix elements corresponding to "iHNL" in
+  the Kohn-Sham matrix elements
+  size: ResidualH2[List_YOUSO[39]]
+                  [SpinP_switch]
+                  [Matomnum+1]
+                  [FNAN[Gc_AN]+1]
+                  [Spe_Total_NO[Cwan]]
+                  [Spe_Total_NO[Hwan]] 
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ******ResidualH2;
 
 /*******************************************************
  double *****H_Hub;             --- added by MJ
@@ -1294,10 +1374,10 @@ double *****CntH;
   the dimensions for derivatives, is not required in H_Hub.
   instead of it, H_Hub should have spin index.
   size: H_Hub[spin]
-             [Matomnum+1 --> Mc_AN]
+             [Matomnum+1 --> Mc_AN]  
              [FNAN[Gc_AN]+1]
              [Spe_Total_NO[Cwan]]
-             [Spe_Total_NO[Hwan]]
+             [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1311,7 +1391,7 @@ double *****H_Hub;           /* --- added by MJ  */
             [Matomnum+1]
             [FNAN[Gc_AN]+1]
             [Spe_Total_NO[Cwan]]
-            [Spe_Total_NO[Hwan]]
+            [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1321,13 +1401,13 @@ double *****iHNL0;           /* --- added by TO  */
 /*******************************************************
  double ******DS_NL;
   overlap matrix elements between projectors,
-  of non-local potentials, and basis orbitals
+  of non-local potentials, and basis orbitals 
   size: DS_NL[SO_switch+1]
              [4]
              [Matomnum+2]
              [FNAN[Gc_AN]+1]
              [Spe_Total_NO[Cwan]]
-             [Spe_Total_VPS_Pro[Hwan]+2]
+             [Spe_Total_VPS_Pro[Hwan]+2] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1337,13 +1417,13 @@ double ******DS_NL;
 /*******************************************************
  double ******CntDS_NL;
   overlap matrix elements between projectors, of non-local
-  potentials, and contracted basis orbitals
-  size: CntDS_NL[SO_switch+1]
+  potentials, and contracted basis orbitals 
+  size: CntDS_NL[SO_switch+1] 
                 [4]
                 [Matomnum+2]
                 [FNAN[Gc_AN]+1]
                 [Spe_Total_CNO[Cwan]]
-                [Spe_Total_VPS_Pro[Hwan]+2]
+                [Spe_Total_VPS_Pro[Hwan]+2] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1351,13 +1431,13 @@ double ******DS_NL;
 double ******CntDS_NL;
 
 /*******************************************************
- double ***H_Zeeman_NCO;
+ double ***H_Zeeman_NCO;          
   matrix element introduced by the constraint for orbital
   magnetic moments. Note that the matrix elements are purely
-  imaginary.
-  size: H_Zeeman_NCO[Matomnum+1]
+  imaginary. 
+  size: H_Zeeman_NCO[Matomnum+1]  
                     [Spe_Total_NO[Cwan]]
-                    [Spe_Total_NO[Hwan]]
+                    [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1366,8 +1446,8 @@ double ***H_Zeeman_NCO;
 
 /*******************************************************
  double ***TRAN_DecMulP;
-  partial decomposed Mulliken population by CL or CR
-  overlapping
+  partial decomposed Mulliken population by CL or CR 
+  overlapping 
   size: TRAN_DecMulP
           [SpinP_switch+1]
           [Matomnum+1]
@@ -1386,7 +1466,7 @@ double ***TRAN_DecMulP;
           [Matomnum+1]
           [FNAN[Gc_AN]+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Hwan]]
+          [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1395,16 +1475,16 @@ double ******DM;
 
 /*******************************************************
  double *****Partial_DM;
-  partial density matrix to calculate partial density
-  in an energy window specified by
+  partial density matrix to calculate partial density 
+  in an energy window specified by 
   a keyword, scf.energy.window.partial.charge.
-
+ 
   size: Partial_DM
           [2]
           [Matomnum+1]
           [FNAN[Gc_AN]+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Hwan]]
+          [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1421,7 +1501,7 @@ double *****Partial_DM;
    Therefore, last two dimensions are equivalent, i.e.,
    if [Spe_Total_NO[Cwan]] != [Spe_Total_NO[Hwan]] then
    DM_onsite = 0.
-   So, it is possible to reduce the dimension of this array into 3,
+   So, it is possible to reduce the dimension of this array into 3, 
    but it remains for the future generalization.
 
   size: DM_onsite
@@ -1429,7 +1509,7 @@ double *****Partial_DM;
           [SpinP_switch+1]
           [Matomnum+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Hwan]]
+          [Spe_Total_NO[Hwan]] 
   allocation: allocate in  truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1446,7 +1526,7 @@ double *****DM_onsite;     /* --- added by MJ  */
          [SpinP_switch+1]
          [Matomnum+MatomnumF+1]
          [Spe_Total_NO[Cwan]]
-         [Spe_Total_NO[Cwan]]
+         [Spe_Total_NO[Cwan]] 
   allocation: allocate in  truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1454,10 +1534,10 @@ double *****DM_onsite;     /* --- added by MJ  */
 double ****v_eff;     /* --- added by MJ  */
 
 /*******************************************************
- dcomplex ******NC_OcpN;
-   matrix consisting of occupation numbers which are used in
-   the non-collinear LDA+U method and a constraint DFT for
-   the spin orientation at each site.
+ dcomplex ******NC_OcpN;     
+   matrix consisting of occupation numbers which are used in 
+   the non-collinear LDA+U method and a constraint DFT for 
+   the spin orientation at each site. 
 
   size: NC_OcpN
           [2]
@@ -1465,25 +1545,25 @@ double ****v_eff;     /* --- added by MJ  */
           [2]
           [Matomnum+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Cwan]]
+          [Spe_Total_NO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
 *******************************************************/
-dcomplex ******NC_OcpN;
+dcomplex ******NC_OcpN;  
 
 /*******************************************************
- dcomplex *****NC_v_eff;
+ dcomplex *****NC_v_eff;     
    effectiv potential which are used in the non-collinear
    LDA+U method and a constraint DFT for the spin orientation
-   at each site.
+   at each site. 
 
   size: NC_v_eff
           [2]
           [2]
           [Matomnum+MatomnumF+1]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Cwan]]
+          [Spe_Total_NO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1500,7 +1580,7 @@ dcomplex *****NC_v_eff;
                   [Matomnum+1]
                   [FNAN[Gc_AN]+1]
                   [Spe_Total_NO[Cwan]]
-                  [Spe_Total_NO[Hwan]]
+                  [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1517,7 +1597,7 @@ double ******ResidualDM;
                    [Matomnum+1]
                    [FNAN[Gc_AN]+1]
                    [Spe_Total_NO[Cwan]]
-                   [Spe_Total_NO[Hwan]]
+                   [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1531,7 +1611,7 @@ double ******iResidualDM;
            [Matomnum+1]
            [FNAN[Gc_AN]+1]
            [Spe_Total_NO[Cwan]]
-           [Spe_Total_NO[Hwan]]
+           [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1545,7 +1625,7 @@ double *****EDM;
            [Matomnum+1]
            [FNAN[Gc_AN]+1]
            [Spe_Total_NO[Cwan]]
-           [Spe_Total_NO[Hwan]]
+           [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1560,7 +1640,7 @@ double *****PDM;
            [Matomnum+1]
            [FNAN[Gc_AN]+1]
            [Spe_Total_NO[Cwan]]
-           [Spe_Total_NO[Hwan]]
+           [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1580,7 +1660,7 @@ double ***S12;
 
 /*******************************************************
  int **NumOLG;
-  the number of overlapping grids between atom Mc_AN
+  the number of overlapping grids between atom Mc_AN 
   and atom Lh_AN
   size: NumOLG[Matomnum+1]
               [FNAN[Gc_AN]+1]
@@ -1592,7 +1672,7 @@ int **NumOLG;
 
 /*******************************************************
  int *RNUM;
-  the number of initial recusion levels of each atom
+  the number of initial recusion levels of each atom 
   size: RNUM[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
@@ -1601,7 +1681,7 @@ int *RNUM;
 
 /*******************************************************
  int *RNUM2;
-  the number of current recusion levels of each atom
+  the number of current recusion levels of each atom 
   size: RNUM2[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
   free:       call as Free_Arrays(0) in openmx.c
@@ -1611,7 +1691,7 @@ int *RNUM2;
 /*******************************************************
  int ***RMI1;
   a table which converts local atomic index to global
-  atomic index.
+  atomic index. 
   size: RMI1[Matomnum+1]
             [FNAN[Gc_AN]+SNAN[Gc_AN]+1]
             [FNAN[Gc_AN]+SNAN[Gc_AN]+1]
@@ -1624,7 +1704,7 @@ int ***RMI1;
 /*******************************************************
  int ***RMI2;
   a table which converts local atomic index to global
-  atomic index.
+  atomic index. 
   size: RMI2[Matomnum+1]
             [FNAN[Gc_AN]+SNAN[Gc_AN]+1]
             [FNAN[Gc_AN]+SNAN[Gc_AN]+1]
@@ -1656,9 +1736,9 @@ int *NE_T_k_op;
 
 /*******************************************************
  dcomplex *****HOMOs_Coef;
-  LCAO coefficients of HOMOs
+  LCAO coefficients of HOMOs 
   size: HOMOs_Coef[List_YOUSO[33]]
-                  [2]
+                  [2] 
                   [List_YOUSO[31]]
                   [List_YOUSO[1]]
                   [List_YOUSO[7]]
@@ -1669,9 +1749,9 @@ dcomplex *****HOMOs_Coef;
 
 /*******************************************************
  dcomplex *****LUMOs_Coef;
-  LCAO coefficients of HOMOs
+  LCAO coefficients of HOMOs 
   size: HOMOs_Coef[List_YOUSO[33]]
-                  [2]
+                  [2] 
                   [List_YOUSO[32]]
                   [List_YOUSO[1]]
                   [List_YOUSO[7]]
@@ -1685,7 +1765,7 @@ dcomplex *****LUMOs_Coef;
   a table which converts index of contracted orbitals
   to that of primitive orbitals
   size: Spe_Specified_Num[List_YOUSO[18]]
-                         [Spe_Total_NO[spe]]
+                         [Spe_Total_NO[spe]]  
   allocation: in Set_BasisPara() of SetPara_DFT.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
@@ -1696,12 +1776,22 @@ int **Spe_Specified_Num;
   a table which converts index of contracted orbitals
   to that of primitive orbitals
   size: Spe_Trans_Orbital[List_YOUSO[18]]
-                         [Spe_Total_NO[spe]]
+                         [Spe_Total_NO[spe]]  
                          [List_YOUSO[24]]
   allocation: in Set_BasisPara() of SetPara_DFT.c
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
 int ***Spe_Trans_Orbital;
+
+/*******************************************************
+ int *Spe_OpenCore_flag;
+  flag to open core pseudopotential. In case of 1, partial 
+  core charge is fully spin-polarized. 
+  size: Spe_Spe2Ban[List_YOUSO[18]]
+  allocation: Allocation_Arrays(0) in Input_std()
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int *Spe_OpenCore_flag;
 
 /*******************************************************
  int *Spe_Spe2Ban;
@@ -1814,7 +1904,7 @@ double *IEV_S;
 int *M2G;
 
 /*******************************************************
- int *F_M2G, *S_M2G;
+ int *F_M2G, *S_M2G; 
   F_M2G, and S_M2G give a conversion from the medium
   index (Matomnum+MatomnumF,
          Matomnum+MatomnumF+MatomnumS)
@@ -1897,7 +1987,7 @@ double *******Spe_ProductRF_Bessel;
   size: HVNA[Matomnum+1]
             [FNAN[Gc_AN]+1]
             [Spe_Total_NO[Cwan]]
-            [Spe_Total_NO[Hwan]]
+            [Spe_Total_NO[Hwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1907,7 +1997,7 @@ double ****HVNA;
 /*******************************************************
  Type_DS_VNA *****DS_VNA;
   overlap matrix elements between projectors of VNA
-  potentials, and basis orbitals
+  potentials, and basis orbitals 
   size: DS_VNA[4]
               [Matomnum+4]
               [FNAN[Gc_AN]+1]
@@ -1922,7 +2012,7 @@ Type_DS_VNA *****DS_VNA;
 /*******************************************************
  Type_DS_VNA *****CntDS_VNA;
   overlap matrix elements between projectors of VNA
-  potentials, and contracted basis orbitals
+  potentials, and contracted basis orbitals 
   size: CntDS_VNA[4]
                  [Matomnum+MatomnumF+1]
                  [FNAN[Gc_AN]+1]
@@ -1942,7 +2032,7 @@ Type_DS_VNA *****CntDS_VNA;
              [Matomnum+1]
              [FNAN[Gc_AN]+1]
              [Spe_Total_NO[Cwan]]
-             [Spe_Total_NO[Cwan]]
+             [Spe_Total_NO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1957,7 +2047,7 @@ double *****HVNA2;
              [Matomnum+1]
              [FNAN[Gc_AN]+1]
              [Spe_Total_NO[Cwan]]
-             [Spe_Total_NO[Cwan]]
+             [Spe_Total_NO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1972,7 +2062,7 @@ double *****HVNA3;
                 [Matomnum+1]
                 [FNAN[Gc_AN]+1]
                 [Spe_Total_CNO[Cwan]]
-                [Spe_Total_CNO[Cwan]]
+                [Spe_Total_CNO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1987,7 +2077,7 @@ double *****CntHVNA2;
                 [Matomnum+1]
                 [FNAN[Gc_AN]+1]
                 [Spe_Total_CNO[Cwan]]
-                [Spe_Total_CNO[Cwan]]
+                [Spe_Total_CNO[Cwan]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -1995,7 +2085,91 @@ double *****CntHVNA2;
 double *****CntHVNA3;
 
 /*******************************************************
- double ***Krylov_U (for BLAS3 version)
+ int *Msize_EC
+ The dimension of matrix consisting of (central atom)+
+ FNAN+SNAN in the EC method
+  size: Msize_EC[Matomnum+1]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int *Msize_EC;
+
+/*******************************************************
+ int *Each_EC_Sub_Dim
+ The dimension of subspace for each atom in the EC method
+  size: Each_EC_Sub_Dim[Matomnum+1]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int *Each_EC_Sub_Dim;
+
+/*******************************************************
+ int *rl_EC
+ recursion level to generate Krylov subspae for each atom 
+ in the EC method
+  size: Each_EC_Sub_Dim[Matomnum+1]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int *rl_EC;
+
+/*******************************************************
+ double ***EVal_EC
+  eigenvalues of the embedded clusters in the EC method
+  size: EVal_EC[SpinP_switch+1]
+               [Matomnum+1]
+               [rl_EC[Mc_AN]*tno1+2]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***EVal_EC;
+
+/*******************************************************
+ double ******Residues_EC
+  residues of the embedded clusters in the EC method
+  size: Residues_EC[SpinP_switch+1]
+                   [Matomnum+1]
+                   [FNAN[Gc_AN]+1]
+                   [tno1]
+                   [tno2]
+                   [rl_EC[Mc_AN]*tno1+2]  
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ******Residues_EC;
+
+/*******************************************************
+ double ***PDOS_EC
+  PDOS of the embedded clusters in the EC method
+  size: PDOS_EC[SpinP_switch+1]
+               [Matomnum+1]
+               [rl_EC[Mc_AN]*tno+2]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***PDOS_EC;
+
+/*******************************************************
+ double ***SubSpace_EC
+  a set of vectors spanning a subspace of the embedded 
+  clusters in the EC method
+  size: SubSpace_EC[SpinP_switch+1]
+                   [Matomnum+1]
+                   [(rl_EC[Mc_AN]*tno+2)*Msize_EC[Mc_AN]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***SubSpace_EC;
+
+/*******************************************************
+ double ***Krylov_U (for BLAS3 version) 
   a Krylov matrix used in the embedding cluster method
   size: Krylov_U[SpinP_switch+1]
                 [Matomnum+1]
@@ -2007,12 +2181,26 @@ double *****CntHVNA3;
 double ***Krylov_U;
 
 /*******************************************************
+ double ***First_Moment_EC
+ double ***Second_Moment_EC
+  First moments of projected density of states used 
+  in the embedding cluster method
+  size: First_Moment_EC[SpinP_switch+1]
+                       [atomnum+1]
+                       [List_YOUSO[7]]
+  allocation: call as Allocate_Arrays(1) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***First_Moment_EC;
+double ***Second_Moment_EC;
+
+/*******************************************************
  double ****EC_matrix
   a perturbation matrix used in the embedding cluster method
   size: EC_matrix[SpinP_switch+1]
                  [Matomnum+1]
-                 [List_YOUSO[3]*List_YOUSO[7]]
-                 [List_YOUSO[3]*List_YOUSO[7]]
+                 [List_YOUSO[3]*List_YOUSO[7]] 
+                 [List_YOUSO[3]*List_YOUSO[7]] 
   allocation: allocate in truncation.c
   free:       in truncation.c
               and call as Free_Arrays(0) in openmx.c
@@ -2079,6 +2267,127 @@ double **InvHessian;
 *******************************************************/
 double **Hessian;
 
+/*******************************************************
+ double ***DecEkin
+  decomposed kinetic energy 
+  size: DecEkin[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEkin;
+
+/*******************************************************
+ double ***DecEna
+  decomposed neutral atom energy 
+  size: DecEna[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEna;
+
+/*******************************************************
+ double ***DecEnl
+  decomposed energy of nonlocal pseudopotential  
+  size: DecEnl[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEnl;
+
+/*******************************************************
+ double ***DecEdee
+  decomposed energy of delta Hartree potential  
+  size: DecEdee[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEdee;
+
+/*******************************************************
+ double ***DecExc
+  decomposed exchange-correlation energy
+  size: DecExc[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecExc;
+
+/*******************************************************
+ double ***DecEef
+  decomposed electric field energy 
+  size: DecEef[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEef;
+
+/*******************************************************
+ double ***DecEscc
+  decomposed energy of screened core-core repulsion energy
+  size: DecEscc[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEscc;
+
+/*******************************************************
+ double ***DecEhub
+  decomposed Hubbard energy 
+  size: DecEhub[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEhub;
+
+/*******************************************************
+ double ***DecEcs
+  decomposed constraint energy 
+  size: DecEcs[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEcs;
+
+/*******************************************************
+ double ***DecEvdw
+  decomposed van der Waals energy (D2 or D3) by Dion
+  size: DecEvdw[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEvdw;
+
+/*******************************************************
+ double ***DecEzs
+  decomposed Zeeman erergy for spin moment
+  size: DecEzs[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEzs;
+
+/*******************************************************
+ double ***DecEzo
+  decomposed Zeeman erergy for orbital moment
+  size: DecEzo[2][Matomnum+1][List_YOUSO[7]]
+  allocation: allocate in truncation.c
+  free:       in truncation.c
+              and call as Free_Arrays(0) in openmx.c
+*******************************************************/
+double ***DecEzo;
+
+
 
 dcomplex *zp,*Ep,*Rp;
 double GL_Abscissae[GL_Mesh+2],GL_Weight[GL_Mesh+2];
@@ -2091,6 +2400,7 @@ double tv[4][4],rtv[4][4];
 double Left_tv[4][4],Right_tv[4][4];
 double gtv[4][4],rgtv[4][4],length_gtv[4];
 double gtv_FE[4][4],rgtv_FE[4][4];
+double Stress_Tensor[9];
 
 double Grid_Origin[4];
 double dipole_moment[4][4];
@@ -2121,7 +2431,7 @@ int MD_OutABC;
 double X_Center_Coordinate,Y_Center_Coordinate,Z_Center_Coordinate;
 dcomplex Comp2Real[YOUSO36+1][2*(YOUSO36+1)+1][2*(YOUSO36+1)+1];
 /* added by mari (May 2004) */
-double TempScale[30],RatScale[30],Temp;
+double TempScale[30],RatScale[30],Temp; 
 int IntScale[30],NumScale[30];
 /* added by mari (May 2004) */
 /* for Nose-Hoover algorithm */
@@ -2136,12 +2446,15 @@ double FricFac,GivenTemp,RandomF;
 
 int NUMPROCS_MPI_COMM_WORLD,MYID_MPI_COMM_WORLD;
 int alloc_first[40],Last_TNumGrid;
-int Scf_RestartFromFile,Band_disp_switch;
+int Scf_RestartFromFile,Band_disp_switch; 
 int GeoOpt_RestartFromFile,OutData_bin_flag;
 int coordinates_unit,unitvector_unit;
 int Size_Total_Matrix,SP_PEV,EKC_core_size_max;
 int specified_system,MO_fileout,num_HOMOs,num_LUMOs;
 int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag,MO_selective;
+int StressConsistency_flag,stress_flag,scf_stress_flag,MD_cellopt_flag,cellopt_swtich;
+int rediagonalize_flag_overlap_matrix; 
+int rediagonalize_flag_overlap_matrix_ELPA1;
 int CntOrb_fileout,Num_CntOrb_Atoms;
 int num_non_eq_kpt,way_of_kpoint;
 int remake_headfile,OneD_Grid,Ngrid1,Ngrid2,Ngrid3;
@@ -2158,23 +2471,24 @@ int Zeeman_NCS_switch,Zeeman_NCO_switch;
 int atomnum,Catomnum,Latomnum,Ratomnum;
 int POLES,rlmax,Solver,dste_flag,Ngrid_fixed_flag,scf_eigen_lib_flag;
 int KrylovH_order,KrylovS_order,recalc_EM,EKC_invS_flag;
+int EC_Sub_Dim,Energy_Decomposition_flag;
 int EKC_Exact_invS_flag,EKC_expand_core_flag,orderN_FNAN_SNAN_flag;
-int MD_switch,PeriodicGamma_flag;
+int MD_switch,PeriodicGamma_flag,CellOpt_switch;
 int Max_FNAN,Max_FSNAN,Max_GridN_Atom,Max_NumOLG,Max_OneD_Grids;
 int Max_Nd,Max_TGN_EH0,CellNN_flag,Kmixing_flag;
 int NN_B_AB2CA_S,NN_B_AB2CA_R,NN_B_CA2CB_S,NN_B_CA2CB_R;
-int NN_A2B_S,NN_A2B_R,NN_B2C_S,NN_B2C_R,NN_B2D_S,NN_B2D_R;
+int NN_A2B_S,NN_A2B_R,NN_B2C_S,NN_B2C_R,NN_B2D_S,NN_B2D_R; 
 int List_YOUSO[NYOUSO];
 int PreNum,TempNum,TCpyCell,CpyCell;
 int Runtest_flag;
 int Num_Mixing_pDM,level_stdout,level_fileout,HS_fileout;
-int memoryusage_fileout;
-int Pulay_SCF,EveryPulay_SCF,SCF_Control_Temp;
+int memoryusage_fileout;  
+int Pulay_SCF,Pulay_SCF_original,EveryPulay_SCF,SCF_Control_Temp;
 int Cnt_switch,RCnt_switch,SICnt_switch,ACnt_switch,SCnt_switch;
 int E_Field_switch,Simple_InitCnt[10];
 int MD_Opt_OK,orbitalOpt_SCF,orbitalOpt_MD,orbitalOpt_per_MDIter;
 int orbitalOpt_History,orbitalOpt_StartPulay,OrbOpt_OptMethod;
-int orbitalOpt_Force_Skip;
+int orbitalOpt_Force_Skip,Initial_Hessian_flag;
 int NOHS_L,NOHS_C,ProExpn_VNA,BufferL_ProVNA;
 int M_GDIIS_HISTORY,OptStartDIIS,OptEveryDIIS;
 int Extrapolated_Charge_History;
@@ -2182,6 +2496,8 @@ int orderN_Kgrid,FT_files_save,FT_files_read;
 int NEB_Num_Images,NEB_Spring_Const;
 int Min_Grid_Index[4],Max_Grid_Index[4];
 int Min_Grid_Index_D[4],Max_Grid_Index_D[4];
+int SO_factor_flag;
+int Cell_Fixed_XYZ[4][4];
 
 double **CompTime;
 
@@ -2207,7 +2523,7 @@ int Band_Nkpath,Band_kPathUnit;
 double Band_UnitCell[4][4];
 int *Band_N_perpath;
 double ***Band_kpath;
-char ***Band_kname;
+char ***Band_kname; 
 
 /*  DOS */
 int DosGauss_fileout;
@@ -2218,7 +2534,7 @@ double Dos_Erange[2];
 int Dos_Kgrid[3];
 int Opticalconductivity_fileout;
 
-/*  electric field */
+/*  electric field */ 
 double E_Field[3];
 
 /* O(N^2) method */
@@ -2264,8 +2580,10 @@ double ****Wannier_RotMat_for_Real_Func; /* Rotation Matrix of real Orbitals for
 
 int **Wannier_Select_Matrix;
 double ***Wannier_Projector_Hybridize_Matrix;
+/* For interface with Wannier90 */
+int Wannier90_fileout;
+/*-------------------------------------------------------------Wannier*/
 
-/*------------------------------------------------------------------------*/
 void Show_DFT_DATA(char *argv[]);
 void Maketest(char *mode, int argc, char *argv[]);
 void Runtest(char *mode, int argc, char *argv[]);
@@ -2273,6 +2591,8 @@ void Memory_Leak_test(int argc, char *argv[]);
 void Get_VSZ(int MD_iter);
 void Force_test(int argc, char *argv[]);
 void Check_Force(char *argv[]);
+void Stress_test(int argc, char *argv[]); 
+void Check_Stress(char *argv[]);
 
 double RF_BesselF(int Gensi, int GL, int Mul, double R);
 double Nonlocal_RadialF(int Gensi, int l, int so, double R);
@@ -2302,8 +2622,8 @@ double Set_Orbitals_Grid(int Cnt_kind);
 double Set_Aden_Grid();
 double Set_Density_Grid(int Cnt_kind, int Calc_CntOrbital_ON, double *****CDM);
 void diagonalize_nc_density();
-void Data_Grid_Copy_B2C_1(double *data_B, double *data_C);
-void Data_Grid_Copy_B2C_2(double **data_B, double **data_C);
+void Data_Grid_Copy_B2C_1(double *data_B, double *data_C); 
+void Data_Grid_Copy_B2C_2(double **data_B, double **data_C); 
 void Density_Grid_Copy_B2D();
 double Set_Initial_DM(double *****CDM, double *****H);
 double Mulliken_Charge( char *mode );
@@ -2333,8 +2653,11 @@ double Mixing_DM(int MD_iter,
                  double *ReRhoAtomk,
                  double *ImRhoAtomk);
 
+double Mixing_H( int MD_iter,
+                 int SCF_iter,
+                 int SCF_iter0 );
 
-void Simple_Mixing_DM(int Change_switch,
+void Simple_Mixing_DM(int Change_switch, 
                       double Mix_wgt,
                       double *****CDM,
                       double *****PDM,
@@ -2344,17 +2667,17 @@ void Simple_Mixing_DM(int Change_switch,
                       double *****iP2DM,
                       double *****RDM,
                       double *****iRDM
-                      /*---------- modified by TOYODA 18/JAN/2010 */
+/*---------- modified by TOYODA 18/JAN/2010 */
 #if EXX_MIX_DM
                       , EXX_t *exx
                       , dcomplex ****exx_CDM
                       , dcomplex ****exx_PDM
                       , dcomplex ****exx_P2DM
-#endif
-                     );
+#endif 
+);
 
-void DIIS_Mixing_DM(int SCF_iter,
-                    double ******ResidualDM, double ******iResidualDM);
+void DIIS_Mixing_DM(int SCF_iter, double ******ResidualDM, double ******iResidualDM);
+void ADIIS_Mixing_DM(int SCF_iter, double ******ResidualDM, double ******iResidualDM);
 void GR_Pulay_DM(int SCF_iter, double ******ResidualDM);
 
 
@@ -2380,9 +2703,10 @@ void DIIS_Mixing_Rhok(int SCF_iter,
                       double *ReRhoAtomk,
                       double *ImRhoAtomk);
 
-
+ 
 void Overlap_Cluster(double ****OLP, double **S,int *MP);
 void Hamiltonian_Cluster(double ****RH, double **H, int *MP);
+void Hamiltonian_Cluster_Hs(double ****RH, double *Hs, int *MP, int spin, int myworld1);
 void Hamiltonian_Cluster_NC(double *****RH, double *****IH,
                             dcomplex **H, int *MP);
 void Hamiltonian_Cluster_SO(double ****RH, double ****IH, dcomplex **H, int *MP);
@@ -2392,7 +2716,7 @@ void Hamiltonian_Band(int Host_ID1, double ****RH,
 void Hamiltonian_Band_NC(int Host_ID1, double *****RH, double *****IH,
                          dcomplex **H, int *MP,
                          double k1, double k2, double k3);
-int Get_OneD_HS_Col(int set_flag, double ****RH, double *H1, int *MP,
+int Get_OneD_HS_Col(int set_flag, double ****RH, double *H1, int *MP, 
                     int *order_GA, int *My_NZeros, int *is1, int *is2);
 void Overlap_Band(int Host_ID1, double ****OLP, dcomplex **S, int *MP,
                   double k1, double k2, double k3);
@@ -2400,18 +2724,18 @@ void Overlap_Band(int Host_ID1, double ****OLP, dcomplex **S, int *MP,
 void Initial_CntCoes(double *****nh, double *****OLP);
 void Initial_CntCoes2(double *****nh, double *****OLP);
 double Opt_Contraction(
-    int orbitalOpt_iter,
-    double TotalE,
-    double *****H,
-    double *****OLP,
-    double *****CDM,
-    double *****EDM,
-    double ****His_CntCoes,
-    double ****His_D_CntCoes,
-    double ****His_CntCoes_Species,
-    double ****His_D_CntCoes_Species,
-    double *His_OrbOpt_Etot,
-    double **OrbOpt_Hessian);
+         int orbitalOpt_iter,
+         double TotalE,
+         double *****H, 
+         double *****OLP,
+         double *****CDM,
+         double *****EDM,
+         double ****His_CntCoes,
+         double ****His_D_CntCoes,
+         double ****His_CntCoes_Species,
+         double ****His_D_CntCoes_Species,
+         double *His_OrbOpt_Etot,
+         double **OrbOpt_Hessian);
 
 void Contract_Hamiltonian(double *****H,   double *****CntH,
                           double *****OLP, double *****CntOLP);
@@ -2424,6 +2748,15 @@ void Cont_Matrix4(double ****Mat, double ****CMat);
 
 /* hmweng */
 void Generate_Wannier();
+
+double EC(char *mode,
+          int SCF_iter,
+          double *****Hks,
+          double *****ImNL,
+	  double ****OLP0,
+	  double *****CDM,
+	  double *****EDM,
+	  double Eele0[2], double Eele1[2]);
 
 double Divide_Conquer(char *mode,
                       int SCF_iter,
@@ -2468,15 +2801,15 @@ double FFT_Density(int den_flag,
                    double *ReDenk, double *ImDenk);
 
 void Get_Value_inReal(int complex_flag,
-                      double *ReVr, double *ImVr,
+                      double *ReVr, double *ImVr, 
                       double *ReVk, double *ImVk);
 
-/** Effective Screening Medium (ESM) Method Calculation (added by T.Ohwaki) **/
+ /** Effective Screening Medium (ESM) Method Calculation (added by T.Ohwaki) **/
 
 double Poisson_ESM(int fft_charge_flag,
-                   double *ReRhok, double *ImRhok);
+		   double *ReRhok, double *ImRhok);
 
-/**  ESM end  **/
+ /**  ESM end  **/
 
 double Set_Hamiltonian(char *mode,
                        int SCF_iter,
@@ -2488,20 +2821,27 @@ double Set_Hamiltonian(char *mode,
                        double *****H);
 double Total_Energy(int MD_iter, double *****CDM, double ECE[]);
 double Force(double *****H0,
-             double ******DS_NL,
-             double *****OLP,
-             double *****CDM,
-             double *****EDM);
+	     double ******DS_NL, 
+	     double *****OLP,
+	     double *****CDM, 
+	     double *****EDM); 
+double Stress(double *****H0,
+	      double ******DS_NL,
+	      double *****OLP,
+	      double *****CDM,
+	      double *****EDM);
 double Set_OLP_Kin(double *****OLP, double *****H0);
 double Set_Nonlocal(double *****HNL, double ******DS_NL);
 double Set_ProExpn_VNA(double ****HVNA, double *****HVNA2, Type_DS_VNA *****DS_VNA);
 void Set_WbyVNA();
 void Set_Vpot(int SCF_iter, int XC_P_switch, double *****CDM);
-void Set_XC_Grid(int XC_P_switch, int XC_switch,
-                 double *Den0, double *Den1,
+void Set_XC_Grid(int XC_P_switch, int XC_switch, 
+                 double *Den0, double *Den1, 
                  double *Den2, double *Den3,
                  double *Vxc0, double *Vxc1,
-                 double *Vxc2, double *Vxc3 );
+                 double *Vxc2, double *Vxc3,
+                 double ***dEXC_dGD, 
+                 double ***dDen_Grid);
 double Pot_NeutralAtom(int ct_AN, double Gx, double Gy, double Gz);
 double XC_Ceperly_Alder(double den, int P_switch);
 void XC_CA_LSDA(double den0, double den1, double XC[2],int P_switch);
@@ -2518,7 +2858,47 @@ double Fuzzy_Weight(int ct_AN, int Mc_AN, int Rn, double x, double y, double z);
 void neb(int argc, char *argv[]);
 void neb_run(char *argv[], MPI_Comm mpi_commWD, int index_images, double ***neb_atom_coordinates,
              int *WhatSpecies_NEB, int *Spe_WhatAtom_NEB, char **SpeName_NEB);
-int neb_check(char *argv[]);
+int neb_check(char *argv[]); 
+void cellopt(char *argv[], double **CompTime);
+ 
+
+/** Natural Bond Orbital (NBO) Analysis (added by T.Ohwaki) **/
+int NBO_switch;
+int NAO_only;
+int Num_NBO_FCenter;
+int *NBO_FCenter;
+int *Num_NHOs;
+int Total_Num_NHO,Total_Num_NBO;
+int NHO_fileout,NBO_fileout;
+int NBO_SmallCell_Switch;
+double NAO_Occ_or_Ryd;
+double **NBO_CDMn_tmp, **NBO_OLPn_tmp, **NBO_Fock_tmp, ***NAO_vec_tmp;
+double **NAO_partial_pop, **NAO_ene_level, ***NAO_coefficient;
+double ****NHOs_Coef,****NBOs_Coef_b,****NBOs_Coef_a;
+double NBO_SmallCellFrac[4][3];
+
+int NAO_Nkpoint;
+double **NAO_kpoint;
+
+int *rlmax_EC_NAO, *rlmax_EC2_NAO, *EKC_core_size_NAO;
+int *F_Snd_Num_NAO, *S_Snd_Num_NAO, *F_Rcv_Num_NAO, *S_Rcv_Num_NAO;
+int **Snd_MAN_NAO, **Snd_GAN_NAO, **Rcv_GAN_NAO;
+int *F_TopMAN_NAO, *S_TopMAN_NAO;
+int *F_G2M_NAO, *S_G2M_NAO;
+int *F_M2G_NAO, *S_M2G_NAO;
+int MatomnumF_NAO, MatomnumS_NAO;
+int *Snd_HFS_Size_NAO, *Rcv_HFS_Size_NAO;
+
+void Calc_NAO_Cluster(double *****CDM);
+void Calc_NAO_Band(
+		   int nkpoint, double **kpoint,
+		   int SpinP_switch,
+		   double *****nh,
+		   double ****OLP);
+
+void Calc_NAO_Krylov(double *****Hks, double ****OLP0, double *****CDM);
+/** NBO end **/
+
 
 /*-----------------------------------------------------------------------*/
 
@@ -2538,12 +2918,38 @@ double Cluster_DFT(char *mode,
                    double ****CntOLP,
                    double *****CDM,
                    double *****EDM,
-                   /*---------- added by TOYODA 08/JAN/2010 */
+/*---------- added by TOYODA 08/JAN/2010 */
                    EXX_t *exx,
                    dcomplex ****exx_CDM,
                    double *Uexx,
-                   /*---------- until here */
+/*---------- until here */
                    double Eele0[2], double Eele1[2]);
+
+double Cluster_DFT_ScaLAPACK(
+                   char *mode,
+                   int SCF_iter,
+                   int SpinP_switch,
+                   double ***Cluster_ReCoes,
+                   double **Cluster_ko,
+                   double *****nh,
+                   double *****ImNL,
+                   double ****CntOLP,
+                   double *****CDM,
+                   double *****EDM,
+                   EXX_t *exx, 
+                   dcomplex ****exx_CDM,
+                   double *Uexx,
+                   double Eele0[2], double Eele1[2],
+		   int myworld1,
+		   int *NPROCS_ID1,
+		   int *Comm_World1,
+		   int *NPROCS_WD1,
+		   int *Comm_World_StartID1,
+		   MPI_Comm *MPI_CommWD1,
+		   double *Ss,
+		   double *Cs,
+		   double *Hs);
+
 
 double Cluster_DFT_Dosout( int SpinP_switch,
                            double *****nh,
@@ -2551,78 +2957,124 @@ double Cluster_DFT_Dosout( int SpinP_switch,
                            double ****CntOLP);
 
 double Cluster_DFT_ON2(char *mode,
-                       int SCF_iter,
-                       int SpinP_switch,
-                       double ***Cluster_ReCoes,
-                       double **Cluster_ko,
-                       double *****nh,
-                       double *****ImNL,
-                       double ****CntOLP,
-                       double *****CDM,
-                       double *****EDM,
-                       double Eele0[2], double Eele1[2]);
+		       int SCF_iter,
+		       int SpinP_switch,
+		       double ***Cluster_ReCoes,
+		       double **Cluster_ko,
+		       double *****nh,
+		       double *****ImNL,
+		       double ****CntOLP,
+		       double *****CDM,
+		       double *****EDM,
+		       double Eele0[2], double Eele1[2]);
 
 
 double Band_DFT_NonCol(int SCF_iter,
                        double *koS,
                        dcomplex **S,
                        int knum_i, int knum_j, int knum_k,
-                       int SpinP_switch,
-                       double *****nh,
-                       double *****ImNL,
-                       double ****CntOLP,
-                       double *****CDM,
-                       double *****EDM,
-                       double Eele0[2], double Eele1[2]);
+		       int SpinP_switch,
+		       double *****nh,
+		       double *****ImNL,
+		       double ****CntOLP,
+		       double *****CDM,
+		       double *****EDM,
+		       double Eele0[2], double Eele1[2]);
 
 double Band_DFT_Col(int SCF_iter,
                     int knum_i, int knum_j, int knum_k,
-                    int SpinP_switch,
-                    double *****nh,
-                    double *****ImNL,
-                    double ****CntOLP,
-                    double *****CDM,
-                    double *****EDM,
-                    double Eele0[2],
-                    double Eele1[2],
-                    int *MP,
-                    int *order_GA,
-                    double *ko,
-                    double *koS,
-                    double ***EIGEN,
-                    double *H1,
-                    double *S1,
-                    double *CDM1,
-                    double *EDM1,
-                    dcomplex **H,
-                    dcomplex **S,
-                    dcomplex **C,
+		    int SpinP_switch,
+		    double *****nh,
+		    double *****ImNL,
+		    double ****CntOLP,
+		    double *****CDM,
+		    double *****EDM,
+		    double Eele0[2], 
+                    double Eele1[2], 
+		    int *MP,
+		    int *order_GA,
+		    double *ko,
+		    double *koS,
+		    double ***EIGEN,
+		    double *H1,
+		    double *S1,
+		    double *CDM1,
+		    double *EDM1,
+		    dcomplex **H,
+		    dcomplex **S,
+		    dcomplex **C,
                     dcomplex *BLAS_S,
-                    int ***k_op,
-                    int *T_k_op,
-                    int **T_k_ID,
-                    double *T_KGrids1,
-                    double *T_KGrids2,
-                    double *T_KGrids3,
+		    int ***k_op,
+		    int *T_k_op,
+		    int **T_k_ID,
+		    double *T_KGrids1,
+		    double *T_KGrids2,
+		    double *T_KGrids3,
                     int myworld1,
-                    int *NPROCS_ID1,
-                    int *Comm_World1,
-                    int *NPROCS_WD1,
-                    int *Comm_World_StartID1,
-                    MPI_Comm *MPI_CommWD1,
+		    int *NPROCS_ID1,
+		    int *Comm_World1,
+		    int *NPROCS_WD1,
+		    int *Comm_World_StartID1,
+		    MPI_Comm *MPI_CommWD1,
                     int myworld2,
-                    int *NPROCS_ID2,
-                    int *NPROCS_WD2,
-                    int *Comm_World2,
-                    int *Comm_World_StartID2,
-                    MPI_Comm *MPI_CommWD2,
-                    EXX_t *exx,
-                    dcomplex ****exx_CDM,
-                    double *Uexx);
+		    int *NPROCS_ID2,
+		    int *NPROCS_WD2,
+		    int *Comm_World2,
+		    int *Comm_World_StartID2,
+		    MPI_Comm *MPI_CommWD2,
+		    EXX_t *exx,
+		    dcomplex ****exx_CDM,
+		    double *Uexx);
 
-void k_inversion(int i,  int j,  int k,
-                 int mi, int mj, int mk,
-                 int *ii, int *ij, int *ik );
+double Band_DFT_Col_ScaLAPACK(
+                    int SCF_iter,
+                    int knum_i, int knum_j, int knum_k,
+		    int SpinP_switch,
+		    double *****nh,
+		    double *****ImNL,
+		    double ****CntOLP,
+		    double *****CDM,
+		    double *****EDM,
+		    double Eele0[2], double Eele1[2], 
+		    int *MP,
+		    int *order_GA,
+		    double *ko,
+		    double *koS,
+		    double ***EIGEN,
+		    double *H1,
+		    double *S1,
+		    double *CDM1,
+		    double *EDM1,
+		    dcomplex **H,
+		    dcomplex *Ss,
+		    dcomplex *Cs,
+                    dcomplex *Hs,
+		    int ***k_op,
+		    int *T_k_op,
+		    int **T_k_ID,
+		    double *T_KGrids1,
+		    double *T_KGrids2,
+		    double *T_KGrids3,
+                    int myworld1,
+		    int *NPROCS_ID1,
+		    int *Comm_World1,
+		    int *NPROCS_WD1,
+		    int *Comm_World_StartID1,
+		    MPI_Comm *MPI_CommWD1,
+                    int myworld2,
+		    int *NPROCS_ID2,
+		    int *NPROCS_WD2,
+		    int *Comm_World2,
+		    int *Comm_World_StartID2,
+		    MPI_Comm *MPI_CommWD2,
+		    EXX_t *exx,
+		    dcomplex ****exx_CDM,
+		    double *Uexx);
+
+
+void k_inversion(int i,  int j,  int k, 
+                 int mi, int mj, int mk, 
+                 int *ii, int *ij, int *ik ); 
 void Band_DFT_kpath( int nkpath, int *n_perk,
                      double ***kpath, char ***kname,
                      int SpinP_switch,
@@ -2630,7 +3082,7 @@ void Band_DFT_kpath( int nkpath, int *n_perk,
                      double *****ImNL,
                      double ****CntOLP);
 void Band_DFT_MO( int nkpoint, double **kpoint,
-                  int SpinP_switch,
+                  int SpinP_switch, 
                   double *****nh,
                   double *****ImNL,
                   double ****CntOLP);
@@ -2639,6 +3091,13 @@ double Band_DFT_Dosout( int knum_i, int knum_j, int knum_k,
                         double *****nh,
                         double *****ImNL,
                         double ****CntOLP );
+
+void Unfolding_Bands( int nkpoint, double **kpoint,
+		      int SpinP_switch, 
+		      double *****nh,
+		      double *****ImNL,
+		      double ****CntOLP);
+
 double MD_pac(int iter, char *fname_input);
 void Calc_Temp_Atoms(int iter);
 int Species2int(char Species[YOUSO10]);
@@ -2659,23 +3118,25 @@ void HCP_structure(double aa, double coa);
 void FCC_structure(double aa);
 void SetPara_DFT();
 void Output_CompTime();
+void Output_Energy_Decomposition();
 void Make_FracCoord(char *file);
 void Merge_LogFile(char *file);
 void Make_InputFile_with_FinalCoord(char *file, int MD_iter);
 void Eigen_lapack(double **a, double *ko, int n, int EVmax);
 void Eigen_lapack2(double *a, int csize, double *ko, int n, int EVmax);
+void Eigen_lapack3(double *a, double *ko, int n, int EVmax);
 void EigenBand_lapack(dcomplex **A, double *W, int N0, int MaxN, int ev_flag);
-void Eigen_PReHH(MPI_Comm MPI_Current_Comm_WD,
+void Eigen_PReHH(MPI_Comm MPI_Current_Comm_WD, 
                  double **ac, double *ko, int n, int EVmax, int bcast_flag);
-void Eigen_PHH(MPI_Comm MPI_Current_Comm_WD,
+void Eigen_PHH(MPI_Comm MPI_Current_Comm_WD, 
                dcomplex **ac, double *ko, int n, int EVmax, int bcast_flag);
-void BroadCast_ReMatrix(MPI_Comm MPI_Curret_Comm_WD,
+void BroadCast_ReMatrix(MPI_Comm MPI_Curret_Comm_WD, 
                         double **Mat, int n, int *is1,int *ie1, int myid, int numprocs,
                         MPI_Status *stat_send,
                         MPI_Request *request_send,
                         MPI_Request *request_recv);
-void BroadCast_ComplexMatrix(MPI_Comm MPI_Current_Comm_WD,
-                             dcomplex **Mat, int n, int *is1, int *ie1, int myid, int numprocs,
+void BroadCast_ComplexMatrix(MPI_Comm MPI_Current_Comm_WD, 
+                             dcomplex **Mat, int n, int *is1, int *ie1, int myid, int numprocs, 
                              MPI_Status *stat_send,
                              MPI_Request *request_send,
                              MPI_Request *request_recv);
@@ -2711,41 +3172,46 @@ void init_alloc_first();
 int File_CntCoes(char *mode);
 void SCF2File(char *mode, char *inputfile);
 void Determine_Cell_from_ECutoff(double tv[4][4], double ECut);
+#ifdef kcomp
 void Spherical_Bessel( double x, int lmax, double *sb, double *dsb );
+#else
+inline void Spherical_Bessel( double x, int lmax, double *sb, double *dsb );
+#endif
+
 
 void Generating_MP_Special_Kpt(/* input */
-    int atomnum,
-    int SpeciesNum,
-    double tv[4][4],
-    double **Gxyz,
-    double *InitN_USpin,
-    double *InitN_DSpin,
-    double criterion_geo,
-    int SpinP_switch,
-    int *WhatSpecies,
-    int knum_i, int knum_j, int knum_k
-    /* implicit output
-    num_non_eq_kpt,
-    NE_KGrids1, NE_KGrids2, NE_KGrids3,
-    NE_T_k_op */ );
+                               int atomnum,
+			       int SpeciesNum,
+			       double tv[4][4],
+			       double **Gxyz,
+                               double *InitN_USpin, 
+                               double *InitN_DSpin,
+                               double criterion_geo,
+                               int SpinP_switch,
+			       int *WhatSpecies,
+			       int knum_i, int knum_j, int knum_k
+                               /* implicit output 
+                               num_non_eq_kpt,
+                               NE_KGrids1, NE_KGrids2, NE_KGrids3,
+                               NE_T_k_op */ );
 
 void Make_Comm_Worlds(
-    MPI_Comm MPI_Current_Comm_WD,
-    int myid0,
-    int numprocs0,
-    int Num_Comm_World,
-    int *myworld1,
-    MPI_Comm *MPI_CommWD,     /* size: Num_Comm_World */
-    int *NPROCS1_ID,          /* size: numprocs0 */
-    int *Comm_World1,         /* size: numprocs0 */
-    int *NPROCS1_WD,          /* size: Num_Comm_World */
-    int *Comm_World_StartID   /* size: Num_Comm_World */
-);
+   MPI_Comm MPI_Current_Comm_WD,   
+   int myid0,
+   int numprocs0,
+   int Num_Comm_World, 
+   int *myworld1, 
+   MPI_Comm *MPI_CommWD,     /* size: Num_Comm_World */
+   int *NPROCS1_ID,          /* size: numprocs0 */
+   int *Comm_World1,         /* size: numprocs0 */
+   int *NPROCS1_WD,          /* size: Num_Comm_World */
+   int *Comm_World_StartID   /* size: Num_Comm_World */
+   );
 
 
-
+ 
 /***********************  openmx_common.c  **************************/
-
+  
 void Cross_Product(double a[4], double b[4], double c[4]);
 double Dot_Product(double a[4], double b[4]);
 void ComplexSH(int l, int m, double theta, double phi,
@@ -2791,11 +3257,12 @@ dcomplex Cexp(dcomplex a);
 void PrintMemory_Fix();
 void PrintMemory(char *name, long int size0, char *mode);
 void dtime(double *);
-
+ 
 /* okuno */
 void DFTDvdW_SetNeighborShell(double rij[3],double** distR,
                               double* distR2,int*nrm);
 void DFTDvdW_init();
+void DFTD3vdW_init(); /* Ellner */
 
 
 /****************************************************************/
@@ -2957,7 +3424,7 @@ int *F_TopMAN,*S_TopMAN;
   global atom number to the medium atom number
   for atoms sent from ID in the size of
   F_Rcv_Num[ID] and F_Rcv_Num[ID] + S_Rcv_Num[ID],
-  respectively.
+  respectively. 
   size: F_G2M[atomnum+1],S_G2M[atomnum+1]
   allocation: Allocation_Arrays(1) in Input_std()
   free:       call as Free_Arrays(0) in openmx.c
@@ -2977,7 +3444,7 @@ int **Snd_MAN;
 
 /*******************************************************
  int **Snd_GAN;
-  Snd_GAN and Snd_GAN are a global atom index of which
+  Snd_GAN and Snd_GAN are a global atom index of which 
   informations are sent to a processor ID.
   size: Snd_GAN[numprocs][FS_Snd_Num[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -2988,7 +3455,7 @@ int **Snd_GAN;
 
 /*******************************************************
  int **Rcv_GAN;
-  Rcv_GAN are a global atom index cell index of which
+  Rcv_GAN are a global atom index cell index of which 
   informations are recieved at myid from a processor ID.
   size: Rcv_GAN[numprocs][F_Rcv_Num[ID]+S_Rcv_Num[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -3000,7 +3467,7 @@ int **Rcv_GAN;
 /*******************************************************
  int **Pro_Snd_GAtom;
 
-  Pro_Snd_GAtom gives the global atomic number used
+  Pro_Snd_GAtom gives the global atomic number used 
   for MPI communication of DS_VNA and DS_NL
   size: Pro_Snd_GAtom[numprocs][Num_Pro_Snd[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -3012,7 +3479,7 @@ int **Pro_Snd_GAtom;
 /*******************************************************
  int **Pro_Snd_MAtom;
 
-  Pro_Snd_MAtom gives the intermedium atomic number used
+  Pro_Snd_MAtom gives the intermedium atomic number used 
   for MPI communication of DS_VNA and DS_NL
   size: Pro_Snd_MAtom[numprocs][Num_Pro_Snd[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -3024,7 +3491,7 @@ int **Pro_Snd_MAtom;
 /*******************************************************
  int **Pro_Snd_LAtom;
 
-  Pro_Snd_MAtom gives the local atomic number used
+  Pro_Snd_MAtom gives the local atomic number used 
   for MPI communication of DS_VNA and DS_NL
   size: Pro_Snd_LAtom[numprocs][Num_Pro_Snd[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -3036,8 +3503,8 @@ int **Pro_Snd_LAtom;
 /*******************************************************
  int **Pro_Snd_LAtom2;
 
-  Pro_Snd_MAtom2 gives the local atomic number used
-  for MPI communication of DS_VNA and DS_NL, and
+  Pro_Snd_MAtom2 gives the local atomic number used 
+  for MPI communication of DS_VNA and DS_NL, and 
   tells us the position of array which should be stored.
   size: Pro_Snd_LAtom2[numprocs][Num_Pro_Snd[ID]]
   allocation: Set_Inf_SndRcv() of truncation.c
@@ -3049,7 +3516,7 @@ int **Pro_Snd_LAtom2;
 /*******************************************************
  int *Num_Snd_Grid_A2B
 
-  Num_Snd_Grid_A2B gives the number of grids data of
+  Num_Snd_Grid_A2B gives the number of grids data of 
   rho_i sent to ID.
   size: Num_Snd_Grid_A2B[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3060,7 +3527,7 @@ int *Num_Snd_Grid_A2B;
 /*******************************************************
  int *Num_Rcv_Grid_A2B
 
-  Num_Rcv_Grid_A2B gives the number of grids data of
+  Num_Rcv_Grid_A2B gives the number of grids data of 
   rho_i received from ID.
   size: Num_Rcv_Grid_A2B[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3071,8 +3538,8 @@ int *Num_Rcv_Grid_A2B;
 /*******************************************************
  int **Index_Snd_Grid_A2B
 
-  Index_Snd_Grid_A2B gives indices BN, atom, and Rn
-  in the partition B associated with the grids data of
+  Index_Snd_Grid_A2B gives indices BN, atom, and Rn 
+  in the partition B associated with the grids data of 
   rho_i sent to ID.
   size: Index_Snd_Grid_A2B[numprocs][3*Num_Snd_Grid_A2B[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3084,8 +3551,8 @@ int **Index_Snd_Grid_A2B;
 /*******************************************************
  int **Index_Rcv_Grid_A2B
 
-  Index_Rcv_Grid_A2B gives indices BN, atom, and Rn
-  in the partition B associated with the grids
+  Index_Rcv_Grid_A2B gives indices BN, atom, and Rn 
+  in the partition B associated with the grids 
   data of rho_i received from ID.
   size: Index_Rcv_Grid_A2B[numprocs][3*Num_Rcv_Grid_A2B[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3097,7 +3564,7 @@ int **Index_Rcv_Grid_A2B;
 /*******************************************************
  int *Num_Snd_Grid_B2C
 
-  Num_Snd_Grid_B2C gives the number of grids data of
+  Num_Snd_Grid_B2C gives the number of grids data of 
   rho sent to ID.
   size: Num_Snd_Grid_B2C[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3108,7 +3575,7 @@ int *Num_Snd_Grid_B2C;
 /*******************************************************
  int *Num_Rcv_Grid_B2C
 
-  Num_Rcv_Grid_B2C gives the number of grids data of
+  Num_Rcv_Grid_B2C gives the number of grids data of 
   rho received from ID.
   size: Num_Rcv_Grid_B2C[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3143,7 +3610,7 @@ int **Index_Rcv_Grid_B2C;
 /*******************************************************
  int *Num_Snd_Grid_B2D
 
-  Num_Snd_Grid_B2D gives the number of grids data of
+  Num_Snd_Grid_B2D gives the number of grids data of 
   rho sent to ID.
   size: Num_Snd_Grid_B2D[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3154,7 +3621,7 @@ int *Num_Snd_Grid_B2D;
 /*******************************************************
  int *Num_Rcv_Grid_B2D
 
-  Num_Rcv_Grid_B2D gives the number of grids data of
+  Num_Rcv_Grid_B2D gives the number of grids data of 
   rho received from ID.
   size: Num_Rcv_Grid_B2D[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
@@ -3201,13 +3668,15 @@ int *Num_Snd_Grid_B_AB2CA;
  int *Num_Rcv_Grid_B_AB2CA
 
   Num_Rcv_Grid_B_AB2CA gives the number of grid data
-  received in the CA partition and sent from the AB
+  received in the CA partition and sent from the AB 
   partition in the partion B.
   size: Num_Rcv_Grid_B_AB2CA[numprocs]
   allocation: call Allocate_Arrays() in Input_std.c
   free:       call Free_Arrays in openmx.c
 *******************************************************/
 int *Num_Rcv_Grid_B_AB2CA;
+/* added by mari 05.12.2014 */
+int *Num_Snd_Grid_B_AB2C;
 
 /*******************************************************
  int *Num_Snd_Grid_B_CA2CB
@@ -3219,6 +3688,8 @@ int *Num_Rcv_Grid_B_AB2CA;
   free:       call Free_Arrays in openmx.c
 *******************************************************/
 int *Num_Snd_Grid_B_CA2CB;
+/* added by mari 05.12.2014 */
+int *Num_Rcv_Grid_B_AB2C;
 
 /*******************************************************
  int *Num_Rcv_Grid_B_CA2CB
@@ -3235,7 +3706,7 @@ int *Num_Rcv_Grid_B_CA2CB;
 /*******************************************************
  int **Index_Snd_Grid_B_AB2CA
 
-  Index_Snd_Grid_B_AB2CA gives index, BN_AB in the partition
+  Index_Snd_Grid_B_AB2CA gives index, BN_AB in the partition 
   B_AB associated with the grids data of sent to ID.
   size: Index_Snd_Grid_B_AB2CA[numprocs][Num_Snd_Grid_B_AB2CA[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3243,11 +3714,13 @@ int *Num_Rcv_Grid_B_CA2CB;
               call as Free_Arrays(0) in openmx.c
 *******************************************************/
 int **Index_Snd_Grid_B_AB2CA;
+/* added by mari 05.12.2014 */
+int **Index_Snd_Grid_B_AB2C;
 
 /*******************************************************
  int **Index_Rcv_Grid_B_AB2CA
 
-  Index_Rcv_Grid_B_AB2CA gives index, BN_AB in the partition
+  Index_Rcv_Grid_B_AB2CA gives index, BN_AB in the partition 
   B_AB associated with the grids data of sent to ID.
   size: Index_Rcv_Grid_B_AB2CA[numprocs][Num_Rcv_Grid_B_AB2CA[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3255,11 +3728,13 @@ int **Index_Snd_Grid_B_AB2CA;
               call as Free_Arrays(0) in openmx.c
 *******************************************************/
 int **Index_Rcv_Grid_B_AB2CA;
+/* added by mari 05.12.2014 */
+int **Index_Rcv_Grid_B_AB2C;
 
 /*******************************************************
  int **Index_Snd_Grid_B_CA2CB
 
-  Index_Snd_Grid_B_CA2CB gives index, BN_CA in the partition
+  Index_Snd_Grid_B_CA2CB gives index, BN_CA in the partition 
   B_CA associated with the grids data of sent to ID.
   size: Index_Snd_Grid_B_CA2CB[numprocs][Num_Snd_Grid_B_CA2CB[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3271,7 +3746,7 @@ int **Index_Snd_Grid_B_CA2CB;
 /*******************************************************
  int **Index_Rcv_Grid_B_CA2CB
 
-  Index_Rcv_Grid_B_CA2CB gives index, BN_CA in the partition
+  Index_Rcv_Grid_B_CA2CB gives index, BN_CA in the partition 
   B_CA associated with the grids data of sent to ID.
   size: Index_Rcv_Grid_B_CA2CB[numprocs][Num_Rcv_Grid_B_CA2CB[ID]]
   allocation: allocate_grids2atoms() in truncation.c
@@ -3393,7 +3868,7 @@ int *GP_B2D_S;
 int *GP_B2D_R;
 
 /*******************************************************
- double *time_per_atom;
+ double *time_per_atom; 
   elapsed time which is required for each atom
   size: time_per_atom[atomnum+1]
   allocation: call as Allocate_Arrays(1) in Input_std.c
@@ -3422,6 +3897,9 @@ int Max_Num_Snd_Grid_B2C,Max_Num_Rcv_Grid_B2C;
 int Max_Num_Snd_Grid_B2D,Max_Num_Rcv_Grid_B2D;
 int Max_Num_Snd_Grid_B_AB2CA;
 int Max_Num_Rcv_Grid_B_AB2CA;
+/* added by mari 05.12.2014 */
+int Max_Num_Snd_Grid_B_AB2C;
+int Max_Num_Rcv_Grid_B_AB2C;
 int Max_Num_Snd_Grid_B_CA2CB;
 int Max_Num_Rcv_Grid_B_CA2CB;
 
@@ -3432,14 +3910,14 @@ double V_ESM;
 double ESM_wall_position,ESM_wall_height;
 double ESM_buffer_range;
 
-/**  ESM end  **/
+ /**  ESM end  **/
 
 int Set_Allocate_Atom2CPU(int MD_iter, int isw, int weight_flag);
 
-/* added by T.Ohwaki */
+ /* added by T.Ohwaki */
 int Arti_Force;
 double Arti_Grad;
-/* added by T.Ohwaki */
+ /* added by T.Ohwaki */
 
 /* vdW  DFT-D added by okuno*/
 int dftD_switch;     /* okuno */
@@ -3454,3 +3932,42 @@ double **C6ij_dftD;  /* C6 coefficient of each atom type pair */
 double **Rsum_dftD;  /* sum of VdW radii */
 int n1_DFT_D,n2_DFT_D,n3_DFT_D;
 int DFTD_IntDir1,DFTD_IntDir2,DFTD_IntDir3;
+
+/* vdW DFT-D3 added by Ellner*/
+int version_dftD;             /* 1-->DFT-D2 (Okuno), 2-->DFT-D3 with zero damping, 3--> DFT-D3 with BJ damping */
+int DFTD3_damp_dftD;       /* For DFTD3: 1 --> ZERO 2--> BJ */
+double k1_dftD, k2_dftD, k3_dftD;    /* used for calculating coordination number */
+double s6_dftD, s8_dftD;   /* global scaling factors (s6=1.0)*/ 
+double sr6_dftD, sr8_dftD;  /* parameters for zero damping function (sr8=1.0)*/
+double alp6_dftD, alp8_dftD; /* exponent in zero damping function (alp6=14)*/
+double **r0ab_dftD;        /* parameters used in calculating zero damping function*/
+double a1_dftD, a2_dftD;   /* parameters for BJ damping function */
+double *r2r4_dftD;         /* intermediate used in r2r4ab_dftd */
+double **r2r4ab_dftD;      /* used in calculating C8 */
+double cncut_dftD;         /* coordination number cut-off radius. Also needs global cut-off radius defined above (okuno) as rcut_dftD */
+int n1_CN_DFT_D,n2_CN_DFT_D,n3_CN_DFT_D; /* for cncut PBC */
+int *maxcn_dftD;           /* max number of C6 ref parameters per atom */
+double *****C6ab_dftD;     /* C6 info: m=1,2,3:parameter/CN_atomA/CN_atomB [atomA][atomB][CN_ref_atomA][CN_ref_atomB][m] */
+double *rcov_dftD;         /* intermediate used in rcovab_dftD */
+double **rcovab_dftD;      /* covalent radius used in calculating coordination number */
+
+/* unfolding added by Chi-Cheng Lee */
+double **unfold_abc;
+double *unfold_origin;
+int *unfold_mapN2n;
+double unfold_lbound,unfold_ubound;
+int unfold_electronic_band;
+int unfold_Nkpoint;
+int unfold_nkpts;
+double **unfold_kpoint;
+char **unfold_kpoint_name;
+/* end unfolding */
+
+
+/* scalapack */
+
+static int NBLK=128;
+int nblk,np_rows,np_cols,na_rows,na_cols,na_rows_max,na_cols_max;
+int my_prow,my_pcol;
+int bhandle0,bhandle1,bhandle2,ictxt0,ictxt1,ictxt2;
+int descS[9],descH[9],descC[9];

@@ -7,22 +7,26 @@
 #define  measure_time   0
 
 static void Eigen_zheev(dcomplex **A, double *W, int N0);
-static void Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag);
+static int Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag);
 static void Eigen_HH(dcomplex **ac, double *ko, int n, int EVmax, int ev_flag);
 
 
 void EigenBand_lapack(dcomplex **A, double *W, int N0, int MaxN, int ev_flag)
 {
+    int info;
 
     /*
-    Eigen_HH(A,W,N0,MaxN,ev_flag);
+    if (ev_flag==1) Eigen_HH(A,W,N0,MaxN,ev_flag);
+    else            Eigen_zheevx(A,W,N0,MaxN,ev_flag);
     */
 
     Eigen_zheevx(A,W,N0,MaxN,ev_flag);
 
     /*
+    Eigen_HH(A,W,N0,MaxN,ev_flag);
     Eigen_zheev(A,W,N0);
     */
+
 }
 
 
@@ -265,7 +269,7 @@ void Eigen_HH(dcomplex **ac, double *ko, int n, int EVmax, int ev_flag)
 
     if (measure_time==1) dtime(&Stime);
 
-    if (ev_flag) {
+    if (ev_flag==1) {
 
         /* ad stores u */
         for (i=2; i<=n; i++) {
@@ -539,27 +543,29 @@ void Eigen_zheev(dcomplex **A, double *W, int N0)
 
 
 
-void Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag)
+int Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag)
 {
     char *JOBZ0="N";
     char *JOBZ1="V";
     char *UPLO="L";
     char *RANGE="I";
-    INTEGER N=N0;
-    INTEGER LDA=N;
-    double VL,VU;
+    INTEGER N,LDA,LDZ;
+    double VL,VU,sum;
     INTEGER  IL,IU;
     double ABSTOL=LAPACK_ABSTOL;
     INTEGER M;
     dcomplex *Z;
-    INTEGER LDZ=N;
     dcomplex *WORK;
     INTEGER LWORK;
     double *RWORK;
     INTEGER  *IWORK;
     INTEGER *IFAIL,INFO;
     dcomplex *A0;
-    int i,j;
+    int i,j,k,po;
+
+    N = N0;
+    LDA = N;
+    LDZ = N;
 
     IL = 1;
     IU = MaxN;
@@ -600,10 +606,14 @@ void Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag)
     IFAIL=(INTEGER*)malloc(sizeof(INTEGER)*N);
     for (i=0; i<N; i++) IFAIL[i] = 0;
 
+
+    F77_NAME(zheevx,ZHEEVX)(JOBZ1, RANGE, UPLO, &N, A0, &LDA, &VL, &VU, &IL, &IU,
+                            &ABSTOL, &M, W, Z, &LDZ, WORK, &LWORK, RWORK,
+                            IWORK, IFAIL, &INFO );
+
+    /* store Z to A */
+
     if (ev_flag==1) {
-        F77_NAME(zheevx,ZHEEVX)(JOBZ1, RANGE, UPLO, &N, A0, &LDA, &VL, &VU, &IL, &IU,
-                                &ABSTOL, &M, W, Z, &LDZ, WORK, &LWORK, RWORK,
-                                IWORK, IFAIL, &INFO );
 
         for (i=1; i<=N; i++) {
             for (j=1; j<=N; j++) {
@@ -613,28 +623,25 @@ void Eigen_zheevx(dcomplex **A, double *W, int N0, int MaxN, int ev_flag)
             }
         }
     }
-    else {
-        F77_NAME(zheevx,ZHEEVX)(JOBZ0, RANGE, UPLO, &N, A0, &LDA, &VL, &VU, &IL, &IU,
-                                &ABSTOL, &M, W, Z, &LDZ, WORK, &LWORK, RWORK,
-                                IWORK, IFAIL, &INFO );
-    }
 
     /*
     printf("ret=%d\n",INFO);
     for (i=0;i<N;i++) printf("%lf ",W[i]);
+    printf("\n");
     */
 
     /* shift by 1 */
     for (i=N; i>=1; i--) {
-        W[i] =W[i-1];
+        W[i] = W[i-1];
     }
 
     free(IFAIL);
     free(IWORK);
     free(RWORK);
     free(WORK);
-    free(A0);
     free(Z);
+    free(A0);
 
+    return INFO;
 }
 

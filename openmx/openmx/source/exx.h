@@ -8,7 +8,7 @@
 #define EXX_SYSTEM_PERIODIC  1 /* periodic */
 #define EXX_SYSTEM_CLUSTER   2 /* non-periodic */
 
-#define EXX_ROOT_RANK 0
+#define EXX_ROOT_RANK 0 
 #define EXX_PATHLEN 256
 
 #include "exx_def_openmx.h"
@@ -35,17 +35,17 @@ extern double g_exx_rc_cut;
 extern double g_exx_w_scr;
 
 EXX_t* EXX_New(
-    int           natom,
-    const double *atom_v,
-    const int    *atom_sp,
-    int           nspec,
-    const double *spec_rc,
-    const int    *spec_nb,
-    const double *pvec,
-    double        w_scr,
-    double        rc_cut,
-    int           mode,
-    const char   *cachedir
+  int           natom,
+  const double *atom_v,
+  const int    *atom_sp,
+  int           nspec,
+  const double *spec_rc,
+  const int    *spec_nb,
+  const double *pvec,
+  double        w_scr,
+  double        rc_cut,
+  int           mode,
+  const char   *cachedir
 );
 
 void EXX_Free(EXX_t *);
@@ -77,33 +77,33 @@ const char* EXX_CacheDir(const EXX_t *self);
 
 
 int EXX_Find_OP(
-    const EXX_t *self,
-    int          iatom1,
-    int          iatom2,
-    int          iR_x,
-    int          iR_y,
-    int          iR_z
+  const EXX_t *self,
+  int          iatom1,
+  int          iatom2,
+  int          iR_x,
+  int          iR_y,
+  int          iR_z
 );
 
 int EXX_Find_EP(
-    const EXX_t *self,
-    int          iatom1,
-    int          iatom2,
-    int          iR_x,
-    int          iR_y,
-    int          iR_z
+  const EXX_t *self,
+  int          iatom1,
+  int          iatom2,
+  int          iR_x,
+  int          iR_y,
+  int          iR_z
 );
 
 #if 0
 int EXX_Make_Quartets(
-    const EXX_t *xfm,
-    int *q_op1, /* [nq] */
-    int *q_op2, /* [nq] */
-    int *q_opd, /* [nq] */
-    int *q_wf,  /* [nq] */
-    int *q_ep1, /* [nq*8] */
-    int *q_ep2, /* [nq*8] */
-    int *q_mul  /* [nq] */
+  const EXX_t *xfm,
+  int *q_op1, /* [nq] */
+  int *q_op2, /* [nq] */
+  int *q_opd, /* [nq] */
+  int *q_wf,  /* [nq] */
+  int *q_ep1, /* [nq*8] */
+  int *q_ep2, /* [nq*8] */
+  int *q_mul  /* [nq] */
 );
 #endif
 
