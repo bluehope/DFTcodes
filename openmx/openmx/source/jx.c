@@ -31,8 +31,9 @@
 #define VERBOSE 0
 #define DEBUG_MSG 0
 #define DEBUG_MSG2 0
-#define ORBITAL_SELECTION  1 /* for calc_J_band1 only */
+#define ORBITAL_SELECTION  0 /* for calc_J_band1 only */
 #define ORBITAL_SELECTION2 0
+#define ORBITAL_SELECTION3 1
 static const double  Shift_K_Point = 0 ; /*1e-6; */
 
 static void Eigen_lapack(double **a, double *ko, int n);
@@ -163,108 +164,108 @@ int main(int argc, char *argv[])
     s_vec[6]="Cluster2";
 
     if (myid == Host_ID) {
-				/* lattice vector & reciprocal lattice vector print*/
-			printf("TCpyCell %d\n",TCpyCell);
-			printf(" tv \n");
-			sprintf(output_fname,"latticeVector.csv");
-			if(NULL!=(out = fopen(output_fname,"w"))){	
-				for(i=1;i<=3;i++){
-					printf(" %f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
-					fprintf(out,"%f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
-				}
-				printf(" rtv \n");
-				for(i=1;i<=3;i++){
-					printf(" %f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
-					fprintf(out, "%f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
-				}
-				fclose(out);
-			}
-			/* User input */
-			printf("SpinP_switch %d\n",SpinP_switch);
-			for (ct_AN=1; ct_AN<=atomnum; ct_AN++) {
-				printf("Atom %d Total_NumOrbs %d\n",ct_AN,Total_NumOrbs[ct_AN]);
-			}
-			printf(" Solver type [typeid,type] \n");
-			for (i=0; i<=6; i++) {
-				printf("[%d:%s] ",i+1,s_vec[i]);
-			}
-			printf("\n Select Solver: \n");
-			scanf("%d",&Solver);
-		}
-		MPI_Bcast(&Solver, 4, MPI_INT, 0, comm1);
+        /* lattice vector & reciprocal lattice vector print*/
+        printf("TCpyCell %d\n",TCpyCell);
+        printf(" tv \n");
+        sprintf(output_fname,"latticeVector.csv");
+        if(NULL!=(out = fopen(output_fname,"w"))) {
+            for(i=1; i<=3; i++) {
+                printf(" %f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
+                fprintf(out,"%f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
+            }
+            printf(" rtv \n");
+            for(i=1; i<=3; i++) {
+                printf(" %f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
+                fprintf(out, "%f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
+            }
+            fclose(out);
+        }
+        /* User input */
+        printf("SpinP_switch %d\n",SpinP_switch);
+        for (ct_AN=1; ct_AN<=atomnum; ct_AN++) {
+            printf("Atom %d Total_NumOrbs %d\n",ct_AN,Total_NumOrbs[ct_AN]);
+        }
+        printf(" Solver type [typeid,type] \n");
+        for (i=0; i<=6; i++) {
+            printf("[%d:%s] ",i+1,s_vec[i]);
+        }
+        printf("\n Select Solver: \n");
+        scanf("%d",&Solver);
+    }
+    MPI_Bcast(&Solver, 4, MPI_INT, 0, comm1);
 
-		if (myid==Host_ID) {
-			printf(" Previous eigenvalue solver = %s\n",s_vec[Solver-1]);
-			printf(" atomnum                    = %i\n",atomnum);
-			printf(" ChemP                      = %15.12f (Hartree)\n",ChemP);
-			printf(" E_Temp                     = %15.12f (K)\n",E_Temp);
-		}
-		if      (Solver==2 || Solver==7) jx_cluster1(argc, argv);
-		else if (Solver==3) {
+    if (myid==Host_ID) {
+        printf(" Previous eigenvalue solver = %s\n",s_vec[Solver-1]);
+        printf(" atomnum                    = %i\n",atomnum);
+        printf(" ChemP                      = %15.12f (Hartree)\n",ChemP);
+        printf(" E_Temp                     = %15.12f (K)\n",E_Temp);
+    }
+    if      (Solver==2 || Solver==7) jx_cluster1(argc, argv);
+    else if (Solver==3) {
 
-			/**** Calculation of J for bulk system  ****/
+        /**** Calculation of J for bulk system  ****/
 
-			/*************************************************************************
-				Calculation flow in the evaluation of J:
+        /*************************************************************************
+        	Calculation flow in the evaluation of J:
 
-				PART-1 : set full Hamiltonian and overlap
-				PART-2 : the generalized eigenvalue problem HC = ESC
-				PART-3 : Calculation of J
-			 **************************************************************************/
+        	PART-1 : set full Hamiltonian and overlap
+        	PART-2 : the generalized eigenvalue problem HC = ESC
+        	PART-3 : Calculation of J
+         **************************************************************************/
 
-			/*************************************************************************
-				PART-1 :  set full Hamiltonian and overlap
-			 **************************************************************************/
+        /*************************************************************************
+        	PART-1 :  set full Hamiltonian and overlap
+         **************************************************************************/
 
-			if (myid==Host_ID) {
-				printf(" \nEvaluation of J based on band calculation\n");
-			}
-			Full_atom = (int*)malloc(sizeof(int)*atomnum);
-			MPF = (int*)malloc(sizeof(int)*(atomnum+1));
+        if (myid==Host_ID) {
+            printf(" \nEvaluation of J based on band calculation\n");
+        }
+        Full_atom = (int*)malloc(sizeof(int)*atomnum);
+        MPF = (int*)malloc(sizeof(int)*(atomnum+1));
 
-			/* read Full_atom */
-			for (i=0; i<atomnum; i++) {
-				Full_atom[i] = i+1;
-			}
+        /* read Full_atom */
+        for (i=0; i<atomnum; i++) {
+            Full_atom[i] = i+1;
+        }
 
-			/*********************************************
-				make an array MPF which specifies the starting
-				position of atom II in the martix such as
-				a full but small Hamiltonian
-			 *********************************************/
+        /*********************************************
+        	make an array MPF which specifies the starting
+        	position of atom II in the martix such as
+        	a full but small Hamiltonian
+         *********************************************/
 
-			Anum = 1;
-			for (i=0; i<atomnum; i++) {
-				ct_AN = Full_atom[i];
-				Anum = Anum + Total_NumOrbs[ct_AN];
-			}
-			F_TNumOrbs = Anum - 1;
-			F_TNumOrbs3 = F_TNumOrbs + 3;
+        Anum = 1;
+        for (i=0; i<atomnum; i++) {
+            ct_AN = Full_atom[i];
+            Anum = Anum + Total_NumOrbs[ct_AN];
+        }
+        F_TNumOrbs = Anum - 1;
+        F_TNumOrbs3 = F_TNumOrbs + 3;
 
-			/*********************************************
-				get knum_i, knum_j, and knum_k
-			 *********************************************/
+        /*********************************************
+        	get knum_i, knum_j, and knum_k
+         *********************************************/
 
-			do {
-				if (myid==Host_ID) {
-					Nk[1] = 0;
-					Nk[2] = 0;
-					Nk[3] = 0;
-					printf(" Custom k-grids? 0: no 1: yes (will read kpoint.csv) \n");
-					scanf("%d",&custom_kpoints);
-					printf("input custom_kpoints %d\n",custom_kpoints);
-					if (0 == custom_kpoints) {
-						printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
-						scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
-						printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
-					} else if(1 == custom_kpoints) {
-						/* custom kpoints  */
-						printf(" Reading kpoint.csv\n");
+        do {
+            if (myid==Host_ID) {
+                Nk[1] = 0;
+                Nk[2] = 0;
+                Nk[3] = 0;
+                printf(" Custom k-grids? 0: no 1: yes (will read kpoint.csv) \n");
+                scanf("%d",&custom_kpoints);
+                printf("input custom_kpoints %d\n",custom_kpoints);
+                if (0 == custom_kpoints) {
+                    printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
+                    scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
+                    printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
+                } else if(1 == custom_kpoints) {
+                    /* custom kpoints  */
+                    printf(" Reading kpoint.csv\n");
 
-						if(custom_kpoints_fp=fopen("kpoint.csv","r")) {
-							/* check kpoint.csv */
-							custom_kpoints_num = 0;
-							fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
+                    if(custom_kpoints_fp=fopen("kpoint.csv","r")) {
+                        /* check kpoint.csv */
+                        custom_kpoints_num = 0;
+                        fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
 
                         T_knum = 0;
                         while(0<fscanf(custom_kpoints_fp, "%lf,%lf,%lf",&k1,&k2,&k3) ) {
@@ -386,7 +387,7 @@ int main(int argc, char *argv[])
         }
         for (i=0; i<=(knum_k-1); i++) {
             if (knum_k==1) k1 = 0.0;
-						/*else           k1 = ((double)i)/(2.0*(snum_k-1));*/
+            /*else           k1 = ((double)i)/(2.0*(snum_k-1));*/
             else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);
             KGrids3[i]=k1;
         }
@@ -597,7 +598,7 @@ int main(int argc, char *argv[])
                 orbital_mask1 = (int*)malloc(sizeof(int)*Total_NumOrbs[atmij[1]]);
                 orbital_mask2 = (int*)malloc(sizeof(int)*Total_NumOrbs[atmij[2]]);
                 for(i=0; i<Total_NumOrbs[atmij[1]]; i++) {
-                    orbital_mask1[i]=0;
+                    orbital_mask1[i]=0; /* 0: unmask 1: mask */
                 }
                 for(i=0; i<Total_NumOrbs[atmij[2]]; i++) {
                     orbital_mask2[i]=0;
@@ -605,13 +606,13 @@ int main(int argc, char *argv[])
                 if(myid == Host_ID) {
 
                     orbital_mask_option = 0;
-                    printf(" Orbital masking option? off:0 on:1 \n");
+                    printf(" Orbital masking option? off:0 mask selected:1 unmask selected:2 \n");
                     scanf("%d",&orbital_mask_option);
                     if(0 < orbital_mask_option) {
                         int input_length = 0;
                         int orbital_to_mask = -1;
 
-                        printf(" Number of orbitals to mask for atom1: %d (%d orbitals)\n",
+                        printf(" Number of orbitals to mask or unmask for atom1: %d (%d orbitals)\n",
                                atmij[1],Total_NumOrbs[atmij[1]]);
                         scanf("%d",&input_length);
                         for(i=0; i<input_length; i++) {
@@ -619,7 +620,7 @@ int main(int argc, char *argv[])
                             assert(orbital_to_mask < Total_NumOrbs[atmij[1]]);
                             orbital_mask1[orbital_to_mask] = 1;
                         }
-                        printf(" Number of orbitals to mask for atom2: %d (%d orbitals)\n",
+                        printf(" Number of orbitals to mask or unmask for atom2: %d (%d orbitals)\n",
                                atmij[2],Total_NumOrbs[atmij[2]]);
                         scanf("%d",&input_length);
                         for(i=0; i<input_length; i++) {
@@ -628,7 +629,25 @@ int main(int argc, char *argv[])
                             orbital_mask2[orbital_to_mask] = 1;
                         }
                         printf("\n");
+                        if(2==orbital_mask_option) {
+                            /* inverse mask */
+                            for(i=0; i<Total_NumOrbs[atmij[1]]; i++) {
+                                if(1 == orbital_mask1[i])
+                                    orbital_mask1[i]= 0;
+                                else
+                                    orbital_mask1[i]= 1;
+
+                            }
+                            for(i=0; i<Total_NumOrbs[atmij[2]]; i++) {
+                                if(1 == orbital_mask2[i])
+                                    orbital_mask2[i]= 0;
+                                else
+                                    orbital_mask2[i]= 1;
+                            }
+                        }
                         fflush(stdout);
+
+
                     }
 
                 }
@@ -754,7 +773,7 @@ int main(int argc, char *argv[])
                                     sum = 0.0;
                                     sumi=0.0;
 #if DEBUG_MSG
-																		fprintf(stdout,"C_i Si");
+                                    fprintf(stdout,"C_i Si");
 #endif
                                     for (l=P_min; l<=n; l++) {
                                         sum  +=  S[i1][l].r*M1[l]*C[l-(P_min-1)][j1].r
@@ -762,18 +781,18 @@ int main(int argc, char *argv[])
                                         sumi +=  S[i1][l].r*M1[l]*C[l-(P_min-1)][j1].i
                                                  + S[i1][l].i*M1[l]*C[l-(P_min-1)][j1].r;
 #if DEBUG_MSG
-																				fprintf(stdout,"M1 %f %f S %f %f\n", 
-																						M1[l]*C[l-(P_min-1)][j1].r, M1[l]*C[l-(P_min-1)][j1].i,
-																						S[i1][l].r,S[i1][l].i);
+                                        fprintf(stdout,"M1 %f %f S %f %f\n",
+                                                M1[l]*C[l-(P_min-1)][j1].r, M1[l]*C[l-(P_min-1)][j1].i,
+                                                S[i1][l].r,S[i1][l].i);
 #endif
                                     }
 #if DEBUG_MSG
-																				fprintf(stdout,"\n");
+                                    fprintf(stdout,"\n");
 #endif
                                     Coes[spin][i1][j1].r = sum;
                                     Coes[spin][i1][j1].i = sumi;
 #if DEBUG_MSG
-																		fprintf(stdout,"Coes sumi %f\n",sumi);
+                                    fprintf(stdout,"Coes sumi %f\n",sumi);
 #endif
                                 }
                             }
@@ -834,35 +853,63 @@ int main(int argc, char *argv[])
                     printf("\n");
                     if(0 < all_kpoint_output) {
                         sprintf(all_kpoint_output_fname,"jx-kpoints_meshk_%d_%d_%dx%dx%d",
-														First_Atom,Second_Atom,knum_i,knum_j,knum_k);
+                                First_Atom,Second_Atom,knum_i,knum_j,knum_k);
                         if(1==custom_kpoints)
                             sprintf(all_kpoint_output_fname,"jx-kpoints_%d_%d",First_Atom,Second_Atom);
 
-                        if(1==orbital_mask_option) {
+                        if(0 < orbital_mask_option) {
                             char buf[256];
                             int mask_cnt = 0;
-                            /* First_atom orbital mask */
-                            strcat(all_kpoint_output_fname,"_m1_");
-                            for(i=0; i<Total_NumOrbs[First_Atom]; i++) {
-                                if(orbital_mask1[i]>0) {
+                            if(1 == orbital_mask_option ) {
+                                /* First_atom orbital mask */
+                                strcat(all_kpoint_output_fname,"_m1_");
+                                for(i=0; i<Total_NumOrbs[First_Atom]; i++) {
+                                    if(0 < orbital_mask1[i]) {
 
-                                    sprintf(buf,"%d",i);
-                                    if(0<mask_cnt)
-                                        strcat(all_kpoint_output_fname,",");
-                                    strcat(all_kpoint_output_fname,buf);
-                                    mask_cnt++;
+                                        sprintf(buf,"%d",i);
+                                        if(0<mask_cnt)
+                                            strcat(all_kpoint_output_fname,",");
+                                        strcat(all_kpoint_output_fname,buf);
+                                        mask_cnt++;
+                                    }
+                                }
+                                /* Second_atom orbital mask */
+                                strcat(all_kpoint_output_fname,"_m2_");
+                                mask_cnt = 0;
+                                for(i=0; i<Total_NumOrbs[Second_Atom]; i++) {
+                                    if(0 < orbital_mask2[i]) {
+                                        sprintf(buf,"%d",i);
+                                        if(0<mask_cnt)
+                                            strcat(all_kpoint_output_fname,",");
+                                        strcat(all_kpoint_output_fname,buf);
+                                        mask_cnt++;
+                                    }
                                 }
                             }
-                            /* Second_atom orbital mask */
-                            strcat(all_kpoint_output_fname,"_m2_");
-                            mask_cnt = 0;
-                            for(i=0; i<Total_NumOrbs[Second_Atom]; i++) {
-                                if(orbital_mask2[i]>0) {
-                                    sprintf(buf,"%d",i);
-                                    if(0<mask_cnt)
-                                        strcat(all_kpoint_output_fname,",");
-                                    strcat(all_kpoint_output_fname,buf);
-                                    mask_cnt++;
+                            else if(2 == orbital_mask_option ) {
+                                /* First_atom orbital mask */
+                                strcat(all_kpoint_output_fname,"_um1_");
+                                for(i=0; i<Total_NumOrbs[First_Atom]; i++) {
+                                    if(0 == orbital_mask1[i]) {
+
+                                        sprintf(buf,"%d",i);
+                                        if(0<mask_cnt)
+                                            strcat(all_kpoint_output_fname,",");
+                                        strcat(all_kpoint_output_fname,buf);
+                                        mask_cnt++;
+                                    }
+                                }
+                                /* Second_atom orbital mask */
+                                strcat(all_kpoint_output_fname,"_um2_");
+                                mask_cnt = 0;
+                                for(i=0; i<Total_NumOrbs[Second_Atom]; i++) {
+                                    if(0 == orbital_mask2[i]) {
+                                        sprintf(buf,"%d",i);
+                                        if(0<mask_cnt)
+                                            strcat(all_kpoint_output_fname,",");
+                                        strcat(all_kpoint_output_fname,buf);
+                                        mask_cnt++;
+                                    }
                                 }
                             }
                         }
@@ -1488,7 +1535,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                             for (j=0; j<TNO2; j++) {
 #if  ORBITAL_SELECTION
                                 SmallHks[spin][i+SPI][j+SPJ] = 0.0;
-                                if(orbital_mask1[i]>0 | orbital_mask2[j])
+                                if(orbital_mask1[i]>0 | orbital_mask2[j]>0)
                                     continue;
 #endif
                                 SmallHks[spin][i+SPI][j+SPJ] = Hks[spin][ct_AN][h_AN][i][j];
@@ -1647,6 +1694,10 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                             sum_i = 0.0;
 
                             for(jj=1; jj<=NOI; jj++) {
+#if  ORBITAL_SELECTION3
+                                if(orbital_mask1[jj-1])
+                                    continue;
+#endif
                                 sum_r +=  C[spin1][(jj-1+MPF[Choo_atom[0]])][i].r*Vi[jj][ll] ;
                                 sum_i += -C[spin1][(jj-1+MPF[Choo_atom[0]])][i].i*Vi[jj][ll] ;
                             }
@@ -1659,7 +1710,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                         sum1_i += IVi_r[ll]*C[spin2][(ll-1+MPF[Choo_atom[0]])][j].i
                                   + IVi_i[ll]*C[spin2][(ll-1+MPF[Choo_atom[0]])][j].r ;
 #if DEBUG_MSG2
-												fprintf(stdout,"spin12 %d,%d sum1_r,i %f %f\n",spin1,spin2,sum1_r,sum1_i);
+                        fprintf(stdout,"spin12 %d,%d sum1_r,i %f %f\n",spin1,spin2,sum1_r,sum1_i);
 #endif
                     }
                     VVi_r[spin1][spin2][i][j] = sum1_r ;
@@ -1683,6 +1734,10 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                             sum_i = 0.0;
 
                             for(jj=1; jj<=NOJ; jj++) {
+#if  ORBITAL_SELECTION3
+                                if(orbital_mask2[jj-1])
+                                    continue;
+#endif
                                 sum_r +=  C[spin1][(jj-1+MPF[Choo_atom[1]])][i].r*Vj[jj][ll] ;
                                 sum_i += -C[spin1][(jj-1+MPF[Choo_atom[1]])][i].i*Vj[jj][ll] ;
                             }
@@ -1746,7 +1801,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                      (  VVj_r[0][1][i][j] * VVi_i[1][0][j][i]
                         + VVj_i[0][1][i][j] * VVi_r[1][0][j][i] ) / dko ;
 #if DEBUG_MSG
-						fprintf(stdout,"VV %f,%f\n",VVi_i[1][0][j][i],VVj_i[0][1][i][j]);
+            fprintf(stdout,"VV %f,%f\n",VVi_i[1][0][j][i],VVj_i[0][1][i][j]);
 #endif
         }
     }
@@ -1798,7 +1853,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     J_ij_r = 2.194746*100000.0*J_ij_r;
     J_ij_i = 2.194746*100000.0*J_ij_i;
 #if DEBUG_MSG
-		fprintf(stdout,"J_ij %f %f\n",J_ij_r,J_ij_i);
+    fprintf(stdout,"J_ij %f %f\n",J_ij_r,J_ij_i);
 #endif
 
     Jmat[0] = J_ij_r;
@@ -2390,8 +2445,8 @@ void Overlap_Band(double ****OLP,
             l3 = atv_ijk[Rn][3];
             kRn = k1*(double)l1 + k2*(double)l2 + k3*(double)l3;
 #if VERBOSE
-						printf("Rn %d l1 l2 l3 [%d,%d,%d] GB_AN %d tnoB %d\n",
-								Rn,l1,l2,l3,GB_AN, tnoB);
+            printf("Rn %d l1 l2 l3 [%d,%d,%d] GB_AN %d tnoB %d\n",
+                   Rn,l1,l2,l3,GB_AN, tnoB);
 #endif
 
             si = sin(2.0*PI*kRn);
@@ -2494,7 +2549,7 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
             si = sin(2.0*PI*kRn);
             co = cos(2.0*PI*kRn);
 #if DEBUG_MSG
-						fprintf(stdout,"%f %f %f %d %d %d si co %f %f\n",k1,k2,k3,l1,l2,l3,si,co);
+            fprintf(stdout,"%f %f %f %d %d %d si co %f %f\n",k1,k2,k3,l1,l2,l3,si,co);
 
 #endif
             Bnum = MP[GB_AN];
