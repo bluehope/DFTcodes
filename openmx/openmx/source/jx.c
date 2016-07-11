@@ -873,7 +873,7 @@ int main(int argc, char *argv[])
                         if(0 < orbital_mask_option) {
 							strcat(all_kpoint_output_fname,"_[");
 							strcat(all_kpoint_output_fname,orbital_mask_name);
-							strcat(all_kpoint_output_fname,"]_");
+							strcat(all_kpoint_output_fname,"]");
                             char buf[256];
                             int mask_cnt = 0;
                             if(1 == orbital_mask_option ) {
@@ -928,7 +928,10 @@ int main(int argc, char *argv[])
                                     }
                                 }
                             }
-                        }
+                        }else{
+							/* when all orbital is used */
+							strcat(all_kpoint_output_fname,"_[all]_");
+						}
                         strcat(all_kpoint_output_fname,".csv");
 
                         printf(" k1,k2,k3,JrTk,JiTk\n");
