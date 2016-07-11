@@ -119,15 +119,18 @@ int main(int argc, char *argv[])
     FILE *custom_kpoints_fp;
     int custom_kpoints_num;
     int custom_kpoints;
+	char custom_kpoints_fname[2048] = "";
+	char custom_kpoints_name[256] = ""; /* representative name for custom kpoint line */
     static double *custom_KGrids1,*custom_KGrids2,*custom_KGrids3;
     int all_kpoint_output; /* 0: no printout for each k-points, 1:printout for each k-points */
-    char all_kpoint_output_fname[2048];
-    char output_fname[2048];
+    char all_kpoint_output_fname[2048] = "";
+    char output_fname[2048] = "";
     FILE *out; /* kpoin j out*/
 
     /* selective orbital */
     int orbital_mask_option; /* 0: orbital masking off, 1: orbital maksing on */
     int *orbital_mask1,*orbital_mask2; /* orbital mask for atom 1 and 2 */
+    char orbital_mask_name[256] = ""; /* representative name for selected orbital */
 
     /* MPI initialize */
 
@@ -260,9 +263,15 @@ int main(int argc, char *argv[])
                     printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
                 } else if(1 == custom_kpoints) {
                     /* custom kpoints  */
-                    printf(" Reading kpoint.csv\n");
+					printf(" type custom_kpoint filename without '.csv' (ex: kpoint.csv then type kpoint)\n");
+					scanf("%s",custom_kpoints_name);
+					
+					strcat(custom_kpoints_fname,custom_kpoints_name);
+					strcat(custom_kpoints_fname,".csv");
+					
+                    printf(" Reading %s \n",custom_kpoints_fname);
 
-                    if(custom_kpoints_fp=fopen("kpoint.csv","r")) {
+                    if(custom_kpoints_fp=fopen(custom_kpoints_fname,"r")) {
                         /* check kpoint.csv */
                         custom_kpoints_num = 0;
                         fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
@@ -609,6 +618,7 @@ int main(int argc, char *argv[])
                     printf(" Orbital masking option? off:0 mask selected:1 unmask selected:2 \n");
                     scanf("%d",&orbital_mask_option);
                     if(0 < orbital_mask_option) {
+
                         int input_length = 0;
                         int orbital_to_mask = -1;
 
@@ -628,6 +638,9 @@ int main(int argc, char *argv[])
                             assert(orbital_to_mask < Total_NumOrbs[atmij[2]]);
                             orbital_mask2[orbital_to_mask] = 1;
                         }
+						printf(" Representative name for selected orbitals ex) eg_t2g \n");
+						scanf("%s",orbital_mask_name);
+						printf( " orbital_mask_name: %s",orbital_mask_name);
                         printf("\n");
                         if(2==orbital_mask_option) {
                             /* inverse mask */
@@ -852,12 +865,15 @@ int main(int argc, char *argv[])
                     /* print all kpoint */
                     printf("\n");
                     if(0 < all_kpoint_output) {
-                        sprintf(all_kpoint_output_fname,"jx-kpoints_meshk_%d_%d_%dx%dx%d",
+                        sprintf(all_kpoint_output_fname,"jx_meshk_%d_%d_%dx%dx%d",
                                 First_Atom,Second_Atom,knum_i,knum_j,knum_k);
                         if(1==custom_kpoints)
-                            sprintf(all_kpoint_output_fname,"jx-kpoints_%d_%d",First_Atom,Second_Atom);
+                            sprintf(all_kpoint_output_fname,"jx-%s_%d_%d",custom_kpoints_name, First_Atom,Second_Atom);
 
                         if(0 < orbital_mask_option) {
+							strcat(all_kpoint_output_fname,"_[");
+							strcat(all_kpoint_output_fname,orbital_mask_name);
+							strcat(all_kpoint_output_fname,"]_");
                             char buf[256];
                             int mask_cnt = 0;
                             if(1 == orbital_mask_option ) {
@@ -953,6 +969,7 @@ int main(int argc, char *argv[])
 
         	int *orbital_mask1;
         	int *orbital_mask2;
+			char* orbital_mask_name;
          *********************************************/
 
         free(Full_atom);
@@ -1002,6 +1019,7 @@ int main(int argc, char *argv[])
 
         free(orbital_mask1);
         free(orbital_mask2);
+		orbital_mask_name[0] = '\0';
     }
 
     /* print message */
