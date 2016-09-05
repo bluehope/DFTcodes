@@ -2796,6 +2796,7 @@ void Input_std(char *file)
     /* end unfolding */
 
     /* selective MO out bluehope*/
+    MO_selective = 0;
     if (MO_fileout == 1){
         input_int("MO.selective",&MO_selective,0);
         if (2<=level_stdout) {
