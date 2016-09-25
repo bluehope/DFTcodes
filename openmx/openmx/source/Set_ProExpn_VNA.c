@@ -33,7 +33,7 @@ static double Set_VNA3(double *****HVNA3);
 #ifdef kcomp
 static void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb );
 #else
-inline void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb );
+extern inline void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb );
 #endif
 
 
@@ -2808,7 +2808,7 @@ double Set_VNA3(double *****HVNA3)
 #ifdef kcomp
 static void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb )
 #else
-inline void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb )
+extern inline void Spherical_Bessel2( double x, int lmax, double *sb, double *dsb )
 #endif
 {
     int m,n,nmax;
