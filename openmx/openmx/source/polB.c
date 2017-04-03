@@ -2125,7 +2125,7 @@ void Hamiltonian_Band_NC(double *****RH, double *****IH,
 }
 
 
-
+#pragma optimization_level 1
 void Eigen_HH(dcomplex **ac, double *ko, int n, int EVmax)
 {
     /**********************************************************************

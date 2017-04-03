@@ -36,7 +36,7 @@
 #define S00l_ref(i,j) ( ((j)-1)*NUM_e[0]+(i)-1 )
 #define S00r_ref(i,j) ( ((j)-1)*NUM_e[1]+(i)-1 )
 
-
+int TRAN_SCF_skip,TRAN_analysis;
 
 static int SpinP_switch,SpinP_switch2;
 static int NUM_c, NUM_e[2];
@@ -1066,7 +1066,7 @@ void TRAN_Main_Analysis( MPI_Comm comm1,
 
     /* S MitsuakiKAWAMURA*/
     /********************************************
-    Start EigenChannel Analysis
+              Start EigenChannel Analysis
     *********************************************/
 
     if (TRAN_Channel_Nenergy * TRAN_Channel_Nkpoint <= 0) TRAN_Channel == 0;
@@ -1388,12 +1388,18 @@ void TRAN_Main_Analysis( MPI_Comm comm1,
     }
 
     MTRAN_Free_All();
+
     /* MPI_Finalize() and exit(0) should not be done here
        Mistuaki Kawamura
 
     MPI_Finalize();
     exit(0);
     */
+
+    if (TRAN_SCF_skip==1 && TRAN_analysis==1) {
+        MPI_Finalize();
+        exit(0);
+    }
 }
 
 
@@ -2380,7 +2386,7 @@ void MTRAN_Transmission(MPI_Comm comm1,
 
                 /* calculation of transmission  */
 
-                TRAN_Calc_OneTransmission(NUM_c, SigmaL_R, SigmaL_A, SigmaR_R, SigmaR_A, GC_R, GC_A, v1, v2 ,&value);
+                TRAN_Calc_OneTransmission(NUM_c, SigmaL_R, SigmaL_A, SigmaR_R, SigmaR_A, GC_R, GC_A, v1, v2,&value);
 
                 tran_transmission[k][iw].r = value.r;
                 tran_transmission[k][iw].i = value.i;
@@ -3076,7 +3082,7 @@ void MTRAN_Output_Conductance(
         fprintf(fp,"#\n");
         fprintf(fp,"#    G0 = e^2/h\n");
         fprintf(fp,"#       = (1.60217653 * 10^{-19})^2/(6.626076 * 10^{-34})\n");
-        fprintf(fp,"#       = 3.87404194169 * 10^{-4} [C^2 J^{-1} s^{-1}]\n");
+        fprintf(fp,"#       = 3.87404194169 * 10^{-5} [C^2 J^{-1} s^{-1}]\n");
         fprintf(fp,"#    note that\n");
         fprintf(fp,"#    e = 1.60217653 * 10^{-19} C\n");
         fprintf(fp,"#    h = 6.626076 * 10^{-34} J s\n");
@@ -4226,6 +4232,7 @@ static void MTRAN_Free_All()
         free(H00_e[iside]);
         free(H01_e[iside]);
     }
+
     for (spin = 0; spin <= SpinP_switch; spin++) {
         free(HCC[spin]);
         free(VCC[spin]);
@@ -4239,6 +4246,7 @@ static void MTRAN_Free_All()
     free(VCC);
     free(HCL);
     free(HCR);
+
     /*
     Malloc in MTRAN_Input
     */
@@ -4264,6 +4272,7 @@ static void MTRAN_Free_All()
 
         free(TRAN_Channel_energy);
     }
+
     /*
     Malloc in MTRAN_Read_Tran_HS
     */
@@ -4306,17 +4315,27 @@ static void MTRAN_Free_All()
     for (i = 0; i <= (atomnum); i++) {
         free(natn[i]);
         free(ncn[i]);
-        free(atv_ijk[i]);
     }
     free(natn);
     free(ncn);
+
+    for (i=0; i<(TCpyCell+1); i++) {
+        free(atv_ijk[i]);
+    }
     free(atv_ijk);
+
+    /*
+    printf("ZZZ6\n");
+    MPI_Finalize();
+    exit(0);
+    */
 
     free(TRAN_region);
     free(TRAN_Original_Id);
     free(WhatSpecies);
     free(Spe_Total_CNO);
     free(FNAN);
+
     /**********************************************
     informations of leads
     **********************************************/
