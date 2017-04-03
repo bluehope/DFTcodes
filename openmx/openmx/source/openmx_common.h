@@ -716,6 +716,24 @@ int **atv_ijk;
 double **MO_kpoint;
 
 /*******************************************************
+ double **MO_selection;
+  selective wave function ouput.
+  size: MO_selection[atomnum][2]
+  allocation: call as Allocate_Arrays(5) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int **MO_selection;
+ 
+/*******************************************************
+ int ***MO_basis_selection
+ wave fuction output basis selection
+  size: MO_basis_selection[SpeciesNum][Spe_MaxL_Basis+1][Spe_Num_Basis]
+  allocation: call as Allocate_Arrays(5) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int ***MO_basis_selection;
+
+/*******************************************************
  double **Spe_PAO_XV;
   radial mesh (x=log(r)) for PAO
   size: Spe_PAO_XV[List_YOUSO[18]]
@@ -2440,7 +2458,7 @@ int GeoOpt_RestartFromFile,OutData_bin_flag;
 int coordinates_unit,unitvector_unit;
 int Size_Total_Matrix,SP_PEV,EKC_core_size_max;
 int specified_system,MO_fileout,num_HOMOs,num_LUMOs;
-int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag;
+int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag,MO_selective;
 int StressConsistency_flag,stress_flag,scf_stress_flag,MD_cellopt_flag,cellopt_swtich;
 int rediagonalize_flag_overlap_matrix;
 int rediagonalize_flag_overlap_matrix_ELPA1;
