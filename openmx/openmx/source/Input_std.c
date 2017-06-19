@@ -2160,6 +2160,8 @@ void Input_std(char *file)
     i_vec[1] = -1;  /* switch off explicitly */
     s_vec[2]="on";
     i_vec[2] = 1;   /* switch on explicitly */
+    s_vec[2]="on2"; /* Hongkee Yoon */
+    i_vec[2] = 2;   /* switch on explicitly */
 
     input_string2int("scf.restart", &Scf_RestartFromFile, 3, s_vec,i_vec);
 
@@ -2182,6 +2184,10 @@ void Input_std(char *file)
             printf("Failure of saving %s\n",file_check);
         }
     }
+
+    if (Scf_RestartFromFile==2) {
+			printf("Scf_RestartFromFile 2 \n");
+	}
 
     /****************************************************
                       Band dispersion

@@ -1000,6 +1000,7 @@ double DFT(int MD_iter, int Cnt_Now)
                 }
             }
 
+
             /*****************************************************
              FFT of the initial density for k-space charge mixing
             *****************************************************/
@@ -1087,6 +1088,15 @@ double DFT(int MD_iter, int Cnt_Now)
 
             /* switch a restart flag on for proceeding MD steps */
             if (MD_switch!=0 && Scf_RestartFromFile!=-1) Scf_RestartFromFile = 1;
+            /******************************************************
+                              read restart files SCF Hongkee Yoon
+            ******************************************************/
+			if (2 == Scf_RestartFromFile) {
+				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
+
+				printf("<Restart2> restart from SCF file\n");
+				RestartSCFFileDFT("read", MD_iter, SpinP_switch, H, iHNL, OLP[0], DM[0], &etime);
+			}
 
         } /* end of if (SCF_iter==1) */
 
