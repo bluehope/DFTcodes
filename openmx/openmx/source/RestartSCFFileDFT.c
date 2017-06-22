@@ -1,6 +1,6 @@
 /**********************************************************************
  RestartSCFFileDFT.c
- RestartSCFFileDFT.c provies wayto restart OpenMX DFT routine from 
+ RestartSCFFileDFT.c provies wayto restart OpenMX DFT routine from
  AAA.scfout or AAA.scfin (future)
 **********************************************************************/
 
@@ -24,11 +24,11 @@
 void Input(FILE *fp, double *****H, double *****iHNL,
 	double ****CntOLP,
 	double *****CDM);
-int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL, 
+int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
 		double ****CntOLP,
 		double *****CDM, double *etime);
 
-int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL, 
+int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
 		double ****CntOLP,
 		double *****CDM, double *etime)
 {
@@ -38,21 +38,28 @@ int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,do
 
 	MPI_Comm_size(mpi_comm_level1, &numprocs);
 	MPI_Comm_rank(mpi_comm_level1, &myid);
+
+	//if (ML_flag) return 0;
+	if (0 != myid ) return 0;
+
 	sprintf(fname, "%s%s.scfout", filepath, filename);
 	//if (myid == Host_ID) {
+		MPI_Barrier(mpi_comm_level1);
 		if ((fp = fopen(fname, "r")) != NULL) {
 			printf("\nRead the scfout file (%s)\n", fname);
 			fflush(stdout);
-			MPI_Barrier(mpi_comm_level1);
+
 			Input(fp,H,iHNL,CntOLP,CDM);
-			MPI_Barrier(mpi_comm_level1);
+
 
 			fclose(fp);
+			printf("\nDone reading the scfout file (%s)\n", fname);
 		}
 		else {
 			printf("Failure of reading the scfout file (%s).\n", fname);
 			fflush(stdout);
 		}
+		MPI_Barrier(mpi_comm_level1);
 	//}
 	return 0;
 }
@@ -434,6 +441,10 @@ void Input(FILE *fp, double *****Hks, double *****iHks,
 				TNO2 = Total_NumOrbs[Gh_AN];
 				for (i = 0; i<TNO1; i++) {
 					fread(Hks[spin][ct_AN][h_AN][i], sizeof(double), TNO2, fp);
+#if 0
+					for (int j = 0; j < TNO2; j++)
+						Hks[spin][ct_AN][h_AN][i][j] = 0.0; //test
+#endif
 				}
 			}
 		}

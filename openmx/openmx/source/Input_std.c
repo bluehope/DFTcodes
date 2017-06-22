@@ -2160,10 +2160,12 @@ void Input_std(char *file)
     i_vec[1] = -1;  /* switch off explicitly */
     s_vec[2]="on";
     i_vec[2] = 1;   /* switch on explicitly */
-    s_vec[2]="on2"; /* Hongkee Yoon */
-    i_vec[2] = 2;   /* switch on explicitly */
+    s_vec[3]="onH"; /* Hongkee Yoon */
+    i_vec[3] = 2;   /* switch on explicitly */
+	s_vec[4] = "onDM"; /* Hongkee Yoon */
+	i_vec[4] = 3;   /* switch on explicitly */
 
-    input_string2int("scf.restart", &Scf_RestartFromFile, 3, s_vec,i_vec);
+    input_string2int("scf.restart", &Scf_RestartFromFile, 5, s_vec,i_vec);
 
     /* check the number of processors */
 
@@ -2185,8 +2187,8 @@ void Input_std(char *file)
         }
     }
 
-    if (Scf_RestartFromFile==2) {
-			printf("Scf_RestartFromFile 2 \n");
+    if (Scf_RestartFromFile>=2) {
+			printf("Scf_RestartFromFile %d\n", Scf_RestartFromFile);
 	}
 
     /****************************************************
