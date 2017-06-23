@@ -2164,8 +2164,10 @@ void Input_std(char *file)
     i_vec[3] = 2;   /* switch on explicitly */
 	s_vec[4] = "onDM"; /* Hongkee Yoon */
 	i_vec[4] = 3;   /* switch on explicitly */
+    s_vec[5] = "onDMkeep"; /* Hongkee Yoon */
+	i_vec[5] = 4;   /* switch on explicitly */
 
-    input_string2int("scf.restart", &Scf_RestartFromFile, 5, s_vec,i_vec);
+    input_string2int("scf.restart", &Scf_RestartFromFile, 6, s_vec,i_vec);
 
     /* check the number of processors */
 
@@ -2819,12 +2821,12 @@ void Input_std(char *file)
                         printf("<Input_std> MO_selection %2d %d\n",
                                 i,MO_selection[i][1]);
                     }
-                } 
+                }
                 if(!input_last("MO.selection>")){
                     /*format error*/
                     printf("Format error for MO.selection\n");
                     po++;
-                } 
+                }
             }
         }
 		if(2 == MO_selective){

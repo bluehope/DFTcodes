@@ -21,14 +21,14 @@
 #define MAX_LINE_SIZE 256
 
 #define USE_MALLOC  0
-void Input(FILE *fp, double *****H, double *****iHNL,
+void Input(char *mode, FILE *fp, double *****H, double *****iHNL,
 	double ****CntOLP,
 	double *****CDM);
 int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
 		double ****CntOLP,
 		double *****CDM, double *etime);
 
-int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
+int RestartSCFFileDFT(char *mode, int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
 		double ****CntOLP,
 		double *****CDM, double *etime)
 {
@@ -46,14 +46,14 @@ int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,do
 	//if (myid == Host_ID) {
 		MPI_Barrier(mpi_comm_level1);
 		if ((fp = fopen(fname, "r")) != NULL) {
-			printf("\nRead the scfout file (%s)\n", fname);
+			printf(" Read the scfout file (%s)\n", fname);
 			fflush(stdout);
 
-			Input(fp,H,iHNL,CntOLP,CDM);
+			Input(mode,fp,H,iHNL,CntOLP,CDM);
 
 
 			fclose(fp);
-			printf("\nDone reading the scfout file (%s)\n", fname);
+			printf(" Done reading the scfout file (%s)\n", fname);
 		}
 		else {
 			printf("Failure of reading the scfout file (%s).\n", fname);
@@ -67,7 +67,7 @@ int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,do
 
 
 
-void Input(FILE *fp, double *****Hks, double *****iHks,
+void Input(char *mode, FILE *fp, double *****Hks, double *****iHks,
 	double ****OLP,
 	double *****DM)
 {
@@ -81,6 +81,10 @@ void Input(FILE *fp, double *****Hks, double *****iHks,
 	FILE *fp_makeinp;
 	char buf[fp_bsize];          /* setvbuf */
 
+	static int readH = 1;
+	if(0 == strcasecmp(mode,"readonlydm")){
+		readH = 0;
+	}
 	/****************************************************
 	  atomnum
 	  spinP_switch
@@ -439,12 +443,22 @@ void Input(FILE *fp, double *****Hks, double *****iHks,
 			for (h_AN = 0; h_AN <= FNAN[ct_AN]; h_AN++) {
 				Gh_AN = natn[ct_AN][h_AN];
 				TNO2 = Total_NumOrbs[Gh_AN];
-				for (i = 0; i<TNO1; i++) {
-					fread(Hks[spin][ct_AN][h_AN][i], sizeof(double), TNO2, fp);
+				// readH
+				if(1 == readH){
+					for (i = 0; i < TNO1; i++)
+					{
+						fread(Hks[spin][ct_AN][h_AN][i], sizeof(double), TNO2, fp);
 #if 0
 					for (int j = 0; j < TNO2; j++)
 						Hks[spin][ct_AN][h_AN][i][j] = 0.0; //test
 #endif
+					}
+				}else{
+					/* do not update Hks */
+					double* tmpread = (double*)malloc(sizeof(double)*TNO2);
+					for (i = 0; i < TNO1; i++)
+						fread(tmpread, sizeof(double), TNO2, fp);
+					free(tmpread);
 				}
 			}
 		}
@@ -599,6 +613,28 @@ void Input(FILE *fp, double *****Hks, double *****iHks,
 	else {
 		printf("error in making temporal_12345.input\n");
 	}
+
+	/* Free up */
+	for (ct_AN = 0; ct_AN <= atomnum; ct_AN++) {
+		TNO1 = Total_NumOrbs[ct_AN];
+		for (h_AN = 0; h_AN <= FNAN[ct_AN]; h_AN++) {
+
+			for (i = 0; i<TNO1; i++) {
+				free(OLPpox[ct_AN][h_AN][i]);
+				free(OLPpoy[ct_AN][h_AN][i]);
+				free(OLPpoz[ct_AN][h_AN][i]);
+			}
+			free(OLPpox[ct_AN][h_AN]);
+			free(OLPpoy[ct_AN][h_AN]);
+			free(OLPpoz[ct_AN][h_AN]);
+		}
+		free(OLPpox[ct_AN]);
+		free(OLPpoy[ct_AN]);
+		free(OLPpoz[ct_AN]);
+	}
+	free(OLPpox);
+	free(OLPpoy);
+	free(OLPpoz);
 
 }
 

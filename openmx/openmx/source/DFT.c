@@ -1002,7 +1002,7 @@ double DFT(int MD_iter, int Cnt_Now)
 			/******************************************************
 				read restart files SCF Hongkee Yoon read DM and set H
 			******************************************************/
-			if (3 == Scf_RestartFromFile) {
+			if ((3 == Scf_RestartFromFile) || (4 == Scf_RestartFromFile)) {
 				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
 
 				printf("<Restart2> restart from  DM in SCF file \n");
@@ -1145,6 +1145,26 @@ double DFT(int MD_iter, int Cnt_Now)
             }
 
         }
+        /******************************************************
+				read restart files SCF Hongkee Yoon read DM and
+                do NOT set H
+                DM is fixed and H is mixed
+		******************************************************/
+			if (4 == Scf_RestartFromFile) {
+				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
+
+				printf("<Restart2> keep DM from SCF file \n");
+				RestartSCFFileDFT("readonlydm", SpinP_switch, MD_iter, H, iHNL, OLP[0], DM[0], &etime);
+				/* read density & Set Hamiltonian from DM */
+
+				MPI_Barrier(mpi_comm_level1);
+                MPI_Allreduce(&My_SucceedReadingDMfile, &SucceedReadingDMfile,
+                              1, MPI_INT, MPI_PROD, mpi_comm_level1);
+				time11 += Set_Density_Grid(Cnt_kind, Calc_CntOrbital_ON, DM[0]);
+                MPI_Barrier(mpi_comm_level1);
+				//time3 += Set_Hamiltonian("stdout", SCF_iter, SucceedReadingDMfile, Cnt_kind, H0, HNL, DM[0], H);
+                //MPI_Barrier(mpi_comm_level1);
+			}
 
         /****************************************************
          In case of RMM-DIISH (Mixing_switch==5), the mixing
@@ -1182,7 +1202,7 @@ double DFT(int MD_iter, int Cnt_Now)
         }
 
         /* if (Cnt_switch==0) { */
-        printf("SCF_iter %d SCF_MAX %d\n", SCF_iter, SCF_MAX);
+        // printf("SCF_iter %d SCF_MAX %d\n", SCF_iter, SCF_MAX);
 		if (SCF_iter < SCF_MAX) {
 			if (Cnt_switch == 0) { /* For the case : Only generate Hamiltoian from DM and BYPASS eigenvalue problem */
 
