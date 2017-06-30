@@ -1164,6 +1164,7 @@ double DFT(int MD_iter, int Cnt_Now)
                 MPI_Barrier(mpi_comm_level1);
 				//time3 += Set_Hamiltonian("stdout", SCF_iter, SucceedReadingDMfile, Cnt_kind, H0, HNL, DM[0], H);
                 //MPI_Barrier(mpi_comm_level1);
+                time14 += Mulliken_Charge("stdout");
 			}
 
         /****************************************************
