@@ -101,9 +101,9 @@ int EXX_Step1(
         iop0 += (i<nop_m) ? (nop_n+1) : (nop_n);
     }
 
-    EXX_LOG_TRACE_INTEGER("IOP0"     , iop0);
-    EXX_LOG_TRACE_INTEGER("NOP_N"    , nop_n);
-    EXX_LOG_TRACE_INTEGER("NOP_M"    , nop_m);
+    EXX_LOG_TRACE_INTEGER("IOP0", iop0);
+    EXX_LOG_TRACE_INTEGER("NOP_N", nop_n);
+    EXX_LOG_TRACE_INTEGER("NOP_M", nop_m);
     EXX_LOG_TRACE_INTEGER("NOP_LOCAL", nop_local);
 
     /*----- initialize LIBERI -----*/

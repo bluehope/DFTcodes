@@ -2217,47 +2217,47 @@ static double Cluster_non_collinear(
 
                                     /* Re11 */
                                     dum = FermiF*(C[k][Anum+i].r*C[k][Bnum+j].r
-                                    + C[k][Anum+i].i*C[k][Bnum+j].i);
+                                                  + C[k][Anum+i].i*C[k][Bnum+j].i);
                                     CDM[0][MA_AN][LB_AN][i][j] += dum;
                                     EDM[0][MA_AN][LB_AN][i][j] += dum*ko[k];
 
                                     /* Re22 */
                                     dum = FermiF*(C[k][Anum+i+n].r*C[k][Bnum+j+n].r
-                                    + C[k][Anum+i+n].i*C[k][Bnum+j+n].i);
+                                                  + C[k][Anum+i+n].i*C[k][Bnum+j+n].i);
                                     CDM[1][MA_AN][LB_AN][i][j] += dum;
                                     EDM[1][MA_AN][LB_AN][i][j] += dum*ko[k];
 
                                     /* Re12 */
                                     dum = FermiF*(C[k][Anum+i].r*C[k][Bnum+j+n].r
-                                    + C[k][Anum+i].i*C[k][Bnum+j+n].i);
+                                                  + C[k][Anum+i].i*C[k][Bnum+j+n].i);
                                     CDM[2][MA_AN][LB_AN][i][j] += dum;
                                     EDM[2][MA_AN][LB_AN][i][j] += dum*ko[k];
 
                                     /* Im12 */
                                     dum = FermiF*(C[k][Anum+i].r*C[k][Bnum+j+n].i
-                                    -C[k][Anum+i].i*C[k][Bnum+j+n].r);
+                                                  -C[k][Anum+i].i*C[k][Bnum+j+n].r);
                                     CDM[3][MA_AN][LB_AN][i][j] += dum;
                                     EDM[3][MA_AN][LB_AN][i][j] += dum*ko[k];
 
                                     /* Im11 */
                                     dum = FermiF*(C[k][Anum+i].r*C[k][Bnum+j].i
-                                    -C[k][Anum+i].i*C[k][Bnum+j].r);
+                                                  -C[k][Anum+i].i*C[k][Bnum+j].r);
                                     iDM[0][0][MA_AN][LB_AN][i][j] += dum;
 
                                     /* Im22 */
                                     dum = FermiF*(C[k][Anum+i+n].r*C[k][Bnum+j+n].i
-                                    -C[k][Anum+i+n].i*C[k][Bnum+j+n].r);
+                                                  -C[k][Anum+i+n].i*C[k][Bnum+j+n].r);
                                     iDM[0][1][MA_AN][LB_AN][i][j] += dum;
 
                                     /* partial density matrix for STM simulation */
                                     if (cal_partial_charge) {
 
                                         dum = diffF*(C[k][Anum+i].r*C[k][Bnum+j].r
-                                        + C[k][Anum+i].i*C[k][Bnum+j].i);
+                                                     + C[k][Anum+i].i*C[k][Bnum+j].i);
                                         Partial_DM[0][MA_AN][LB_AN][i][j] += dum;
 
                                         dum = diffF*(C[k][Anum+i+n].r*C[k][Bnum+j+n].r
-                                        + C[k][Anum+i+n].i*C[k][Bnum+j+n].i);
+                                                     + C[k][Anum+i+n].i*C[k][Bnum+j+n].i);
                                         Partial_DM[1][MA_AN][LB_AN][i][j] += dum;
                                     }
                                 }

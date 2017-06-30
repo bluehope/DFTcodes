@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
         rewind( fp1 );
 
         tnelement = 0;
-        while(( ret = fscanf( fp1 , "%lf" , buf )) != EOF ) {
+        while(( ret = fscanf( fp1, "%lf", buf )) != EOF ) {
             tnelement++;
         }
 

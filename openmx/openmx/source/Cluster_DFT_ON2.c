@@ -38,7 +38,7 @@ static double Find_Trial_ChemP_by_Muller(
 
 static void qsort_complex(long n, long *a, double complex *b);
 static int clists_cmp(const clists *x, const clists *y);
-int Lapack_LU_Zinverse(int , dcomplex *);
+int Lapack_LU_Zinverse(int, dcomplex *);
 
 static void Nested_Dissection( int free_flag, int Nmat, int *MP,
                                int *Depth_Level, int *Number_Division);

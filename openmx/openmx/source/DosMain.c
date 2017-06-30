@@ -370,7 +370,7 @@ void Dos_Histgram( char *basename, int Dos_N,
     int ie,spin,i,j,k,ieg,iecenter;
     double *DosE, **Dos;
     double eg,x,factor;
-    int N_Dos , i_Dos[10];
+    int N_Dos, i_Dos[10];
     char file_Dos[YOUSO10];
     FILE *fp_Dos;
     char fp_buf[fp_bsize];          /* setvbuf */
@@ -2833,7 +2833,7 @@ void input_file_eg(char *file_eg,
         i_vec2[1]=0;
         i_vec2[2]=0;
 
-        input_intv("irange" , 2,i_vec,i_vec2);
+        input_intv("irange", 2,i_vec,i_vec2);
         *iemin=i_vec[0];
         *iemax= i_vec[1];
 
@@ -3345,7 +3345,7 @@ void input_main( int mode, int Kgrid[3], int atomnum,
             }
             /*  printf("pdos_n=%d\n",*pdos_n); */
             *pdos_atoms=(int*)malloc(sizeof(int)*(*pdos_n));
-            for (c=strtok(buf2," ") , i=0; i<*pdos_n; c=strtok(NULL," "),i++)  {
+            for (c=strtok(buf2," "), i=0; i<*pdos_n; c=strtok(NULL," "),i++)  {
                 /*  printf("<%s> ",c); */
                 sscanf(c,"%d",&(*pdos_atoms)[i]);
             }
