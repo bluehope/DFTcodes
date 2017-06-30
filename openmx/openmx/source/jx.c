@@ -1,4 +1,7 @@
 /**********************************************************************
+
+  jx.c:
+
   This program code calculates spin-spin interaction
   coupling constant J between the selected two atoms
 
@@ -7,7 +10,6 @@
       7/Dec/2003  Modified by Taisuke Ozaki
      03/Mar/2011  Modified by Fumiyuki Ishii for MPI
 ***********************************************************************/
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,20 +23,11 @@
 #include "f77func.h"
 #include "mpi.h"
 
-#include <assert.h>
-#include <string.h>
+
 #define Host_ID       0         /* ID of the host CPU in MPI */
 
 #define printout  0    /* 0:off, 1:on */
 #define PI   3.1415926535897932384626
-
-#define VERBOSE 0
-#define DEBUG_MSG 0
-#define DEBUG_MSG2 0
-#define ORBITAL_SELECTION  0 /* for calc_J_band1 only */
-#define ORBITAL_SELECTION2 0
-#define ORBITAL_SELECTION3 1
-static const double  Shift_K_Point = 0 ; /*1e-6; */
 
 static void Eigen_lapack(double **a, double *ko, int n);
 static void EigenBand_lapack(dcomplex **A, double *W, int N);
@@ -54,9 +47,7 @@ static void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
                              double k1, double k2, double k3);
 static void calc_J_band1(int First_Atom, int Second_Atom, int *MPF,
                          dcomplex ***C, double **ko,
-                         int F_TNumOrbs, int F_TNumOrbs3, double Jmat[2],
-                         double k1, double k2,double k3,
-                         int *orbital_mask1,int *orbital_mask2);
+                         int F_TNumOrbs, int F_TNumOrbs3, double Jmat[2]);
 static void dtime(double *t);
 
 
@@ -115,23 +106,6 @@ int main(int argc, char *argv[])
     static int l,n,n2,n1,i1,j1,l1;
     static double sum,sumi,sum1;
 
-    /* for each K-point output*/
-    FILE *custom_kpoints_fp;
-    int custom_kpoints_num;
-    int custom_kpoints;
-	char custom_kpoints_fname[2048] = "";
-	char custom_kpoints_name[256] = ""; /* representative name for custom kpoint line */
-    static double *custom_KGrids1,*custom_KGrids2,*custom_KGrids3;
-    int all_kpoint_output; /* 0: no printout for each k-points, 1:printout for each k-points */
-    char all_kpoint_output_fname[2048] = "";
-    char output_fname[2048] = "";
-    FILE *out; /* kpoin j out*/
-
-    /* selective orbital */
-    int orbital_mask_option; /* 0: orbital masking off, 1: orbital maksing on */
-    int *orbital_mask1,*orbital_mask2; /* orbital mask for atom 1 and 2 */
-    char orbital_mask_name[256] = ""; /* representative name for selected orbital */
-
     /* MPI initialize */
 
     MPI_Status stat;
@@ -166,37 +140,6 @@ int main(int argc, char *argv[])
     s_vec[5]="GDC";
     s_vec[6]="Cluster2";
 
-    if (myid == Host_ID) {
-        /* lattice vector & reciprocal lattice vector print*/
-        printf("TCpyCell %d\n",TCpyCell);
-        printf(" tv \n");
-        sprintf(output_fname,"latticeVector.csv");
-        if(NULL!=(out = fopen(output_fname,"w"))) {
-            for(i=1; i<=3; i++) {
-                printf(" %f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
-                fprintf(out,"%f,%f,%f\n",tv[i][1],tv[i][2],tv[i][3]);
-            }
-            printf(" rtv \n");
-            for(i=1; i<=3; i++) {
-                printf(" %f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
-                fprintf(out, "%f,%f,%f\n",rtv[i][1],rtv[i][2],rtv[i][3]);
-            }
-            fclose(out);
-        }
-        /* User input */
-        printf("SpinP_switch %d\n",SpinP_switch);
-        for (ct_AN=1; ct_AN<=atomnum; ct_AN++) {
-            printf("Atom %d Total_NumOrbs %d\n",ct_AN,Total_NumOrbs[ct_AN]);
-        }
-        printf(" Solver type [typeid,type] \n");
-        for (i=0; i<=6; i++) {
-            printf("[%d:%s] ",i+1,s_vec[i]);
-        }
-        printf("\n Select Solver: \n");
-        scanf("%d",&Solver);
-    }
-    MPI_Bcast(&Solver, 4, MPI_INT, 0, comm1);
-
     if (myid==Host_ID) {
         printf(" Previous eigenvalue solver = %s\n",s_vec[Solver-1]);
         printf(" atomnum                    = %i\n",atomnum);
@@ -209,16 +152,16 @@ int main(int argc, char *argv[])
         /**** Calculation of J for bulk system  ****/
 
         /*************************************************************************
-        	Calculation flow in the evaluation of J:
+         Calculation flow in the evaluation of J:
 
-        	PART-1 : set full Hamiltonian and overlap
-        	PART-2 : the generalized eigenvalue problem HC = ESC
-        	PART-3 : Calculation of J
-         **************************************************************************/
+         PART-1 : set full Hamiltonian and overlap
+         PART-2 : the generalized eigenvalue problem HC = ESC
+         PART-3 : Calculation of J
+        **************************************************************************/
 
         /*************************************************************************
-        	PART-1 :  set full Hamiltonian and overlap
-         **************************************************************************/
+         PART-1 :  set full Hamiltonian and overlap
+        **************************************************************************/
 
         if (myid==Host_ID) {
             printf(" \nEvaluation of J based on band calculation\n");
@@ -232,10 +175,10 @@ int main(int argc, char *argv[])
         }
 
         /*********************************************
-        	make an array MPF which specifies the starting
-        	position of atom II in the martix such as
-        	a full but small Hamiltonian
-         *********************************************/
+        make an array MPF which specifies the starting
+        position of atom II in the martix such as
+        a full but small Hamiltonian
+        *********************************************/
 
         Anum = 1;
         for (i=0; i<atomnum; i++) {
@@ -246,79 +189,28 @@ int main(int argc, char *argv[])
         F_TNumOrbs3 = F_TNumOrbs + 3;
 
         /*********************************************
-        	get knum_i, knum_j, and knum_k
-         *********************************************/
+             get knum_i, knum_j, and knum_k
+        *********************************************/
 
         do {
             if (myid==Host_ID) {
-                Nk[1] = 0;
-                Nk[2] = 0;
-                Nk[3] = 0;
-                printf(" Custom k-grids? 0: no 1: yes (will read kpoint.csv) \n");
-                scanf("%d",&custom_kpoints);
-                printf("input custom_kpoints %d\n",custom_kpoints);
-                if (0 == custom_kpoints) {
-                    printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
-                    scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
-                    printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
-                } else if(1 == custom_kpoints) {
-                    /* custom kpoints  */
-					printf(" type custom_kpoint filename without '.csv' (ex: kpoint.csv then type kpoint)\n");
-					scanf("%s",custom_kpoints_name);
-					
-					strcat(custom_kpoints_fname,custom_kpoints_name);
-					strcat(custom_kpoints_fname,".csv");
-					
-                    printf(" Reading %s \n",custom_kpoints_fname);
-
-                    if(custom_kpoints_fp=fopen(custom_kpoints_fname,"r")) {
-                        /* check kpoint.csv */
-                        custom_kpoints_num = 0;
-                        fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
-
-                        T_knum = 0;
-                        while(0<fscanf(custom_kpoints_fp, "%lf,%lf,%lf",&k1,&k2,&k3) ) {
-                            T_knum++;
-                            /* printf("%d :%lf,%lf,%lf\n",T_knum,k1,k2,k3); */
-
-                        }
-                        if(custom_kpoints_num == T_knum) {
-                            printf(" Reading kpoint.csv finished: %d k-grids\n",
-                                   custom_kpoints_num);
-                        } else {
-                            printf(" Reading kpoint.csv finished: %d k-grids but only %d k-grids\n",
-                                   custom_kpoints_num,T_knum);
-                        }
-                        fclose(custom_kpoints_fp);
-                    }
-                }
+                printf(" Specify the number of k-grids (e.g 4 4 4)  \n");
+                scanf("%d %d %d",&Nk[1],&Nk[2],&Nk[3]);
+                printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
             }
             MPI_Bcast(Nk, 4, MPI_INT, 0, comm1);
             knum_i=Nk[1];
             knum_j=Nk[2];
             knum_k=Nk[3];
-            knum_switch = 0;
-            /* custom kpoints  */
-            MPI_Bcast(&custom_kpoints_num, 1, MPI_INT, 0, comm1);
-            MPI_Bcast(&T_knum, 1, MPI_INT, 0, comm1);
-            MPI_Bcast(&custom_kpoints , 1, MPI_INT, 0, comm1);
-            if( 0 == custom_kpoints ) {
-                if ( knum_i<=0 || knum_j<=0 || knum_k<=0 ) {
-                    printf("invalid number\n");
-                    knum_switch = 0;
-                }
-                else {
-                    knum_switch = 1;
-                }
-            } else if(1 == custom_kpoints) {
-                if((custom_kpoints_num != T_knum) || T_knum <= 0 ) {
-                    printf("invalid kpoint.csv input custom_kpoints_num %d T_knum %d\n",
-                           custom_kpoints_num,T_knum  );
-                } else {
-                    knum_switch = 1;
-                }
-            }
 
+
+            if ( knum_i<=0 || knum_j<=0 || knum_k<=0 ) {
+                printf("invalid number\n");
+                knum_switch = 0;
+            }
+            else {
+                knum_switch = 1;
+            }
         } while(knum_switch==0);
 
         /****************************************************
@@ -384,20 +276,17 @@ int main(int argc, char *argv[])
 
         for (i=0; i<=(knum_i-1); i++) {
             if (knum_i==1) k1 = 0.0;
-            /* else           k1 = ((double)i)/(2.0*(snum_i-1)); */
             else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);
             KGrids1[i]=k1;
         }
         for (i=0; i<=(knum_j-1); i++) {
             if (knum_j==1) k1 = 0.0;
-            /* else           k1 = ((double)i)/(2.0*(snum_j-1)); */
-            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);
+            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_j);
             KGrids2[i]=k1;
         }
         for (i=0; i<=(knum_k-1); i++) {
             if (knum_k==1) k1 = 0.0;
-            /*else           k1 = ((double)i)/(2.0*(snum_k-1));*/
-            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_i);
+            else           k1 = -0.5 + (2.0*(double)i+1.0)/(2.0*snum_k);
             KGrids3[i]=k1;
         }
 
@@ -458,14 +347,11 @@ int main(int argc, char *argv[])
         ************************************/
 
 
-
-        if(0 == custom_kpoints) {
-            T_knum = 0;
-            for (i=0; i<=(knum_i-1); i++) {
-                for (j=0; j<=(knum_j-1); j++) {
-                    for (k=0; k<=(knum_k-1); k++) {
-                        T_knum++;
-                    }
+        T_knum = 0;
+        for (i=0; i<=(knum_i-1); i++) {
+            for (j=0; j<=(knum_j-1); j++) {
+                for (k=0; k<=(knum_k-1); k++) {
+                    T_knum++;
                 }
             }
         }
@@ -479,54 +365,23 @@ int main(int argc, char *argv[])
         arpo = (int*)malloc(sizeof(int)*numprocs);
 
         /* set T_KGrids1,2,3 and T_k_op */
-        if(0 == custom_kpoints) {
-            T_knum = 0;
-            for (i=0; i<=(knum_i-1); i++) {
-                for (j=0; j<=(knum_j-1); j++) {
-                    for (k=0; k<=(knum_k-1); k++) {
 
-                        T_KGrids1[T_knum] = KGrids1[i];
-                        T_KGrids2[T_knum] = KGrids2[j];
-                        T_KGrids3[T_knum] = KGrids3[k];
-                        JrTk[T_knum]=0.0;
-                        JiTk[T_knum]=0.0;
+        T_knum = 0;
+        for (i=0; i<=(knum_i-1); i++) {
+            for (j=0; j<=(knum_j-1); j++) {
+                for (k=0; k<=(knum_k-1); k++) {
 
-                        T_knum++;
-                    }
+                    T_KGrids1[T_knum] = KGrids1[i];
+                    T_KGrids2[T_knum] = KGrids2[j];
+                    T_KGrids3[T_knum] = KGrids3[k];
+                    JrTk[T_knum]=0.0;
+                    JiTk[T_knum]=0.0;
+
+                    T_knum++;
                 }
             }
-        } else if(1== custom_kpoints) {
-            /* custom kpoints  */
-            custom_KGrids1 = (double*)malloc(sizeof(double)*T_knum);
-            custom_KGrids2 = (double*)malloc(sizeof(double)*T_knum);
-            custom_KGrids3 = (double*)malloc(sizeof(double)*T_knum);
-
-            custom_kpoints_fp=fopen("kpoint.csv","r");
-            T_knum = 0;
-            fscanf(custom_kpoints_fp,"%d",&custom_kpoints_num);
-            while(0<fscanf(custom_kpoints_fp, "%lf,%lf,%lf",&k1,&k2,&k3) ) {
-                custom_KGrids1[T_knum] = k1;
-                custom_KGrids2[T_knum] = k2;
-                custom_KGrids3[T_knum] = k3;
-                T_knum++;
-            }
-            fclose(custom_kpoints_fp);
-            if( T_knum != custom_kpoints_num)
-                return -1;
-
-            T_knum = 0;
-            for(T_knum = 0; T_knum < custom_kpoints_num; T_knum++) {
-                T_KGrids1[T_knum] = custom_KGrids1[T_knum];
-                T_KGrids2[T_knum] = custom_KGrids2[T_knum];
-                T_KGrids3[T_knum] = custom_KGrids3[T_knum];
-
-                JrTk[T_knum]=0.0;
-                JiTk[T_knum]=0.0;
-            }
-            free(custom_KGrids1);
-            free(custom_KGrids2);
-            free(custom_KGrids3);
         }
+
         /****  allocate k-point  into proccessors *****/
 
         if (T_knum<=myid) {
@@ -565,23 +420,10 @@ int main(int argc, char *argv[])
 
                 if (atmij[1] > 0) {
                     printf(" Atom:i,j = %d, %d \n",atmij[1], atmij[2]);
-
-                    /* get all_kpoint_output */
-                    all_kpoint_output = 0;
-                    printf(" Print all k-grids J value?  off:0  on:1\n");
-                    scanf("%d",&all_kpoint_output);
-                    if(0 < all_kpoint_output) {
-                        printf("all k-grids output mode:on\n");
-                    } else {
-                        printf("all k-grids output mode:off\n");
-                    }
-                    fflush(stdout);
-
                 }
                 else {
                     printf(" ******* exit \n");
                 }
-
             }
 
             MPI_Bcast(atmij, 3, MPI_INT, 0, comm1);
@@ -589,10 +431,10 @@ int main(int argc, char *argv[])
             First_Atom  = atmij[1];
             Second_Atom = atmij[2];
 
-            if (First_Atom==0 && Second_Atom==0) {
+            if      (First_Atom==0 && Second_Atom==0) {
                 end_switch = 1;
                 MPI_Finalize();
-                exit(0);
+                exit(1);
             }
             else if (First_Atom==0 && Second_Atom!=0 ||
                      First_Atom!=0 && Second_Atom==0) {
@@ -603,76 +445,9 @@ int main(int argc, char *argv[])
             }
             else {
 
-                /* selective orbital */
-                orbital_mask1 = (int*)malloc(sizeof(int)*Total_NumOrbs[atmij[1]]);
-                orbital_mask2 = (int*)malloc(sizeof(int)*Total_NumOrbs[atmij[2]]);
-                for(i=0; i<Total_NumOrbs[atmij[1]]; i++) {
-                    orbital_mask1[i]=0; /* 0: unmask 1: mask */
-                }
-                for(i=0; i<Total_NumOrbs[atmij[2]]; i++) {
-                    orbital_mask2[i]=0;
-                }
-                if(myid == Host_ID) {
-
-                    orbital_mask_option = 0;
-                    printf(" Orbital masking option? off:0 mask selected:1 unmask selected:2 \n");
-                    scanf("%d",&orbital_mask_option);
-                    if(0 < orbital_mask_option) {
-
-                        int input_length = 0;
-                        int orbital_to_mask = -1;
-
-                        printf(" Number of orbitals to mask or unmask for atom1: %d (%d orbitals)\n",
-                               atmij[1],Total_NumOrbs[atmij[1]]);
-                        scanf("%d",&input_length);
-                        for(i=0; i<input_length; i++) {
-                            scanf("%d",&orbital_to_mask);
-                            assert(orbital_to_mask < Total_NumOrbs[atmij[1]]);
-                            orbital_mask1[orbital_to_mask] = 1;
-                        }
-                        printf(" Number of orbitals to mask or unmask for atom2: %d (%d orbitals)\n",
-                               atmij[2],Total_NumOrbs[atmij[2]]);
-                        scanf("%d",&input_length);
-                        for(i=0; i<input_length; i++) {
-                            scanf("%d",&orbital_to_mask);
-                            assert(orbital_to_mask < Total_NumOrbs[atmij[2]]);
-                            orbital_mask2[orbital_to_mask] = 1;
-                        }
-						printf(" Representative name for selected orbitals ex) eg_t2g \n");
-						scanf("%s",orbital_mask_name);
-						printf( " orbital_mask_name: %s",orbital_mask_name);
-                        printf("\n");
-                        if(2==orbital_mask_option) {
-                            /* inverse mask */
-                            for(i=0; i<Total_NumOrbs[atmij[1]]; i++) {
-                                if(1 == orbital_mask1[i])
-                                    orbital_mask1[i]= 0;
-                                else
-                                    orbital_mask1[i]= 1;
-
-                            }
-                            for(i=0; i<Total_NumOrbs[atmij[2]]; i++) {
-                                if(1 == orbital_mask2[i])
-                                    orbital_mask2[i]= 0;
-                                else
-                                    orbital_mask2[i]= 1;
-                            }
-                        }
-                        fflush(stdout);
-
-
-                    }
-
-                }
-                MPI_Bcast(orbital_mask1, Total_NumOrbs[atmij[1]], MPI_INT, 0, comm1);
-                MPI_Bcast(orbital_mask2, Total_NumOrbs[atmij[2]], MPI_INT, 0, comm1);
-                MPI_Barrier(comm1);
-
-
-
                 /****************************************************
-                	calculation of J
-                 ****************************************************/
+                                      calculation of J
+                ****************************************************/
 
                 /* loop for k-grids */
 
@@ -689,8 +464,6 @@ int main(int argc, char *argv[])
                         MPI_Bcast(&arpo[ID], 1, MPI_INT, ID, comm1);
                     }
                     if (myid==Host_ID) {
-                        fprintf(stderr,"%.2f%% ",100.0*(double)(kloop+1)/(double)num_kloop0);
-                        fflush(stderr);
                     }
 
                     kloop = arpo[myid];
@@ -702,16 +475,16 @@ int main(int argc, char *argv[])
 
                     if (0<=kloop) {
 
-                        k1 = T_KGrids1[kloop] + Shift_K_Point;
-                        k2 = T_KGrids2[kloop] - Shift_K_Point;
-                        k3 = T_KGrids3[kloop] + 2*Shift_K_Point;
+                        k1 = T_KGrids1[kloop];
+                        k2 = T_KGrids2[kloop];
+                        k3 = T_KGrids3[kloop];
                         JrTk[kloop]=0.0;
                         JiTk[kloop]=0.0;
 
                         /****************************************************
-                        	MPF indicates the starting position of
-                        	atom i in arraies H and S
-                         ****************************************************/
+                         MPF indicates the starting position of
+                        	 atom i in arraies H and S
+                        ****************************************************/
 
                         Overlap_Band(OLP,S,MPF,k1,k2,k3);
 
@@ -727,8 +500,8 @@ int main(int argc, char *argv[])
                             Hamiltonian_Band(Hks[spin], H, MPF, k1, k2, k3);
 
                             /****************************************************
-                            	M1 * U^t * H * U * M1
-                             ****************************************************/
+                               M1 * U^t * H * U * M1
+                            ****************************************************/
 
                             for (i1=1; i1<=n; i1++) {
                                 for (j1=P_min; j1<=n; j1++) {
@@ -770,9 +543,9 @@ int main(int argc, char *argv[])
                             EigenBand_lapack(C,ko[spin],n1);
 
                             /****************************************************
-                            	Transformation to the original eigenvectors.
-                            	NOTE JRCAT-244p and JAIST-2122p
-                             ****************************************************/
+                             Transformation to the original eigenvectors.
+                               NOTE JRCAT-244p and JAIST-2122p
+                            ****************************************************/
 
                             for (i1=1; i1<=n; i1++) {
                                 for (j1=1; j1<=n; j1++) {
@@ -785,28 +558,14 @@ int main(int argc, char *argv[])
                                 for (j1=1; j1<=n1; j1++) {
                                     sum = 0.0;
                                     sumi=0.0;
-#if DEBUG_MSG
-                                    fprintf(stdout,"C_i Si");
-#endif
                                     for (l=P_min; l<=n; l++) {
                                         sum  +=  S[i1][l].r*M1[l]*C[l-(P_min-1)][j1].r
                                                  - S[i1][l].i*M1[l]*C[l-(P_min-1)][j1].i;
                                         sumi +=  S[i1][l].r*M1[l]*C[l-(P_min-1)][j1].i
                                                  + S[i1][l].i*M1[l]*C[l-(P_min-1)][j1].r;
-#if DEBUG_MSG
-                                        fprintf(stdout,"M1 %f %f S %f %f\n",
-                                                M1[l]*C[l-(P_min-1)][j1].r, M1[l]*C[l-(P_min-1)][j1].i,
-                                                S[i1][l].r,S[i1][l].i);
-#endif
                                     }
-#if DEBUG_MSG
-                                    fprintf(stdout,"\n");
-#endif
                                     Coes[spin][i1][j1].r = sum;
                                     Coes[spin][i1][j1].i = sumi;
-#if DEBUG_MSG
-                                    fprintf(stdout,"Coes sumi %f\n",sumi);
-#endif
                                 }
                             }
 
@@ -814,22 +573,20 @@ int main(int argc, char *argv[])
                         } /* spin */
 
                         /*************************************************************************
-                        	PART-3 : Calculation of J
+                           PART-3 : Calculation of J
 
-                        	1) V_i,alpha,beta = < i,alpha | V_i | j,beta >
-                        	= 0.5 * ( H_i,alpha,i,beta(0) - H_i,alpha,i,beta(1) )
+                        1) V_i,alpha,beta = < i,alpha | V_i | j,beta >
+                        	          = 0.5 * ( H_i,alpha,i,beta(0) - H_i,alpha,i,beta(1) )
 
-                        	2) V'_i = SUM_alpha,beta{ C_i,alpha * V_alpha,beta * C_i,beta }
+                        2) V'_i = SUM_alpha,beta{ C_i,alpha * V_alpha,beta * C_i,beta }
 
-                        	3) calculation of J from V'
-                         **************************************************************************/
+                        3) calculation of J from V'
+                        **************************************************************************/
 
                         /* calculation of J */
 
                         calc_J_band1(First_Atom, Second_Atom, MPF, Coes, ko,
-                                     n1, F_TNumOrbs3, Jmat,
-                                     k1,k2,k3,
-                                     orbital_mask1,orbital_mask2);
+                                     n1, F_TNumOrbs3, Jmat);
 
                         JrTk[kloop] += Jmat[0];
                         JiTk[kloop] += Jmat[1];
@@ -841,115 +598,23 @@ int main(int argc, char *argv[])
 
 
                 MPI_Barrier(comm1);
-                if(0 == custom_kpoints) {
-                    kloop=0;
-                    for (i=0; i<=(knum_i-1); i++) {
-                        for (j=0; j<=(knum_j-1); j++) {
-                            for (k=0; k<=(knum_k-1); k++) {
-                                ID1 = Tkmesh2ID[kloop];
-                                MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                                MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                                kloop++;
-                            }
-                        }
-                    }
-                } else if(1== custom_kpoints) {
-                    for (kloop=0; kloop < T_knum; kloop++) {
-                        ID1 = Tkmesh2ID[kloop];
-                        MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                        MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
-                    }
-                }
-
-                if (myid==Host_ID) {
-                    /* print all kpoint */
-                    printf("\n");
-                    if(0 < all_kpoint_output) {
-                        sprintf(all_kpoint_output_fname,"jx_meshk_%d_%d_%dx%dx%d",
-                                First_Atom,Second_Atom,knum_i,knum_j,knum_k);
-                        if(1==custom_kpoints)
-                            sprintf(all_kpoint_output_fname,"jx-%s_%d_%d",custom_kpoints_name, First_Atom,Second_Atom);
-
-                        if(0 < orbital_mask_option) {
-							strcat(all_kpoint_output_fname,"_[");
-							strcat(all_kpoint_output_fname,orbital_mask_name);
-							strcat(all_kpoint_output_fname,"]");
-                            char buf[256];
-                            int mask_cnt = 0;
-                            if(1 == orbital_mask_option ) {
-                                /* First_atom orbital mask */
-                                strcat(all_kpoint_output_fname,"_m1_");
-                                for(i=0; i<Total_NumOrbs[First_Atom]; i++) {
-                                    if(0 < orbital_mask1[i]) {
-
-                                        sprintf(buf,"%d",i);
-                                        if(0<mask_cnt)
-                                            strcat(all_kpoint_output_fname,",");
-                                        strcat(all_kpoint_output_fname,buf);
-                                        mask_cnt++;
-                                    }
-                                }
-                                /* Second_atom orbital mask */
-                                strcat(all_kpoint_output_fname,"_m2_");
-                                mask_cnt = 0;
-                                for(i=0; i<Total_NumOrbs[Second_Atom]; i++) {
-                                    if(0 < orbital_mask2[i]) {
-                                        sprintf(buf,"%d",i);
-                                        if(0<mask_cnt)
-                                            strcat(all_kpoint_output_fname,",");
-                                        strcat(all_kpoint_output_fname,buf);
-                                        mask_cnt++;
-                                    }
-                                }
-                            }
-                            else if(2 == orbital_mask_option ) {
-                                /* First_atom orbital mask */
-                                strcat(all_kpoint_output_fname,"_um1_");
-                                for(i=0; i<Total_NumOrbs[First_Atom]; i++) {
-                                    if(0 == orbital_mask1[i]) {
-
-                                        sprintf(buf,"%d",i);
-                                        if(0<mask_cnt)
-                                            strcat(all_kpoint_output_fname,",");
-                                        strcat(all_kpoint_output_fname,buf);
-                                        mask_cnt++;
-                                    }
-                                }
-                                /* Second_atom orbital mask */
-                                strcat(all_kpoint_output_fname,"_um2_");
-                                mask_cnt = 0;
-                                for(i=0; i<Total_NumOrbs[Second_Atom]; i++) {
-                                    if(0 == orbital_mask2[i]) {
-                                        sprintf(buf,"%d",i);
-                                        if(0<mask_cnt)
-                                            strcat(all_kpoint_output_fname,",");
-                                        strcat(all_kpoint_output_fname,buf);
-                                        mask_cnt++;
-                                    }
-                                }
-                            }
-                        }else{
-							/* when all orbital is used */
-							strcat(all_kpoint_output_fname,"_[all]_");
-						}
-                        strcat(all_kpoint_output_fname,".csv");
-
-                        printf(" k1,k2,k3,JrTk,JiTk\n");
-                        printf(" output file name: %s\n",all_kpoint_output_fname);
-                        if(!((out = fopen(all_kpoint_output_fname,"w")) == NULL)) {
-                            for (i=0; i<T_knum; i++) {
-                                fprintf(out,"%f,%f,%f,%f,%f\n",
-                                        T_KGrids1[i], T_KGrids2[i], T_KGrids3[i], JrTk[i], JiTk[i]*10000.0);
-                            }
-                            fclose(out);
+                kloop=0;
+                for (i=0; i<=(knum_i-1); i++) {
+                    for (j=0; j<=(knum_j-1); j++) {
+                        for (k=0; k<=(knum_k-1); k++) {
+                            ID1 = Tkmesh2ID[kloop];
+                            MPI_Bcast(&JrTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
+                            MPI_Bcast(&JiTk[kloop], 1, MPI_DOUBLE, ID1, comm1);
+                            kloop++;
                         }
                     }
                 }
+
+
                 for (i=0; i<T_knum; i++) {
                     Jr += JrTk[i];
                 }
-                //Jr = Jr/(double)(knum_i*knum_j*knum_k);
-                Jr = Jr/(double)(T_knum);
+                Jr = Jr/(double)(knum_i*knum_j*knum_k);
                 if (myid==Host_ID) {
                     printf("\n J_ij between %ith atom and %ith atom is %15.12f cm^{-1}\n",
                            First_Atom, Second_Atom, Jr);
@@ -958,22 +623,18 @@ int main(int argc, char *argv[])
 
         } while(end_switch==0);
         /*********************************************
-        	freeing of arrays:
+        freeing of arrays:
 
-        	int *Full_atom;
-        	int *MPF;
-        	double ***FullHks ;
-        	double **FullOLP ;
-        	double **ko;
-        	double *M1;
-        	double **B;
-        	double ***C;
-        	double **D;
-
-        	int *orbital_mask1;
-        	int *orbital_mask2;
-			char* orbital_mask_name;
-         *********************************************/
+        int *Full_atom;
+        int *MPF;
+        double ***FullHks ;
+        double **FullOLP ;
+        double **ko;
+        double *M1;
+        double **B;
+        double ***C;
+        double **D;
+        *********************************************/
 
         free(Full_atom);
         free(MPF);
@@ -1019,10 +680,6 @@ int main(int argc, char *argv[])
             free(k_op[i]);
         }
         free(k_op);
-
-        free(orbital_mask1);
-        free(orbital_mask2);
-		orbital_mask_name[0] = '\0';
     }
 
     /* print message */
@@ -1042,7 +699,7 @@ int main(int argc, char *argv[])
 
     MPI_Finalize();
 
-    exit(0);
+    exit(1);
 }
 
 
@@ -1089,16 +746,16 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /*************************************************************************
-    	Calculation flow in the evaluation of J:
+       Calculation flow in the evaluation of J:
 
-    	PART-1 : set full Hamiltonian and overlap
-    	PART-2 : the generalized eigenvalue problem HC = ESC
-    	PART-3 : Calculation of J
-     **************************************************************************/
+       PART-1 : set full Hamiltonian and overlap
+       PART-2 : the generalized eigenvalue problem HC = ESC
+       PART-3 : Calculation of J
+    **************************************************************************/
 
     /*************************************************************************
-    	PART-1 :  set full Hamiltonian and overlap
-     **************************************************************************/
+       PART-1 :  set full Hamiltonian and overlap
+    **************************************************************************/
 
     printf(" \nEvaluation of J based on cluster calculation\n");
 
@@ -1111,10 +768,10 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /*********************************************
-    	make an array MPF which specifies the starting
-    	position of atom II in the martix such as
-    	a full but small Hamiltonian
-     *********************************************/
+     make an array MPF which specifies the starting
+     position of atom II in the martix such as
+     a full but small Hamiltonian
+    *********************************************/
 
     Anum = 1;
     for (i=0; i<atomnum; i++) {
@@ -1126,11 +783,11 @@ void jx_cluster1(int argc, char *argv[])
     F_TNumOrbs3 = F_TNumOrbs + 3;
 
     /*****************************************
-    	allocation of arrays:
+      allocation of arrays:
 
-    	double ***FullHks ;
-    	double **FullOLP ;
-     ******************************************/
+      double ***FullHks ;
+      double **FullOLP ;
+    ******************************************/
 
     FullHks = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
     for (spin=0; spin<=SpinP_switch; spin++) {
@@ -1146,13 +803,13 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /*****************************************
-    	rearragement of data:
-    	Hks to FullHks
-    	OLP to FullOLP
+     rearragement of data:
+     Hks to FullHks
+     OLP to FullOLP
 
-    	FullHks [1 to F_TNumOrbs] [1 to F_TNumOrbs]
-    	FullOLP [1 to F_TNumOrbs] [1 to F_TNumOrbs]
-     ******************************************/
+     FullHks [1 to F_TNumOrbs] [1 to F_TNumOrbs]
+     FullOLP [1 to F_TNumOrbs] [1 to F_TNumOrbs]
+    ******************************************/
 
     for (spin=0; spin<=SpinP_switch; spin++) {
         for (i=0; i<F_TNumOrbs3; i++) {
@@ -1193,18 +850,18 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /*************************************************************************
-    	PART-2 : solve the generalized eigenvalue problem HC = ESC
-     **************************************************************************/
+       PART-2 : solve the generalized eigenvalue problem HC = ESC
+    **************************************************************************/
 
     /*******************************************
-    	allocation of arrays:
+     allocation of arrays:
 
-    	double ko[SpinP_switch+1][F_TNumOrbs3];
-    	double M1[F_TNumOrbs3];
-    	double B[F_TNumOrbs3][F_TNumOrbs3];
-    	double C[SpinP_switch+1][F_TNumOrbs3][F_TNumOrbs3];
-    	double D[F_TNumOrbs3][F_TNumOrbs3];
-     ********************************************/
+     double ko[SpinP_switch+1][F_TNumOrbs3];
+     double M1[F_TNumOrbs3];
+     double B[F_TNumOrbs3][F_TNumOrbs3];
+     double C[SpinP_switch+1][F_TNumOrbs3][F_TNumOrbs3];
+     double D[F_TNumOrbs3][F_TNumOrbs3];
+    ********************************************/
 
     ko = (double**)malloc(sizeof(double*)*(SpinP_switch+1));
     for (spin=0; spin<=SpinP_switch; spin++) {
@@ -1231,23 +888,23 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /*******************************************
-    	diagonalize the overlap matrix
+     diagonalize the overlap matrix
 
-    	first
-    	FullOLP -> OLP matrix
-    	after call Eigen_lapack
-    	FullOLP -> eigenvectors of OLP matrix
-     ********************************************/
+     first
+     FullOLP -> OLP matrix
+     after call Eigen_lapack
+     FullOLP -> eigenvectors of OLP matrix
+    ********************************************/
 
     printf(" Diagonalize the overlap matrix\n");
 
     Eigen_lapack(FullOLP,ko[0],F_TNumOrbs);
 
     /*
-    	 for (l=1; l<=F_TNumOrbs; l++){
-    	 printf("l ko %2d %15.12f\n",l,ko[0][l]);
-    	 }
-    	 */
+      for (l=1; l<=F_TNumOrbs; l++){
+      printf("l ko %2d %15.12f\n",l,ko[0][l]);
+      }
+    */
 
     /* check ill-conditioned eigenvalues */
 
@@ -1264,11 +921,10 @@ void jx_cluster1(int argc, char *argv[])
     }
 
     /****************************************************
-    	Calculations of eigenvalues for up and down spins
-     ****************************************************/
+     Calculations of eigenvalues for up and down spins
+    ****************************************************/
 
     n = F_TNumOrbs;
-    printf("SpinP_switch %d\n",SpinP_switch);
 
     for (spin=0; spin<=SpinP_switch; spin++) {
 
@@ -1303,9 +959,9 @@ void jx_cluster1(int argc, char *argv[])
         Eigen_lapack(D,ko[spin],n);
 
         /****************************************************
-        	Transformation to the original eigen vectors.
-        	NOTE 244P
-         ****************************************************/
+            Transformation to the original eigen vectors.
+                              NOTE 244P
+        ****************************************************/
 
         for (i1=1; i1<=n; i1++) {
             for (j1=1; j1<=n; j1++) {
@@ -1352,17 +1008,16 @@ void jx_cluster1(int argc, char *argv[])
 
     /*************************************************************************
 
-    	PART-3 : Calculation of J
+       PART-3 : Calculation of J
 
-    	1) V_i,alpha,beta = < i,alpha | V_i | j,beta >
-    	= 0.5 * ( H_i,alpha,i,beta(0) - H_i,alpha,i,beta(1) )
+       1) V_i,alpha,beta = < i,alpha | V_i | j,beta >
+                         = 0.5 * ( H_i,alpha,i,beta(0) - H_i,alpha,i,beta(1) )
 
-    	2) V'_i = SUM_alpha,beta{ C_i,alpha * V_alpha,beta * C_i,beta }
+       2) V'_i = SUM_alpha,beta{ C_i,alpha * V_alpha,beta * C_i,beta }
 
-    	3) calculation of J from V'
-     **************************************************************************/
+       3) calculation of J from V'
+    **************************************************************************/
 
-    fflush(stdout);
     printf("\n");
 
     end_switch = 0;
@@ -1370,7 +1025,6 @@ void jx_cluster1(int argc, char *argv[])
 
         /* specify two atoms */
         printf(" Specify two atoms (e.g 1 2, quit: 0 0)  ");
-        fflush(stdout);
         scanf("%d %d",&First_Atom,&Second_Atom);
 
         if      (First_Atom==0 && Second_Atom==0) end_switch = 1;
@@ -1389,18 +1043,18 @@ void jx_cluster1(int argc, char *argv[])
     } while(end_switch==0);
 
     /*********************************************
-    	freeing of arrays:
+      freeing of arrays:
 
-    	int *Full_atom;
-    	int *MPF;
-    	double ***FullHks ;
-    	double **FullOLP ;
-    	double **ko;
-    	double *M1;
-    	double **B;
-    	double ***C;
-    	double **D;
-     *********************************************/
+      int *Full_atom;
+      int *MPF;
+      double ***FullHks ;
+      double **FullOLP ;
+      double **ko;
+      double *M1;
+      double **B;
+      double ***C;
+      double **D;
+    *********************************************/
 
     free(Full_atom);
     free(MPF);
@@ -1449,9 +1103,7 @@ void jx_cluster1(int argc, char *argv[])
 
 
 void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, double **ko,
-                  int F_TNumOrbs, int F_TNumOrbs3, double Jmat[2],
-                  double k1, double k2,double k3,
-                  int *orbital_mask1,int *orbital_mask2)
+                  int F_TNumOrbs, int F_TNumOrbs3, double Jmat[2])
 {
     static int ct_AN,h_AN,Gh_AN,i,j,TNO1,TNO2;
     static int spin,Rn;
@@ -1478,15 +1130,12 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     static double dFftn;
     static double dko;
 
-    /* VVj_r VVj_i ko ouput  */
-    char output_fname[256];
-    FILE *out; /* kpoin j out*/
     /*********************************************
-    	allocation of arrays:
+      allocation of arrays:
 
-    	int Choo_atom[Number_Choo];
-    	int MP[Number_Choo];
-     *********************************************/
+      int Choo_atom[Number_Choo];
+      int MP[Number_Choo];
+    *********************************************/
 
     Number_Choo = 2;
 
@@ -1497,10 +1146,10 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     Choo_atom[1] = Second_Atom;
 
     /*********************************************
-    	make an array MP which specify the starting
-    	position of atom II in the martix such as
-    	a full but small Hamiltonian
-     *********************************************/
+     make an array MP which specify the starting
+     position of atom II in the martix such as
+     a full but small Hamiltonian
+    *********************************************/
 
     Anum = 1;
     for (i=0; i<Number_Choo; i++) {
@@ -1517,11 +1166,11 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     NOJ = Total_NumOrbs[JJ] ; /* this gives orbital number of j-atom (or 2nd atom) */
 
     /*********************************************
-    	allocation of arrays:
+      allocation of arrays:
 
-    	double ***SmallHks ;
-    	double **SmallOLP ;
-     *********************************************/
+      double ***SmallHks ;
+      double **SmallOLP ;
+    *********************************************/
 
     SmallHks = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
     for (spin=0; spin<=SpinP_switch; spin++) {
@@ -1537,8 +1186,8 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     }
 
     /*********************************************
-    	Hamiltonian and overlap for selected two atom
-     *********************************************/
+     Hamiltonian and overlap for selected two atom
+    *********************************************/
 
     for (spin=0; spin<=SpinP_switch; spin++) {
         for (II=0; II<Number_Choo; II++) {
@@ -1554,11 +1203,6 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                         TNO2 = Total_NumOrbs[Gh_AN];
                         for (i=0; i<TNO1; i++) {
                             for (j=0; j<TNO2; j++) {
-#if  ORBITAL_SELECTION
-                                SmallHks[spin][i+SPI][j+SPJ] = 0.0;
-                                if(orbital_mask1[i]>0 | orbital_mask2[j]>0)
-                                    continue;
-#endif
                                 SmallHks[spin][i+SPI][j+SPJ] = Hks[spin][ct_AN][h_AN][i][j];
                             }
                         }
@@ -1601,8 +1245,8 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     }
 
     /*********************************************
-    	calculation of V from H(0)-H(1)
-     *********************************************/
+          calculation of V from H(0)-H(1)
+    *********************************************/
 
     /* memory allocation of Vi and Vj  */
     Vi = (double**)malloc(sizeof(double*)*(NOI+3));
@@ -1648,14 +1292,14 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     }
 
     /*********************************************
-    	calculation of VVi and VVj
-     *********************************************/
+             calculation of VVi and VVj
+    *********************************************/
 
     /* memory allocation */
     VVi_r = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
     for (spin1=0; spin1<=SpinP_switch; spin1++) {
         VVi_r[spin1] = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
-        for (spin2=0; spin2<=SpinP_switch; spin2++) {
+        for (spin2=0; spin2<=1; spin2++) {
             VVi_r[spin1][spin2] = (double**)malloc(sizeof(double*)*F_TNumOrbs3);
             for (i=0; i<F_TNumOrbs3; i++) {
                 VVi_r[spin1][spin2][i] = (double*)malloc(sizeof(double)*F_TNumOrbs3);
@@ -1666,7 +1310,7 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     VVi_i = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
     for (spin1=0; spin1<=SpinP_switch; spin1++) {
         VVi_i[spin1] = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
-        for (spin2=0; spin2<=SpinP_switch; spin2++) {
+        for (spin2=0; spin2<=1; spin2++) {
             VVi_i[spin1][spin2] = (double**)malloc(sizeof(double*)*F_TNumOrbs3);
             for (i=0; i<F_TNumOrbs3; i++) {
                 VVi_i[spin1][spin2][i] = (double*)malloc(sizeof(double)*F_TNumOrbs3);
@@ -1715,10 +1359,6 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                             sum_i = 0.0;
 
                             for(jj=1; jj<=NOI; jj++) {
-#if  ORBITAL_SELECTION3
-                                if(orbital_mask1[jj-1])
-                                    continue;
-#endif
                                 sum_r +=  C[spin1][(jj-1+MPF[Choo_atom[0]])][i].r*Vi[jj][ll] ;
                                 sum_i += -C[spin1][(jj-1+MPF[Choo_atom[0]])][i].i*Vi[jj][ll] ;
                             }
@@ -1730,9 +1370,6 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
 
                         sum1_i += IVi_r[ll]*C[spin2][(ll-1+MPF[Choo_atom[0]])][j].i
                                   + IVi_i[ll]*C[spin2][(ll-1+MPF[Choo_atom[0]])][j].r ;
-#if DEBUG_MSG2
-                        fprintf(stdout,"spin12 %d,%d sum1_r,i %f %f\n",spin1,spin2,sum1_r,sum1_i);
-#endif
                     }
                     VVi_r[spin1][spin2][i][j] = sum1_r ;
                     VVi_i[spin1][spin2][i][j] = sum1_i ;
@@ -1755,10 +1392,6 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
                             sum_i = 0.0;
 
                             for(jj=1; jj<=NOJ; jj++) {
-#if  ORBITAL_SELECTION3
-                                if(orbital_mask2[jj-1])
-                                    continue;
-#endif
                                 sum_r +=  C[spin1][(jj-1+MPF[Choo_atom[1]])][i].r*Vj[jj][ll] ;
                                 sum_i += -C[spin1][(jj-1+MPF[Choo_atom[1]])][i].i*Vj[jj][ll] ;
                             }
@@ -1783,8 +1416,8 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
     }
 
     /*********************************************
-    	calculation of J_ij
-     *********************************************/
+                calculation of J_ij
+    *********************************************/
 
     /* allocation of memory */
     Fftn = (double**)malloc(sizeof(double*)*(SpinP_switch+1));
@@ -1807,13 +1440,6 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
         for (j=1; j<=F_TNumOrbs; j++) {
             dFftn = Fftn[0][i] - Fftn[1][j] ;
             dko = ko[1][j] - ko[0][i] ;
-            if(0==dko) {
-                printf("k1,k2,k3 %f,%f,%f i %d j %d dFftn %f J_ij_part %f\n",
-                       k1,k2,k3,
-                       i,j,dFftn, (  VVj_r[0][1][i][j] * VVi_r[1][0][j][i]
-                                     - VVj_i[0][1][i][j] * VVi_i[1][0][j][i] ) );
-                continue;
-            }
             J_ij_r = J_ij_r + 0.5*dFftn *
                      (  VVj_r[0][1][i][j] * VVi_r[1][0][j][i]
                         - VVj_i[0][1][i][j] * VVi_i[1][0][j][i] ) / dko ;
@@ -1821,78 +1447,30 @@ void calc_J_band1(int First_Atom, int Second_Atom, int *MPF, dcomplex ***C, doub
             J_ij_i = J_ij_i + 0.5*dFftn *
                      (  VVj_r[0][1][i][j] * VVi_i[1][0][j][i]
                         + VVj_i[0][1][i][j] * VVi_r[1][0][j][i] ) / dko ;
-#if DEBUG_MSG
-            fprintf(stdout,"VV %f,%f\n",VVi_i[1][0][j][i],VVj_i[0][1][i][j]);
-#endif
         }
-    }
-    /* VVJ_r, VVj_i, ko print to file */
-#if 0
-    /* fprintf(stderr,"SpinP_switch %d\n",SpinP_switch); */
-    sprintf(output_fname,"jx_%d_%d_%f_%f_%f_ko.csv",First_Atom,Second_Atom,k1,k2,k3);
-    if( !((out = fopen(output_fname,"w")) == NULL)) {
-        /* header print */
-        for (spin=0; spin<=SpinP_switch; spin++) {
-            fprintf(out,"spin%d",spin);
-            if(spin < SpinP_switch)
-                fprintf(out,",");
-        }
-        fprintf(out,"\n");
-        /* list output */
-        for (i=1; i<=F_TNumOrbs; i++) {
-            for (spin=0; spin<=SpinP_switch; spin++) {
-                fprintf(out,"%f",ko[spin][i]);
-                if(spin < SpinP_switch)
-                    fprintf(out,",");
-            }
-            fprintf(out,"\n");
-        }
-        fclose(out);
     }
 
-    sprintf(output_fname,"jx_%d_%d_%f_%f_%f_VV.csv",First_Atom,Second_Atom,k1,k2,k3);
-    if( !((out = fopen(output_fname,"w")) == NULL)) {
-        /* header print */
-        fprintf(out,"i,j,VVj_r01,VVj_r10,VVj_i01,VVj_i10,VVi_r01,VVi_r10,VVi_i01,VVi_i10\n");
-        /* matrix output */
-        for (i=1; i<=F_TNumOrbs; i++) {
-            for (j=1; j<=F_TNumOrbs; j++) {
-                fprintf(out,"%d,%d,%f,%f,%f,%f,%f,%f,%f,%f\n",i,j,
-                        VVj_r[0][1][i][j],VVj_r[1][0][i][j],
-                        VVj_i[0][1][i][j],VVj_i[1][0][i][j],
-                        VVi_r[0][1][i][j],VVi_r[1][0][i][j],
-                        VVi_i[0][1][i][j],VVi_i[1][0][i][j]
-
-                       );
-            }
-        }
-        fclose(out);
-    }
-#endif
     /* unit conversion: Hartree to cm^{-1} */
 
     J_ij_r = 2.194746*100000.0*J_ij_r;
     J_ij_i = 2.194746*100000.0*J_ij_i;
-#if DEBUG_MSG
-    fprintf(stdout,"J_ij %f %f\n",J_ij_r,J_ij_i);
-#endif
 
     Jmat[0] = J_ij_r;
     Jmat[1] = J_ij_i;
 
     /*********************************************
-    	freeing of arrays:
+      freeing of arrays:
 
-    	double ***SmallHks ;
-    	double **SmallOLP ;
-    	double **Vi;
-    	double **Vj;
-    	double ****VVi;
-    	double ****VVj;
-    	double *IVi;
-    	double *IVj;
-    	double **Fftn;
-     *********************************************/
+      double ***SmallHks ;
+      double **SmallOLP ;
+      double **Vi;
+      double **Vj;
+      double ****VVi;
+      double ****VVj;
+      double *IVi;
+      double *IVj;
+      double **Fftn;
+    *********************************************/
 
     free(Choo_atom);
     free(MP);
@@ -2007,11 +1585,11 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     static double dko;
 
     /*********************************************
-    	allocation of arrays:
+      allocation of arrays:
 
-    	int Choo_atom[Number_Choo];
-    	int MP[Number_Choo];
-     *********************************************/
+      int Choo_atom[Number_Choo];
+      int MP[Number_Choo];
+    *********************************************/
 
     Number_Choo = 2;
 
@@ -2022,10 +1600,10 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     Choo_atom[1] = Second_Atom;
 
     /*********************************************
-    	make an array MP which specify the starting
-    	position of atom II in the martix such as
-    	a full but small Hamiltonian
-     *********************************************/
+     make an array MP which specify the starting
+     position of atom II in the martix such as
+     a full but small Hamiltonian
+    *********************************************/
 
     Anum = 1;
     for (i=0; i<Number_Choo; i++) {
@@ -2042,11 +1620,11 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     NOJ = Total_NumOrbs[JJ] ; /* this gives orbital number of j-atom (or 2nd atom) */
 
     /*********************************************
-    	allocation of arrays:
+      allocation of arrays:
 
-    	double ***SmallHks ;
-    	double **SmallOLP ;
-     *********************************************/
+      double ***SmallHks ;
+      double **SmallOLP ;
+    *********************************************/
 
     SmallHks = (double***)malloc(sizeof(double**)*(SpinP_switch+1));
     for (spin=0; spin<=SpinP_switch; spin++) {
@@ -2062,8 +1640,8 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     }
 
     /*********************************************
-    	Hamiltonian and overlap for selected two atom
-     *********************************************/
+     Hamiltonian and overlap for selected two atom
+    *********************************************/
 
     for (spin=0; spin<=SpinP_switch; spin++) {
         for (II=0; II<Number_Choo; II++) {
@@ -2121,8 +1699,8 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     }
 
     /*********************************************
-    	calculation of V from H(0)-H(1)
-     *********************************************/
+          calculation of V from H(0)-H(1)
+    *********************************************/
 
     /* memory allocation of Vi and Vj  */
     Vi = (double**)malloc(sizeof(double*)*(NOI+3));
@@ -2168,8 +1746,8 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     }
 
     /*********************************************
-    	calculation of VVi and VVj
-     *********************************************/
+             calculation of VVi and VVj
+    *********************************************/
 
     /* memory allocation */
     VVi = (double****)malloc(sizeof(double***)*(SpinP_switch+1));
@@ -2242,8 +1820,8 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
     }
 
     /*********************************************
-    	calculation of J_ij
-     *********************************************/
+                calculation of J_ij
+    *********************************************/
 
     /* allocation of memory */
     Fftn = (double**)malloc(sizeof(double*)*(SpinP_switch+1));
@@ -2279,18 +1857,18 @@ void calc_J_cluster1(int First_Atom, int Second_Atom, int *MPF, double ***C, dou
            Choo_atom[0], Choo_atom[1], J_ij);
 
     /*********************************************
-    	freeing of arrays:
+      freeing of arrays:
 
-    	double ***SmallHks ;
-    	double **SmallOLP ;
-    	double **Vi;
-    	double **Vj;
-    	double ****VVi;
-    	double ****VVj;
-    	double *IVi;
-    	double *IVj;
-    	double **Fftn;
-     *********************************************/
+      double ***SmallHks ;
+      double **SmallOLP ;
+      double **Vi;
+      double **Vj;
+      double ****VVi;
+      double ****VVj;
+      double *IVi;
+      double *IVj;
+      double **Fftn;
+    *********************************************/
 
     free(MP);
     free(Choo_atom);
@@ -2424,8 +2002,8 @@ void Overlap_Band(double ****OLP,
     NUM = Anum - 1;
 
     /****************************************************
-    	Allocation
-     ****************************************************/
+                         Allocation
+    ****************************************************/
 
     n2 = NUM + 2;
 
@@ -2440,8 +2018,8 @@ void Overlap_Band(double ****OLP,
     }
 
     /****************************************************
-    	set overlap
-     ****************************************************/
+                         set overlap
+    ****************************************************/
 
     S[0][0].r = NUM;
 
@@ -2465,22 +2043,12 @@ void Overlap_Band(double ****OLP,
             l2 = atv_ijk[Rn][2];
             l3 = atv_ijk[Rn][3];
             kRn = k1*(double)l1 + k2*(double)l2 + k3*(double)l3;
-#if VERBOSE
-            printf("Rn %d l1 l2 l3 [%d,%d,%d] GB_AN %d tnoB %d\n",
-                   Rn,l1,l2,l3,GB_AN, tnoB);
-#endif
 
             si = sin(2.0*PI*kRn);
             co = cos(2.0*PI*kRn);
             Bnum = MP[GB_AN];
             for (i=0; i<tnoA; i++) {
                 for (j=0; j<tnoB; j++) {
-#if  ORBITAL_SELECTION2
-                    if(i>=ORBITAL_1 && i<=ORBITAL_2)
-                        continue;
-                    if(j>=ORBITAL_1 && j<=ORBITAL_2)
-                        continue;
-#endif
                     s = OLP[GA_AN][LB_AN][i][j];
                     S1[Anum+i][Bnum+j] = S1[Anum+i][Bnum+j] + s*co;
                     S2[Anum+i][Bnum+j] = S2[Anum+i][Bnum+j] + s*si;
@@ -2497,8 +2065,8 @@ void Overlap_Band(double ****OLP,
     }
 
     /****************************************************
-    	free arrays
-     ****************************************************/
+                         free arrays
+    ****************************************************/
 
     for (i=0; i<n2; i++) {
         free(S1[i]);
@@ -2526,8 +2094,8 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
     NUM = Anum - 1;
 
     /****************************************************
-    	Allocation
-     ****************************************************/
+                         Allocation
+    ****************************************************/
 
     n2 = NUM + 2;
 
@@ -2542,8 +2110,8 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
     }
 
     /****************************************************
-    	set Hamiltonian
-     ****************************************************/
+                      set Hamiltonian
+    ****************************************************/
 
     H[0][0].r = 2.0*NUM;
     for (i=1; i<=NUM; i++) {
@@ -2569,19 +2137,9 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
 
             si = sin(2.0*PI*kRn);
             co = cos(2.0*PI*kRn);
-#if DEBUG_MSG
-            fprintf(stdout,"%f %f %f %d %d %d si co %f %f\n",k1,k2,k3,l1,l2,l3,si,co);
-
-#endif
             Bnum = MP[GB_AN];
             for (i=0; i<tnoA; i++) {
                 for (j=0; j<tnoB; j++) {
-#if  ORBITAL_SELECTION2
-                    if(i>=ORBITAL_1 && i<=ORBITAL_2)
-                        continue;
-                    if(j>=ORBITAL_1 && j<=ORBITAL_2)
-                        continue;
-#endif
                     h = RH[GA_AN][LB_AN][i][j];
                     H1[Anum+i][Bnum+j] = H1[Anum+i][Bnum+j] + h*co;
                     H2[Anum+i][Bnum+j] = H2[Anum+i][Bnum+j] + h*si;
@@ -2598,8 +2156,8 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
     }
 
     /****************************************************
-    	free arrays
-     ****************************************************/
+                         free arrays
+    ****************************************************/
 
     for (i=0; i<n2; i++) {
         free(H1[i]);
@@ -2614,10 +2172,10 @@ void Hamiltonian_Band(double ****RH, dcomplex **H, int *MP,
 void Eigen_lapack(double **a, double *ko, int n)
 {
     /* input:  n;
-    input:  a[n][n];  matrix A
+       input:  a[n][n];  matrix A
 
-    output: a[n][n]; eigevectors
-    output: ko[n];   eigenvalues  */
+       output: a[n][n]; eigevectors
+       output: ko[n];   eigenvalues  */
 
     static char *name="Eigen_lapack";
 
@@ -2705,77 +2263,77 @@ void Eigen_lapack(double **a, double *ko, int n)
 
 
 /*
-	 void EigenBand_lapack(dcomplex **A, double *W, int N)
-	 {
-	 static char *JOBZ="V";
-	 static char *RANGE="A";
-	 static char *UPLO="L";
+  void EigenBand_lapack(dcomplex **A, double *W, int N)
+  {
+  static char *JOBZ="V";
+  static char *RANGE="A";
+  static char *UPLO="L";
 
-	 int LDA=N;
-	 double VL,VU;
-	 int IL,IU;
-	 double ABSTOL=1.0e-10;
-	 int M;
+  int LDA=N;
+  double VL,VU;
+  int IL,IU;
+  double ABSTOL=1.0e-10;
+  int M;
 
-	 int LWORK;
-	 dcomplex *Z;
-	 dcomplex *A0;
-	 dcomplex *WORK;
-	 double *RWORK;
-	 int *IFAIL, INFO;
-	 int LDZ=N;
-	 int i,j;
-	 int *IWORK;
+  int LWORK;
+  dcomplex *Z;
+  dcomplex *A0;
+  dcomplex *WORK;
+  double *RWORK;
+  int *IFAIL, INFO;
+  int LDZ=N;
+  int i,j;
+  int *IWORK;
 
-	 A0=(dcomplex*)malloc(sizeof(dcomplex)*N*N);
+  A0=(dcomplex*)malloc(sizeof(dcomplex)*N*N);
 
-	 for (i=1;i<=N;i++) {
-	 for (j=1;j<=N;j++) {
-	 A0[(j-1)*N+i-1] = A[i][j];
-	 }
-	 }
+  for (i=1;i<=N;i++) {
+  for (j=1;j<=N;j++) {
+  A0[(j-1)*N+i-1] = A[i][j];
+  }
+  }
 
-	 LWORK=3*N;
-	 WORK=(dcomplex*)malloc(sizeof(dcomplex)*LWORK);
-	 Z=(dcomplex*)malloc(sizeof(dcomplex)*N*N);
-	 RWORK=(double*)malloc(sizeof(double)*7*N);
-	 IWORK=(int*)malloc(sizeof(int)*5*N);
-	 IFAIL=(int*)malloc(sizeof(int)*N);
+  LWORK=3*N;
+  WORK=(dcomplex*)malloc(sizeof(dcomplex)*LWORK);
+  Z=(dcomplex*)malloc(sizeof(dcomplex)*N*N);
+  RWORK=(double*)malloc(sizeof(double)*7*N);
+  IWORK=(int*)malloc(sizeof(int)*5*N);
+  IFAIL=(int*)malloc(sizeof(int)*N);
 
 
-	 F77_NAME(zheevx,ZHEEVX)( JOBZ, RANGE, UPLO, &N, A0, &LDA, &VL, &VU, &IL, &IU,
-	 &ABSTOL, &M, W, Z, &LDZ, WORK, &LWORK, RWORK, IWORK,
-	 IFAIL, &INFO );
+  F77_NAME(zheevx,ZHEEVX)( JOBZ, RANGE, UPLO, &N, A0, &LDA, &VL, &VU, &IL, &IU,
+  &ABSTOL, &M, W, Z, &LDZ, WORK, &LWORK, RWORK, IWORK,
+  IFAIL, &INFO );
 
-	 if (INFO!=0) {
-	 printf("************************************************************\n");
-	 printf("  EigenBand_lapack: zheevx_()=%d\n",INFO);
-	 printf("************************************************************\n");
-	 exit(10);
-	 }
+  if (INFO!=0) {
+  printf("************************************************************\n");
+  printf("  EigenBand_lapack: zheevx_()=%d\n",INFO);
+  printf("************************************************************\n");
+  exit(10);
+  }
 
-	 for (i=1;i<=N;i++) {
-	 for (j=1;j<=N;j++) {
-	 A[i][j].r = Z[(j-1)*N+i-1].r;
-	 A[i][j].i = Z[(j-1)*N+i-1].i;
-	 }
-	 }
+  for (i=1;i<=N;i++) {
+  for (j=1;j<=N;j++) {
+  A[i][j].r = Z[(j-1)*N+i-1].r;
+  A[i][j].i = Z[(j-1)*N+i-1].i;
+  }
+  }
 
-	 for (i=N;i>=1;i--) {
-	 W[i] =W[i-1];
-	 }
+  for (i=N;i>=1;i--) {
+  W[i] =W[i-1];
+  }
 
-	 for (i=1; i<=N; i++) {
-	 printf("i=%2d W=%15.12f\n",i,W[i]);
-	 }
+  for (i=1; i<=N; i++) {
+  printf("i=%2d W=%15.12f\n",i,W[i]);
+  }
 
-	 free(A0);
-	 free(WORK);
-	 free(Z);
-	 free(RWORK);
-	 free(IWORK);
-	 free(IFAIL);
-}
+  free(A0);
+  free(WORK);
+  free(Z);
+  free(RWORK);
+  free(IWORK);
+  free(IFAIL);
+  }
 */
 
 
@@ -2802,13 +2360,7 @@ void EigenBand_lapack(dcomplex **A, double *W, int N)
 
     LWORK=3*N;
     WORK=(dcomplex*)malloc(sizeof(dcomplex)*LWORK);
-    for (i=0; i<LWORK; i++) {
-        WORK[i].r =0.0;
-        WORK[i].i =0.0;
-    }
     RWORK=(double*)malloc(sizeof(double)*(3*N-2));
-    for (i=0; i<(3*N-2); i++) RWORK[i] = 0.0;
-
     F77_NAME(zheev,ZHEEV)(JOBZ,UPLO, &N, A0, &N, W, WORK, &LWORK, RWORK, &INFO  );
 
     if (INFO!=0) {
@@ -2843,13 +2395,14 @@ void dtime(double *t)
 
     /* user time + system time */
     /*
-    	 float tarray[2];
-    	 clock_t times(), wall;
-    	 struct tms tbuf;
-    	 wall = times(&tbuf);
-    	 tarray[0] = (float) (tbuf.tms_utime / (float)CLOCKS_PER_SEC);
-    	 tarray[1] = (float) (tbuf.tms_stime / (float)CLOCKS_PER_SEC);
-     *t = (double) (tarray[0]+tarray[1]);
-     printf("dtime: %lf\n",*t);
-     */
+      float tarray[2];
+      clock_t times(), wall;
+      struct tms tbuf;
+      wall = times(&tbuf);
+      tarray[0] = (float) (tbuf.tms_utime / (float)CLOCKS_PER_SEC);
+      tarray[1] = (float) (tbuf.tms_stime / (float)CLOCKS_PER_SEC);
+      *t = (double) (tarray[0]+tarray[1]);
+      printf("dtime: %lf\n",*t);
+    */
 }
+

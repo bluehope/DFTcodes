@@ -373,7 +373,7 @@ int input_stringv(const char *key,const int nret, char **ret, char  **defval)
         strcpy(ret[i],defval[i]);
     }
     rewind(fp);
-    while ( (c=fgets(buf,size,fp)) ) {
+    while ( c=fgets(buf,size,fp) ) {
         sscanf(buf,"%s",key_inbuf);
         buflen = strlen_trim(key_inbuf);
         if (keylen==buflen && strncasecmp(key,key_inbuf,keylen)==0) {
@@ -420,7 +420,7 @@ int input_doublev(const char *key,const int nret,
         ret[i]=defval[i];
     }
     rewind(fp);
-    while ( (c=fgets(buf,size,fp)) ) {
+    while ( c=fgets(buf,size,fp) ) {
         sscanf(buf,"%s",key_inbuf);
         buflen = strlen_trim(key_inbuf);
         if (keylen == buflen && strncasecmp(key,key_inbuf,keylen)==0) {
@@ -468,7 +468,7 @@ int input_intv(const char *key, int nret, int *ret, int *defval)
         ret[i]=defval[i];
     }
     rewind(fp);
-    while ( (c=fgets(buf,size,fp)) ) {
+    while ( c=fgets(buf,size,fp) ) {
         sscanf(buf,"%s",key_inbuf);
         buflen = strlen_trim(key_inbuf);
         if (keylen==buflen && strncasecmp(key,key_inbuf,keylen)==0) {

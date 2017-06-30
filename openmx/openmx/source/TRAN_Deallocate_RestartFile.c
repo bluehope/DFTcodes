@@ -20,7 +20,7 @@
 void TRAN_Deallocate_RestartFile(char *position)
 {
     int side,spin;
-    int i, k, Mc_AN, Gc_AN, tno0, Cwan,  tno1,  Gh_AN,m , h_AN, Hwan;
+    int i, k, Mc_AN, Gc_AN, tno0, Cwan,  tno1,  Gh_AN,m, h_AN, Hwan;
 
     double ScaleSize_t;
     int  SpinP_switch_t, atomnum_t, SpeciesNum_t, Max_FSNAN_t, TCpyCell_t, Matomnum_t, MatomnumF_t, MatomnumS_t;

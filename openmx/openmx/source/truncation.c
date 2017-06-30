@@ -4312,10 +4312,10 @@ void UCell_Box(int MD_iter, int estimate_switch, int CpyCell)
 
                 if (2<=level_stdout) {
                     printf("Cell_Gxyz %3d  %15.12f %15.12f %15.12f\n",
-                    Gc_AN,
-                    Cell_Gxyz[Gc_AN][1],
-                    Cell_Gxyz[Gc_AN][2],
-                    Cell_Gxyz[Gc_AN][3]);
+                           Gc_AN,
+                           Cell_Gxyz[Gc_AN][1],
+                           Cell_Gxyz[Gc_AN][2],
+                           Cell_Gxyz[Gc_AN][3]);
                 }
             }
 

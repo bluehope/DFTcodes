@@ -29,13 +29,13 @@ void Free6D_dcomplex(dcomplex****** buffer);
 void Free4D_double(double**** buffer);
 void Free2D_dcomplex(dcomplex** buffer);
 #else
-extern inline dcomplex****** Allocate6D_dcomplex(int size_1, int size_2, int size_3,
+inline dcomplex****** Allocate6D_dcomplex(int size_1, int size_2, int size_3,
         int size_4, int size_5, int size_6);
-extern inline double**** Allocate4D_double(int size_1, int size_2, int size_3, int size_4);
-extern inline dcomplex** Allocate2D_dcomplex(int size_1, int size_2);
-extern inline void Free6D_dcomplex(dcomplex****** buffer);
-extern inline void Free4D_double(double**** buffer);
-extern inline void Free2D_dcomplex(dcomplex** buffer);
+inline double**** Allocate4D_double(int size_1, int size_2, int size_3, int size_4);
+inline dcomplex** Allocate2D_dcomplex(int size_1, int size_2);
+inline void Free6D_dcomplex(dcomplex****** buffer);
+inline void Free4D_double(double**** buffer);
+inline void Free2D_dcomplex(dcomplex** buffer);
 #endif
 
 

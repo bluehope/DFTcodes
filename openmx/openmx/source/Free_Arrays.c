@@ -2654,10 +2654,6 @@ void array0()
     }
     free(MO_kpoint);
 
-    for (i=0; i<(atomnum+1); i++) {
-        free(MO_selection[i]);
-    }
-    free(MO_selection);
     /* Set_Periodic() in truncation.c */
 
     n = 2*CpyCell + 4;
