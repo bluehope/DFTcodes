@@ -24,7 +24,7 @@
 void  TRAN_Output_Trans_HS_Normal(
     MPI_Comm comm1,
     int SpinP_switch,
-    double ChemP ,
+    double ChemP,
     double *****H,
     double *****iHNL,
     double *****OLP,
@@ -50,7 +50,7 @@ void  TRAN_Output_Trans_HS_Normal(
 void  TRAN_Output_Trans_HS_Direct(
     MPI_Comm comm1,
     int SpinP_switch,
-    double ChemP ,
+    double ChemP,
     double *****H,
     double *****iHNL,
     double *****OLP,
@@ -82,7 +82,7 @@ void  TRAN_Output_Trans_HS(
     MPI_Comm comm1,
     int Solver,
     int SpinP_switch,
-    double ChemP ,
+    double ChemP,
     double *****H,
     double *****iHNL,
     double *****OLP,
@@ -111,7 +111,7 @@ void  TRAN_Output_Trans_HS(
         TRAN_Output_Trans_HS_Normal(
             comm1,
             SpinP_switch,
-            ChemP ,
+            ChemP,
             H,
             iHNL,
             OLP,
@@ -141,7 +141,7 @@ void  TRAN_Output_Trans_HS(
         TRAN_Output_Trans_HS_Direct(
             comm1,
             SpinP_switch,
-            ChemP ,
+            ChemP,
             H,
             iHNL,
             OLP,
@@ -178,7 +178,7 @@ void  TRAN_Output_Trans_HS(
 void  TRAN_Output_Trans_HS_Normal(
     MPI_Comm comm1,
     int SpinP_switch,
-    double ChemP ,
+    double ChemP,
     double *****H,
     double *****iHNL,
     double *****OLP,
@@ -216,7 +216,7 @@ void  TRAN_Output_Trans_HS_Normal(
     MPI_Status status;
     MPI_Request request;
 
-    MPI_Comm_size(comm1 ,&numprocs);
+    MPI_Comm_size(comm1,&numprocs);
     MPI_Comm_rank(comm1, &myid);
 
     if (myid==Host_ID) {
@@ -743,7 +743,7 @@ void  TRAN_Output_Trans_HS_Normal(
 void  TRAN_Output_Trans_HS_Direct(
     MPI_Comm comm1,
     int SpinP_switch,
-    double ChemP ,
+    double ChemP,
     double *****H,
     double *****iHNL,
     double *****OLP,
@@ -781,7 +781,7 @@ void  TRAN_Output_Trans_HS_Direct(
     MPI_Status status;
     MPI_Request request;
 
-    MPI_Comm_size(comm1 ,&numprocs);
+    MPI_Comm_size(comm1,&numprocs);
     MPI_Comm_rank(comm1, &myid);
 
     if (myid==Host_ID) {

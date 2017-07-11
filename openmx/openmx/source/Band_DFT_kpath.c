@@ -654,7 +654,7 @@ void Band_DFT_kpath_Col( int nkpath, int *n_perk,
                     for (l=0; l<n; l++) {
                         fprintf(fp_Band,"%18.15f ",EigenVal[ik][i_perk][spin][l]);
                     }
-                    fprintf(fp_Band  ,"\n");
+                    fprintf(fp_Band,"\n");
                 }
             }
         }
@@ -1279,7 +1279,7 @@ void Band_DFT_kpath_NonCol( int nkpath, int *n_perk,
                 for (l=0; l<2*n; l++) {
                     fprintf(fp_Band,"%18.15f ",EigenVal[ik][i_perk][l]);
                 }
-                fprintf(fp_Band  ,"\n");
+                fprintf(fp_Band,"\n");
             }
         }
 

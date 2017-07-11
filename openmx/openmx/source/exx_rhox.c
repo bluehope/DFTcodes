@@ -45,7 +45,7 @@ void EXX_Output_DM(EXX_t *exx, dcomplex ****exx_DM)
     sz = fwrite(&nep, sizeof(int), 1, fp);
     sz = fwrite(ep_atom1, sizeof(int), nep, fp);
     sz = fwrite(ep_atom2, sizeof(int), nep, fp);
-    sz = fwrite(ep_cell , sizeof(int), nep, fp);
+    sz = fwrite(ep_cell, sizeof(int), nep, fp);
 
     for (spin=0; spin<nspin; spin++) {
         for (iep=0; iep<nep; iep++) {
@@ -134,7 +134,7 @@ void EXX_Input_DM(EXX_t *exx, dcomplex ****exx_DM)
 
     sz = fread(&ep_atom1[0], sizeof(int), nep, fp);
     sz = fread(&ep_atom2[0], sizeof(int), nep, fp);
-    sz = fread(&ep_cell[0] , sizeof(int), nep, fp);
+    sz = fread(&ep_cell[0], sizeof(int), nep, fp);
 
     for (iep=0; iep<nep; iep++) {
         if (ep_atom1[iep] != EXX_Array_EP_Atom1(exx)[iep]) {

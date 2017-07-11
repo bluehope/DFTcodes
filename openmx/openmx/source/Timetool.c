@@ -152,7 +152,7 @@ void Timetool_times(char *name, char *flag)
 {
     struct tms ST;
 
-    if ( strcasecmp(flag , "init")==0 ) {
+    if ( strcasecmp(flag, "init")==0 ) {
         int i;
         for (i=0; i<MAXSTACKLIST; i++) {
             stacklist[i]=NULL;
@@ -162,13 +162,13 @@ void Timetool_times(char *name, char *flag)
     }
 
 
-    if ( strcasecmp(flag , "print")==0 || strcasecmp(flag , "show")==0 ||
-            strcasecmp(flag , "output")==0 ) {
+    if ( strcasecmp(flag, "print")==0 || strcasecmp(flag, "show")==0 ||
+            strcasecmp(flag, "output")==0 ) {
         Timetool_printlist(0,listtop,0.0);
         return;
     }
 
-    if ( strcasecmp(flag , "enter")==0 || strcasecmp(flag , "start")==0 ) {
+    if ( strcasecmp(flag, "enter")==0 || strcasecmp(flag, "start")==0 ) {
         Tlist *now, *tmp;
         times(&ST);
 
@@ -224,7 +224,7 @@ void Timetool_times(char *name, char *flag)
         now->flag=1;
         return;
     }
-    if ( strcasecmp(flag , "exit")==0 || strcasecmp(flag , "end")==0 ) {
+    if ( strcasecmp(flag, "exit")==0 || strcasecmp(flag, "end")==0 ) {
         Tlist *now, *tmp;
         times(&ST);
 

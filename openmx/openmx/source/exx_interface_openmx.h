@@ -15,9 +15,9 @@ EXX_t *g_exx;
           [SpinP_switch+1]
           [nop]
           [Spe_Total_NO[Cwan]]
-          [Spe_Total_NO[Hwan]] 
+          [Spe_Total_NO[Hwan]]
 */
-extern dcomplex *****g_exx_DM; 
+extern dcomplex *****g_exx_DM;
 extern double g_exx_U[2];
 extern int g_exx_switch;
 extern int g_exx_switch_output_DM;
@@ -30,39 +30,39 @@ void EXX_on_OpenMX_Free(void);
 
 
 void EXX_Cluster(
-  double **H,
-  double *Ux,
-  EXX_t *exx,
-  dcomplex ***exx_CDM, 
-  const int *MP
+    double **H,
+    double *Ux,
+    EXX_t *exx,
+    dcomplex ***exx_CDM,
+    const int *MP
 );
 
 
 void EXX_Simple_Mixing_DM(
-  EXX_t *exx,
-  double mix_wgt,
-  dcomplex ***exx_CDM,
-  dcomplex ***exx_PDM,
-  dcomplex ***exx_P2DM
+    EXX_t *exx,
+    double mix_wgt,
+    dcomplex ***exx_CDM,
+    dcomplex ***exx_PDM,
+    dcomplex ***exx_P2DM
 );
 
 
 void EXX_Fock_Band(
-  dcomplex **H,
-  EXX_t *exx,
-  dcomplex ****exx_CDM, 
-  int    *MP,
-  double k1,  
-  double k2,  
-  double k3,
-  int spin
+    dcomplex **H,
+    EXX_t *exx,
+    dcomplex ****exx_CDM,
+    int    *MP,
+    double k1,
+    double k2,
+    double k3,
+    int spin
 );
 
 void EXX_Energy_Band(
-  double *Ux,
-  EXX_t *exx,
-  dcomplex ****exx_CDM, 
-  int    *MP
+    double *Ux,
+    EXX_t *exx,
+    dcomplex ****exx_CDM,
+    int    *MP
 );
 
 void EXX_Reduce_DM(EXX_t *exx, dcomplex ***exx_DM);

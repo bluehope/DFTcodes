@@ -2258,14 +2258,14 @@ void Input_std(char *file)
         if (fp=input_find("<Band.kpath") ) {
             for (i=1; i<=Band_Nkpath; i++) {
                 fscanf(fp,"%d %lf %lf %lf %lf %lf %lf %s %s",
-                       &Band_N_perpath[i]  ,
+                       &Band_N_perpath[i],
                        &Band_kpath[i][1][1], &Band_kpath[i][1][2],&Band_kpath[i][1][3],
                        &Band_kpath[i][2][1], &Band_kpath[i][2][2],&Band_kpath[i][2][3],
                        Band_kname[i][1],Band_kname[i][2]);
 
                 if (myid==Host_ID && 2<=level_stdout) {
                     printf("%d (%lf %lf %lf) (%lf %lf %lf) %s %s\n",
-                           Band_N_perpath[i]  ,
+                           Band_N_perpath[i],
                            Band_kpath[i][1][1], Band_kpath[i][1][2],Band_kpath[i][1][3],
                            Band_kpath[i][2][1], Band_kpath[i][2][2],Band_kpath[i][2][3],
                            Band_kname[i][1],Band_kname[i][2]);
@@ -2353,7 +2353,7 @@ void Input_std(char *file)
     input_double("orbitalOpt.SD.step",&orbitalOpt_SD_step,(double)0.001);
     input_int("orbitalOpt.HistoryPulay",&orbitalOpt_History,20);
     input_int("orbitalOpt.StartPulay",&orbitalOpt_StartPulay,10);
-    input_logical("orbitalOpt.Force.Skip" ,&orbitalOpt_Force_Skip,0);
+    input_logical("orbitalOpt.Force.Skip",&orbitalOpt_Force_Skip,0);
 
     s_vec[0]="DIIS";
     s_vec[1]="EF";
@@ -2797,70 +2797,70 @@ void Input_std(char *file)
 
     /* selective MO out bluehope*/
     MO_selective = 0;
-    if (MO_fileout == 1){
+    if (MO_fileout == 1) {
         input_int("MO.selective",&MO_selective,0);
         if (2<=level_stdout) {
             printf("<Input_std> MO.selective %d\n",MO_selective);
         }
-        if(1 <= MO_selective){
-            if(fp=input_find("<MO.selection")){
-                for(i=1;i<=atomnum; i++){
+        if(1 <= MO_selective) {
+            if(fp=input_find("<MO.selection")) {
+                for(i=1; i<=atomnum; i++) {
                     fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
 
                     if (2<=level_stdout) {
                         printf("<Input_std> MO_selection %2d %d\n",
-                                i,MO_selection[i][1]);
+                               i,MO_selection[i][1]);
                     }
-                } 
-                if(!input_last("MO.selection>")){
+                }
+                if(!input_last("MO.selection>")) {
                     /*format error*/
                     printf("Format error for MO.selection\n");
                     po++;
-                } 
+                }
             }
         }
-		if(2 == MO_selective){
-			if (fp=input_find("<MO.basis")) {
+        if(2 == MO_selective) {
+            if (fp=input_find("<MO.basis")) {
 
-				/* initialize the U-values */
-				for (i=0; i<SpeciesNum; i++) {
-					for (l=0; l<=Spe_MaxL_Basis[i]; l++) {
-						for (mul=0; mul<Spe_Num_Basis[i][l]; mul++) {
-							MO_basis_selection[i][l][mul]= 0 ;
-						}
-					}
-				}
+                /* initialize the U-values */
+                for (i=0; i<SpeciesNum; i++) {
+                    for (l=0; l<=Spe_MaxL_Basis[i]; l++) {
+                        for (mul=0; mul<Spe_Num_Basis[i][l]; mul++) {
+                            MO_basis_selection[i][l][mul]= 0 ;
+                        }
+                    }
+                }
 
-				/* read the MO basis on off from the '.dat' file  */
-				for (i=0; i<SpeciesNum; i++) {
-					fscanf(fp,"%s",Species);
-					if (2<=level_stdout) {
-						printf("MO.basis %s\n",Species);
-					}
-					j = Species2int(Species);
-					for (l=0; l<=Spe_MaxL_Basis[j]; l++) {
-						for (mul=0; mul<Spe_Num_Basis[j][l]; mul++) {
-							fscanf(fp,"%s %d", buf, &MO_basis_selection[j][l][mul]) ;
-							if (2<=level_stdout) {
-								printf("MO.basis %s %s %d\n",Species,buf,MO_basis_selection[j][l][mul]);
-							}
-						}
-					}
-				}
+                /* read the MO basis on off from the '.dat' file  */
+                for (i=0; i<SpeciesNum; i++) {
+                    fscanf(fp,"%s",Species);
+                    if (2<=level_stdout) {
+                        printf("MO.basis %s\n",Species);
+                    }
+                    j = Species2int(Species);
+                    for (l=0; l<=Spe_MaxL_Basis[j]; l++) {
+                        for (mul=0; mul<Spe_Num_Basis[j][l]; mul++) {
+                            fscanf(fp,"%s %d", buf, &MO_basis_selection[j][l][mul]) ;
+                            if (2<=level_stdout) {
+                                printf("MO.basis %s %s %d\n",Species,buf,MO_basis_selection[j][l][mul]);
+                            }
+                        }
+                    }
+                }
 
-				if (! input_last("MO.basis>") ) {
-					/* format error */
-					printf("Format error for MO.basis\n");
-					po++;
-				}
+                if (! input_last("MO.basis>") ) {
+                    /* format error */
+                    printf("Format error for MO.basis\n");
+                    po++;
+                }
 
-			}   /*  if (fp=input_find("<MO.basis"))  */
-		}
+            }   /*  if (fp=input_find("<MO.basis"))  */
+        }
 
-	}
+    }
 
-	/****************************************************
-	  OutData_bin_flag
+    /****************************************************
+      OutData_bin_flag
     ****************************************************/
 
     input_logical("OutData.bin.flag",&OutData_bin_flag,0); /* default=off */

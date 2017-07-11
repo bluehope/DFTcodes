@@ -140,9 +140,9 @@ void Initial_CntCoes2(double *****nh, double *****OLP)
         PrintMemory("Initial_CntCoes: tmp_index",sizeof(int)*(List_YOUSO[25]+1)*
                     (2*(List_YOUSO[25]+1)+1),NULL);
         PrintMemory("Initial_CntCoes: tmp_index1",sizeof(int)*(List_YOUSO[25]+1)*
-                    List_YOUSO[24]*(2*(List_YOUSO[25]+1)+1) ,NULL);
+                    List_YOUSO[24]*(2*(List_YOUSO[25]+1)+1),NULL);
         PrintMemory("Initial_CntCoes: tmp_index2",sizeof(int)*(List_YOUSO[25]+1)*
-                    List_YOUSO[24]*(2*(List_YOUSO[25]+1)+1) ,NULL);
+                    List_YOUSO[24]*(2*(List_YOUSO[25]+1)+1),NULL);
         PrintMemory("Initial_CntCoes: Check_ko",sizeof(double)*(List_YOUSO[25]+1)*
                     (2*(List_YOUSO[25]+1)+1),NULL);
         firsttime=0;
