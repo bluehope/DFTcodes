@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------
   exx_xc.h
 
-  semi-local XC potenitals for EXX and hybrid functional calculations 
+  semi-local XC potenitals for EXX and hybrid functional calculations
 
   MT, 14/JAN/2010
 ----------------------------------------------------------------------*/

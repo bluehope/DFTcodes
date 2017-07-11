@@ -3,13 +3,13 @@
 #define __f77_function_definition__
 
 
-  /* f77 name is uppercase */
-/* #define _F77_FUNC_UPPERCASE_ */ 
+/* f77 name is uppercase */
+/* #define _F77_FUNC_UPPERCASE_ */
 
-    /* f77 name has a underscore */
+/* f77 name has a underscore */
 /* #define _F77_FUNC_UNDERSCORE1_ */
 
-    /* f77 name has two undrescores */
+/* f77 name has two undrescores */
 /*#define _F77_FUNC_UNDERSCORE2_ */
 
 
@@ -48,27 +48,27 @@
 
 
 #if  defined ( _F77_FUNC_UPPERCASE_ )  && !defined(_F77_FUNC_UNDERSCORE1_)  && defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) A ## __
+#define F77_NAME(a,A) A ## __
 #endif
 
 #if  !defined ( _F77_FUNC_UPPERCASE_ )  && !defined(_F77_FUNC_UNDERSCORE1_)   && defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) a ## __
+#define F77_NAME(a,A) a ## __
 #endif
 
 #if  defined ( _F77_FUNC_UPPERCASE_ )  && defined(_F77_FUNC_UNDERSCORE1_)    && !defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) A ## _
+#define F77_NAME(a,A) A ## _
 #endif
 
 #if  !defined ( _F77_FUNC_UPPERCASE_ )  && defined(_F77_FUNC_UNDERSCORE1_) && !defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) a ## _
+#define F77_NAME(a,A) a ## _
 #endif
 
 #if  defined ( _F77_FUNC_UPPERCASE_ )  && !defined(_F77_FUNC_UNDERSCORE1_) && !defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) A 
+#define F77_NAME(a,A) A
 #endif
 
 #if  !defined ( _F77_FUNC_UPPERCASE_ )  && !defined(_F77_FUNC_UNDERSCORE1_) && !defined(_F77_FUNC_UNDERSCORE2_)
-    #define F77_NAME(a,A) a 
+#define F77_NAME(a,A) a
 #endif
 
 
