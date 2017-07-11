@@ -999,6 +999,24 @@ double DFT(int MD_iter, int Cnt_Now)
                     }
                 }
             }
+			/******************************************************
+				read restart files SCF Hongkee Yoon read DM and set H
+			******************************************************/
+			if ((3 == Scf_RestartFromFile) || (4 == Scf_RestartFromFile)) {
+				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
+
+				printf("<Restart2> restart from  DM in SCF file \n");
+				RestartSCFFileDFT("read", SpinP_switch, MD_iter, H, iHNL, OLP[0], DM[0], &etime);
+				/* read density & Set Hamiltonian from DM */
+
+				MPI_Barrier(mpi_comm_level1);
+                MPI_Allreduce(&My_SucceedReadingDMfile, &SucceedReadingDMfile,
+                              1, MPI_INT, MPI_PROD, mpi_comm_level1);
+				time11 += Set_Density_Grid(Cnt_kind, Calc_CntOrbital_ON, DM[0]);
+                MPI_Barrier(mpi_comm_level1);
+				time3 += Set_Hamiltonian("stdout", SCF_iter, SucceedReadingDMfile, Cnt_kind, H0, HNL, DM[0], H);
+                MPI_Barrier(mpi_comm_level1);
+			}
 
             /*****************************************************
              FFT of the initial density for k-space charge mixing
@@ -1087,6 +1105,18 @@ double DFT(int MD_iter, int Cnt_Now)
 
             /* switch a restart flag on for proceeding MD steps */
             if (MD_switch!=0 && Scf_RestartFromFile!=-1) Scf_RestartFromFile = 1;
+            /******************************************************
+                              read restart files SCF Hongkee Yoon read H
+            ******************************************************/
+			if (2 == Scf_RestartFromFile) {
+				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
+
+				printf("<Restart2> restart from Hks in SCF file\n");
+				RestartSCFFileDFT("read", SpinP_switch, MD_iter, H, iHNL, OLP[0], DM[0], &etime);
+                /* read density & Set Hamiltonian from DM */
+
+				//time3 += Set_Hamiltonian("stdout", SCF_iter, SucceedReadingDMfile, Cnt_kind, H0, HNL, DM[0], H);
+            }
 
         } /* end of if (SCF_iter==1) */
 
@@ -1115,6 +1145,27 @@ double DFT(int MD_iter, int Cnt_Now)
             }
 
         }
+        /******************************************************
+				read restart files SCF Hongkee Yoon read DM and
+                do NOT set H
+                DM is fixed and H is mixed
+		******************************************************/
+			if (4 == Scf_RestartFromFile) {
+				// time3 += Set_Hamiltonian("nostdout",SCF_iter,SucceedReadingDMfile,Cnt_kind,H0,HNL,DM[0],H);
+
+				printf("<Restart2> keep DM from SCF file \n");
+				RestartSCFFileDFT("readonlydm", SpinP_switch, MD_iter, H, iHNL, OLP[0], DM[0], &etime);
+				/* read density & Set Hamiltonian from DM */
+
+				MPI_Barrier(mpi_comm_level1);
+                MPI_Allreduce(&My_SucceedReadingDMfile, &SucceedReadingDMfile,
+                              1, MPI_INT, MPI_PROD, mpi_comm_level1);
+				time11 += Set_Density_Grid(Cnt_kind, Calc_CntOrbital_ON, DM[0]);
+                MPI_Barrier(mpi_comm_level1);
+				//time3 += Set_Hamiltonian("stdout", SCF_iter, SucceedReadingDMfile, Cnt_kind, H0, HNL, DM[0], H);
+                //MPI_Barrier(mpi_comm_level1);
+                time14 += Mulliken_Charge("stdout");
+			}
 
         /****************************************************
          In case of RMM-DIISH (Mixing_switch==5), the mixing
@@ -1151,479 +1202,487 @@ double DFT(int MD_iter, int Cnt_Now)
             fflush(stdout);
         }
 
-        if (Cnt_switch==0) {
+        /* if (Cnt_switch==0) { */
+        // printf("SCF_iter %d SCF_MAX %d\n", SCF_iter, SCF_MAX);
+		if (SCF_iter < SCF_MAX) {
+			if (Cnt_switch == 0) { /* For the case : Only generate Hamiltoian from DM and BYPASS eigenvalue problem */
 
-            switch (Solver) {
+				switch (Solver) {
 
-            case 1:
-                /* not supported */
-                break;
+				case 1:
+					/* not supported */
+					break;
 
-            case 2:
+				case 2:
 
 #ifndef scalapack
 
-                /*---------- modified by TOYODA 08/JAN/2010 */
+					/*---------- modified by TOYODA 08/JAN/2010 */
 
-                if (g_exx_switch) {
-                    time5 += Cluster_DFT("scf",LSCF_iter,SpinP_switch,
-                                         Cluster_ReCoes,Cluster_ko, H,iHNL,OLP[0],DM[0],EDM,
-                                         g_exx,g_exx_DM[0],g_exx_U,Eele0,Eele1);
-                } else {
+					if (g_exx_switch) {
+						time5 += Cluster_DFT("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, H, iHNL, OLP[0], DM[0], EDM,
+							g_exx, g_exx_DM[0], g_exx_U, Eele0, Eele1);
+					}
+					else {
 
-                    time5 += Cluster_DFT("scf",LSCF_iter,SpinP_switch,
-                                         Cluster_ReCoes,Cluster_ko, H,iHNL,OLP[0],DM[0],EDM,
-                                         NULL,NULL,NULL,Eele0,Eele1);
-                }
-                /*---------- until here */
+						time5 += Cluster_DFT("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, H, iHNL, OLP[0], DM[0], EDM,
+							NULL, NULL, NULL, Eele0, Eele1);
+					}
+					/*---------- until here */
 
 #endif
 
 #ifdef scalapack
 
-                /*---------- modified by TOYODA 08/JAN/2010 */
-                if (g_exx_switch) {
+				/*---------- modified by TOYODA 08/JAN/2010 */
+					if (g_exx_switch) {
 
-                    time5 += Cluster_DFT_ScaLAPACK("scf",LSCF_iter,SpinP_switch,
-                                                   Cluster_ReCoes,Cluster_ko, H,iHNL,OLP[0],DM[0],EDM,
-                                                   g_exx,g_exx_DM[0],g_exx_U,Eele0,Eele1,
-                                                   myworld1,NPROCS_ID1,Comm_World1,NPROCS_WD1,
-                                                   Comm_World_StartID1,MPI_CommWD1,
-                                                   Ss_Cluster,Cs_Cluster,Hs_Cluster);
+						time5 += Cluster_DFT_ScaLAPACK("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, H, iHNL, OLP[0], DM[0], EDM,
+							g_exx, g_exx_DM[0], g_exx_U, Eele0, Eele1,
+							myworld1, NPROCS_ID1, Comm_World1, NPROCS_WD1,
+							Comm_World_StartID1, MPI_CommWD1,
+							Ss_Cluster, Cs_Cluster, Hs_Cluster);
 
-                } else {
+					}
+					else {
 
-                    time5 += Cluster_DFT_ScaLAPACK("scf",LSCF_iter,SpinP_switch,
-                                                   Cluster_ReCoes,Cluster_ko, H,iHNL,OLP[0],DM[0],EDM,
-                                                   NULL,NULL,NULL,Eele0,Eele1,
-                                                   myworld1,NPROCS_ID1,Comm_World1,NPROCS_WD1,
-                                                   Comm_World_StartID1,MPI_CommWD1,
-                                                   Ss_Cluster,Cs_Cluster,Hs_Cluster);
+						time5 += Cluster_DFT_ScaLAPACK("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, H, iHNL, OLP[0], DM[0], EDM,
+							NULL, NULL, NULL, Eele0, Eele1,
+							myworld1, NPROCS_ID1, Comm_World1, NPROCS_WD1,
+							Comm_World_StartID1, MPI_CommWD1,
+							Ss_Cluster, Cs_Cluster, Hs_Cluster);
 
-                }
-                /*---------- until here */
+					}
+					/*---------- until here */
 
 #endif
 
-                break;
+					break;
 
-            case 3:
+				case 3:
 
-                if (SpinP_switch<=1)
+					if (SpinP_switch <= 1)
 
 #ifndef scalapack
 
-                    /*---------- modified by TOYODA 15/FEB/2010 */
-                    if (5==XC_switch) {
-                        time5 += Band_DFT_Col(LSCF_iter,
-                                              Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                              SpinP_switch,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1,
-                                              MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                              H1_Band_Col,S1_Band_Col,
-                                              CDM1_Band_Col,EDM1_Band_Col,
-                                              H_Band_Col,S_Band,C_Band_Col,
-                                              BLAS_S,
-                                              k_op,T_k_op,T_k_ID,
-                                              T_KGrids1,T_KGrids2,T_KGrids3,
-                                              myworld1,
-                                              NPROCS_ID1,
-                                              Comm_World1,
-                                              NPROCS_WD1,
-                                              Comm_World_StartID1,
-                                              MPI_CommWD1,
-                                              myworld2,
-                                              NPROCS_ID2,
-                                              NPROCS_WD2,
-                                              Comm_World2,
-                                              Comm_World_StartID2,
-                                              MPI_CommWD2,
-                                              g_exx,
-                                              g_exx_DM[0],
-                                              g_exx_U
-                                             );
-                    } else {
+						/*---------- modified by TOYODA 15/FEB/2010 */
+						if (5 == XC_switch) {
+							time5 += Band_DFT_Col(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, S_Band, C_Band_Col,
+								BLAS_S,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								g_exx,
+								g_exx_DM[0],
+								g_exx_U
+							);
+						}
+						else {
 
-                        time5 += Band_DFT_Col(LSCF_iter,
-                                              Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                              SpinP_switch,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1,
-                                              MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                              H1_Band_Col,S1_Band_Col,
-                                              CDM1_Band_Col,EDM1_Band_Col,
-                                              H_Band_Col,S_Band,C_Band_Col,
-                                              BLAS_S,
-                                              k_op,T_k_op,T_k_ID,
-                                              T_KGrids1,T_KGrids2,T_KGrids3,
-                                              myworld1,
-                                              NPROCS_ID1,
-                                              Comm_World1,
-                                              NPROCS_WD1,
-                                              Comm_World_StartID1,
-                                              MPI_CommWD1,
-                                              myworld2,
-                                              NPROCS_ID2,
-                                              NPROCS_WD2,
-                                              Comm_World2,
-                                              Comm_World_StartID2,
-                                              MPI_CommWD2,
-                                              NULL, NULL, NULL);
-                    }
-                /*---------- until here */
+							time5 += Band_DFT_Col(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, S_Band, C_Band_Col,
+								BLAS_S,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								NULL, NULL, NULL);
+						}
+						/*---------- until here */
 
 #endif
 
 #ifdef scalapack
 
-                /*---------- modified by TOYODA 15/FEB/2010 */
-                if (5==XC_switch) {
-                    time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
-                                                    Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                                    SpinP_switch,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1,
-                                                    MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                                    H1_Band_Col,S1_Band_Col,
-                                                    CDM1_Band_Col,EDM1_Band_Col,
-                                                    H_Band_Col,Ss_Band_Col,Cs_Band_Col,
-                                                    Hs_Band_Col,
-                                                    k_op,T_k_op,T_k_ID,
-                                                    T_KGrids1,T_KGrids2,T_KGrids3,
-                                                    myworld1,
-                                                    NPROCS_ID1,
-                                                    Comm_World1,
-                                                    NPROCS_WD1,
-                                                    Comm_World_StartID1,
-                                                    MPI_CommWD1,
-                                                    myworld2,
-                                                    NPROCS_ID2,
-                                                    NPROCS_WD2,
-                                                    Comm_World2,
-                                                    Comm_World_StartID2,
-                                                    MPI_CommWD2,
-                                                    g_exx,
-                                                    g_exx_DM[0],
-                                                    g_exx_U
-                                                   );
-                } else {
+				/*---------- modified by TOYODA 15/FEB/2010 */
+						if (5 == XC_switch) {
+							time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, Ss_Band_Col, Cs_Band_Col,
+								Hs_Band_Col,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								g_exx,
+								g_exx_DM[0],
+								g_exx_U
+							);
+						}
+						else {
 
-                    time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
-                                                    Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                                    SpinP_switch,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1,
-                                                    MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                                    H1_Band_Col,S1_Band_Col,
-                                                    CDM1_Band_Col,EDM1_Band_Col,
-                                                    H_Band_Col,Ss_Band_Col,Cs_Band_Col,
-                                                    Hs_Band_Col,
-                                                    k_op,T_k_op,T_k_ID,
-                                                    T_KGrids1,T_KGrids2,T_KGrids3,
-                                                    myworld1,
-                                                    NPROCS_ID1,
-                                                    Comm_World1,
-                                                    NPROCS_WD1,
-                                                    Comm_World_StartID1,
-                                                    MPI_CommWD1,
-                                                    myworld2,
-                                                    NPROCS_ID2,
-                                                    NPROCS_WD2,
-                                                    Comm_World2,
-                                                    Comm_World_StartID2,
-                                                    MPI_CommWD2,
-                                                    NULL, NULL, NULL);
-                }
-                /*---------- until here */
+							time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, Ss_Band_Col, Cs_Band_Col,
+								Hs_Band_Col,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								NULL, NULL, NULL);
+						}
+						/*---------- until here */
 
 #endif
 
-                else
-                    time5 += Band_DFT_NonCol(LSCF_iter,
-                                             koS,S_Band,
-                                             Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                             SpinP_switch,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+					else
+						time5 += Band_DFT_NonCol(LSCF_iter,
+							koS, S_Band,
+							Kspace_grid1, Kspace_grid2, Kspace_grid3,
+							SpinP_switch, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 4:
-                /* revised by Y. Xiao for Noncollinear NEGF calculations*/
-                if (SpinP_switch<2) {
-                    time5 += TRAN_DFT(mpi_comm_level1, SucceedReadingDMfile,
-                                      level_stdout, LSCF_iter,SpinP_switch,H,iHNL,OLP[0],
-                                      atomnum,Matomnum,WhatSpecies, Spe_Total_CNO, FNAN, natn,ncn,
-                                      M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,
-                                      DM[0],EDM,TRAN_DecMulP,Eele0,Eele1,ChemP_e0);
-                }
-                else {
-                    time5 += TRAN_DFT_NC(mpi_comm_level1, SucceedReadingDMfile,
-                                         level_stdout, LSCF_iter,SpinP_switch,H,iHNL,OLP[0],
-                                         atomnum,Matomnum,WhatSpecies, Spe_Total_CNO, FNAN, natn,ncn,
-                                         M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,koS,S_Band,
-                                         DM[0],iDM[0],EDM,TRAN_DecMulP,Eele0,Eele1,ChemP_e0);
-                } /* until here by Y. Xiao for Noncollinear NEGF calculations*/
+				case 4:
+					/* revised by Y. Xiao for Noncollinear NEGF calculations*/
+					if (SpinP_switch < 2) {
+						time5 += TRAN_DFT(mpi_comm_level1, SucceedReadingDMfile,
+							level_stdout, LSCF_iter, SpinP_switch, H, iHNL, OLP[0],
+							atomnum, Matomnum, WhatSpecies, Spe_Total_CNO, FNAN, natn, ncn,
+							M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,
+							DM[0], EDM, TRAN_DecMulP, Eele0, Eele1, ChemP_e0);
+					}
+					else {
+						time5 += TRAN_DFT_NC(mpi_comm_level1, SucceedReadingDMfile,
+							level_stdout, LSCF_iter, SpinP_switch, H, iHNL, OLP[0],
+							atomnum, Matomnum, WhatSpecies, Spe_Total_CNO, FNAN, natn, ncn,
+							M2G, G2ID, F_G2M, atv_ijk, List_YOUSO, koS, S_Band,
+							DM[0], iDM[0], EDM, TRAN_DecMulP, Eele0, Eele1, ChemP_e0);
+					} /* until here by Y. Xiao for Noncollinear NEGF calculations*/
 
-                break;
+					break;
 
-            case 5:
-                time5 += Divide_Conquer("scf",LSCF_iter,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 5:
+					time5 += Divide_Conquer("scf", LSCF_iter, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 6:
-                /* not supported */
-                break;
+				case 6:
+					/* not supported */
+					break;
 
-            case 7:
-                break;
+				case 7:
+					break;
 
-            case 8:
-                time5 += Krylov("scf",LSCF_iter,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 8:
+					time5 += Krylov("scf", LSCF_iter, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 9:
-                time5 += Cluster_DFT_ON2("scf",LSCF_iter,SpinP_switch,Cluster_ReCoes,Cluster_ko,
-                                         H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 9:
+					time5 += Cluster_DFT_ON2("scf", LSCF_iter, SpinP_switch, Cluster_ReCoes, Cluster_ko,
+						H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 10:
-                time5 += EC("scf",LSCF_iter,H,iHNL,OLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 10:
+					time5 += EC("scf", LSCF_iter, H, iHNL, OLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            }
+				}
 
-        }
-        else {
+			}
+			else {
 
-            switch (Solver) {
+				switch (Solver) {
 
-            case 1:
-                /* not supported */
-                break;
+				case 1:
+					/* not supported */
+					break;
 
-            case 2:
+				case 2:
 
 #ifndef scalapack
 
-                /*---------- modified by TOYODA 08/JAN/2010 */
-                if (g_exx_switch) {
-                    time5 += Cluster_DFT("scf",LSCF_iter,SpinP_switch,
-                                         Cluster_ReCoes,Cluster_ko, CntH,iCntHNL,CntOLP[0],DM[0],EDM,
-                                         g_exx,g_exx_DM[0],g_exx_U,Eele0,Eele1);
-                }
-                else {
-                    time5 += Cluster_DFT("scf",LSCF_iter,SpinP_switch,
-                                         Cluster_ReCoes,Cluster_ko, CntH,iCntHNL,CntOLP[0],DM[0],EDM,
-                                         NULL,NULL,NULL,Eele0,Eele1);
-                }
-                /*---------- until here */
+					/*---------- modified by TOYODA 08/JAN/2010 */
+					if (g_exx_switch) {
+						time5 += Cluster_DFT("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, CntH, iCntHNL, CntOLP[0], DM[0], EDM,
+							g_exx, g_exx_DM[0], g_exx_U, Eele0, Eele1);
+					}
+					else {
+						time5 += Cluster_DFT("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, CntH, iCntHNL, CntOLP[0], DM[0], EDM,
+							NULL, NULL, NULL, Eele0, Eele1);
+					}
+					/*---------- until here */
 
 #endif
 
 #ifdef scalapack
 
-                /*---------- modified by TOYODA 08/JAN/2010 */
-                if (g_exx_switch) {
-                    time5 += Cluster_DFT_ScaLAPACK("scf",LSCF_iter,SpinP_switch,
-                                                   Cluster_ReCoes,Cluster_ko, CntH,iCntHNL,CntOLP[0],DM[0],EDM,
-                                                   g_exx,g_exx_DM[0],g_exx_U,Eele0,Eele1,
-                                                   myworld1,NPROCS_ID1,Comm_World1,NPROCS_WD1,
-                                                   Comm_World_StartID1,MPI_CommWD1,
-                                                   Ss_Cluster,Cs_Cluster,Hs_Cluster);
+				/*---------- modified by TOYODA 08/JAN/2010 */
+					if (g_exx_switch) {
+						time5 += Cluster_DFT_ScaLAPACK("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, CntH, iCntHNL, CntOLP[0], DM[0], EDM,
+							g_exx, g_exx_DM[0], g_exx_U, Eele0, Eele1,
+							myworld1, NPROCS_ID1, Comm_World1, NPROCS_WD1,
+							Comm_World_StartID1, MPI_CommWD1,
+							Ss_Cluster, Cs_Cluster, Hs_Cluster);
 
-                }
-                else {
-                    time5 += Cluster_DFT_ScaLAPACK("scf",LSCF_iter,SpinP_switch,
-                                                   Cluster_ReCoes,Cluster_ko, CntH,iCntHNL,CntOLP[0],DM[0],EDM,
-                                                   NULL,NULL,NULL,Eele0,Eele1,
-                                                   myworld1,NPROCS_ID1,Comm_World1,NPROCS_WD1,
-                                                   Comm_World_StartID1,MPI_CommWD1,
-                                                   Ss_Cluster,Cs_Cluster,Hs_Cluster);
+					}
+					else {
+						time5 += Cluster_DFT_ScaLAPACK("scf", LSCF_iter, SpinP_switch,
+							Cluster_ReCoes, Cluster_ko, CntH, iCntHNL, CntOLP[0], DM[0], EDM,
+							NULL, NULL, NULL, Eele0, Eele1,
+							myworld1, NPROCS_ID1, Comm_World1, NPROCS_WD1,
+							Comm_World_StartID1, MPI_CommWD1,
+							Ss_Cluster, Cs_Cluster, Hs_Cluster);
 
-                }
-                /*---------- until here */
+					}
+					/*---------- until here */
 
 #endif
 
-                break;
+					break;
 
-            case 3:
+				case 3:
 
-                if (SpinP_switch<=1)
+					if (SpinP_switch <= 1)
 
 #ifndef scalapack
 
-                    /*---------- modified by TOYODA 15/FEB/2010 */
-                    if (5==XC_switch) {
-                        time5 += Band_DFT_Col(LSCF_iter,
-                                              Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                              SpinP_switch,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1,
-                                              MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                              H1_Band_Col,S1_Band_Col,
-                                              CDM1_Band_Col,EDM1_Band_Col,
-                                              H_Band_Col,S_Band,C_Band_Col,
-                                              BLAS_S,
-                                              k_op,T_k_op,T_k_ID,
-                                              T_KGrids1,T_KGrids2,T_KGrids3,
-                                              myworld1,
-                                              NPROCS_ID1,
-                                              Comm_World1,
-                                              NPROCS_WD1,
-                                              Comm_World_StartID1,
-                                              MPI_CommWD1,
-                                              myworld2,
-                                              NPROCS_ID2,
-                                              NPROCS_WD2,
-                                              Comm_World2,
-                                              Comm_World_StartID2,
-                                              MPI_CommWD2,
-                                              g_exx,
-                                              g_exx_DM[0],
-                                              g_exx_U
-                                             );
-                    }
-                    else {
+						/*---------- modified by TOYODA 15/FEB/2010 */
+						if (5 == XC_switch) {
+							time5 += Band_DFT_Col(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, S_Band, C_Band_Col,
+								BLAS_S,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								g_exx,
+								g_exx_DM[0],
+								g_exx_U
+							);
+						}
+						else {
 
-                        time5 += Band_DFT_Col(LSCF_iter,
-                                              Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                              SpinP_switch,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1,
-                                              MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                              H1_Band_Col,S1_Band_Col,
-                                              CDM1_Band_Col,EDM1_Band_Col,
-                                              H_Band_Col,S_Band,C_Band_Col,
-                                              BLAS_S,
-                                              k_op,T_k_op,T_k_ID,
-                                              T_KGrids1,T_KGrids2,T_KGrids3,
-                                              myworld1,
-                                              NPROCS_ID1,
-                                              Comm_World1,
-                                              NPROCS_WD1,
-                                              Comm_World_StartID1,
-                                              MPI_CommWD1,
-                                              myworld2,
-                                              NPROCS_ID2,
-                                              NPROCS_WD2,
-                                              Comm_World2,
-                                              Comm_World_StartID2,
-                                              MPI_CommWD2,
-                                              NULL,
-                                              NULL,
-                                              NULL
-                                             );
+							time5 += Band_DFT_Col(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, S_Band, C_Band_Col,
+								BLAS_S,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								NULL,
+								NULL,
+								NULL
+							);
 
-                    }
-                /*---------- until here */
+						}
+						/*---------- until here */
 
 #endif
 
 #ifdef scalapack
 
-                /*---------- modified by TOYODA 15/FEB/2010 */
-                if (5==XC_switch) {
-                    time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
-                                                    Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                                    SpinP_switch,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1,
-                                                    MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                                    H1_Band_Col,S1_Band_Col,
-                                                    CDM1_Band_Col,EDM1_Band_Col,
-                                                    H_Band_Col,Ss_Band_Col,Cs_Band_Col,
-                                                    Hs_Band_Col,
-                                                    k_op,T_k_op,T_k_ID,
-                                                    T_KGrids1,T_KGrids2,T_KGrids3,
-                                                    myworld1,
-                                                    NPROCS_ID1,
-                                                    Comm_World1,
-                                                    NPROCS_WD1,
-                                                    Comm_World_StartID1,
-                                                    MPI_CommWD1,
-                                                    myworld2,
-                                                    NPROCS_ID2,
-                                                    NPROCS_WD2,
-                                                    Comm_World2,
-                                                    Comm_World_StartID2,
-                                                    MPI_CommWD2,
-                                                    g_exx,
-                                                    g_exx_DM[0],
-                                                    g_exx_U
-                                                   );
-                }
-                else {
+				/*---------- modified by TOYODA 15/FEB/2010 */
+						if (5 == XC_switch) {
+							time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, Ss_Band_Col, Cs_Band_Col,
+								Hs_Band_Col,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								g_exx,
+								g_exx_DM[0],
+								g_exx_U
+							);
+						}
+						else {
 
-                    time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
-                                                    Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                                    SpinP_switch,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1,
-                                                    MP,order_GA,ko,koS,EIGEN_Band_Col,
-                                                    H1_Band_Col,S1_Band_Col,
-                                                    CDM1_Band_Col,EDM1_Band_Col,
-                                                    H_Band_Col,Ss_Band_Col,Cs_Band_Col,
-                                                    Hs_Band_Col,
-                                                    k_op,T_k_op,T_k_ID,
-                                                    T_KGrids1,T_KGrids2,T_KGrids3,
-                                                    myworld1,
-                                                    NPROCS_ID1,
-                                                    Comm_World1,
-                                                    NPROCS_WD1,
-                                                    Comm_World_StartID1,
-                                                    MPI_CommWD1,
-                                                    myworld2,
-                                                    NPROCS_ID2,
-                                                    NPROCS_WD2,
-                                                    Comm_World2,
-                                                    Comm_World_StartID2,
-                                                    MPI_CommWD2,
-                                                    NULL,
-                                                    NULL,
-                                                    NULL
-                                                   );
+							time5 += Band_DFT_Col_ScaLAPACK(LSCF_iter,
+								Kspace_grid1, Kspace_grid2, Kspace_grid3,
+								SpinP_switch, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1,
+								MP, order_GA, ko, koS, EIGEN_Band_Col,
+								H1_Band_Col, S1_Band_Col,
+								CDM1_Band_Col, EDM1_Band_Col,
+								H_Band_Col, Ss_Band_Col, Cs_Band_Col,
+								Hs_Band_Col,
+								k_op, T_k_op, T_k_ID,
+								T_KGrids1, T_KGrids2, T_KGrids3,
+								myworld1,
+								NPROCS_ID1,
+								Comm_World1,
+								NPROCS_WD1,
+								Comm_World_StartID1,
+								MPI_CommWD1,
+								myworld2,
+								NPROCS_ID2,
+								NPROCS_WD2,
+								Comm_World2,
+								Comm_World_StartID2,
+								MPI_CommWD2,
+								NULL,
+								NULL,
+								NULL
+							);
 
-                }
-                /*---------- until here */
+						}
+						/*---------- until here */
 
 #endif
 
-                else
-                    time5 += Band_DFT_NonCol(LSCF_iter,
-                                             koS,S_Band,
-                                             Kspace_grid1,Kspace_grid2,Kspace_grid3,
-                                             SpinP_switch,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+					else
+						time5 += Band_DFT_NonCol(LSCF_iter,
+							koS, S_Band,
+							Kspace_grid1, Kspace_grid2, Kspace_grid3,
+							SpinP_switch, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 4:
-                /* revised by Y. Xiao for Noncollinear NEGF calculations*/
-                if (SpinP_switch<2) {
-                    time5 += TRAN_DFT(mpi_comm_level1, SucceedReadingDMfile,
-                                      level_stdout, LSCF_iter,SpinP_switch,H,iHNL,OLP[0],
-                                      atomnum,Matomnum,WhatSpecies, Spe_Total_CNO, FNAN, natn,ncn,
-                                      M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,
-                                      DM[0],EDM,TRAN_DecMulP,Eele0,Eele1,ChemP_e0);
-                }
-                else {
-                    time5 += TRAN_DFT_NC(mpi_comm_level1, SucceedReadingDMfile,
-                                         level_stdout, LSCF_iter,SpinP_switch,H,iHNL,OLP[0],
-                                         atomnum,Matomnum,WhatSpecies, Spe_Total_CNO, FNAN, natn,ncn,
-                                         M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,koS,S_Band,
-                                         DM[0],iDM[0],EDM,TRAN_DecMulP,Eele0,Eele1,ChemP_e0);
-                }  /* until here by Y. Xiao for Noncollinear NEGF calculations*/
+				case 4:
+					/* revised by Y. Xiao for Noncollinear NEGF calculations*/
+					if (SpinP_switch < 2) {
+						time5 += TRAN_DFT(mpi_comm_level1, SucceedReadingDMfile,
+							level_stdout, LSCF_iter, SpinP_switch, H, iHNL, OLP[0],
+							atomnum, Matomnum, WhatSpecies, Spe_Total_CNO, FNAN, natn, ncn,
+							M2G, G2ID, F_G2M, atv_ijk, List_YOUSO,
+							DM[0], EDM, TRAN_DecMulP, Eele0, Eele1, ChemP_e0);
+					}
+					else {
+						time5 += TRAN_DFT_NC(mpi_comm_level1, SucceedReadingDMfile,
+							level_stdout, LSCF_iter, SpinP_switch, H, iHNL, OLP[0],
+							atomnum, Matomnum, WhatSpecies, Spe_Total_CNO, FNAN, natn, ncn,
+							M2G, G2ID, F_G2M, atv_ijk, List_YOUSO, koS, S_Band,
+							DM[0], iDM[0], EDM, TRAN_DecMulP, Eele0, Eele1, ChemP_e0);
+					}  /* until here by Y. Xiao for Noncollinear NEGF calculations*/
 
-                break;
+					break;
 
-            case 5:
-                time5 += Divide_Conquer("scf",LSCF_iter,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 5:
+					time5 += Divide_Conquer("scf", LSCF_iter, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 6:
-                /* not supported */
-                break;
+				case 6:
+					/* not supported */
+					break;
 
-            case 7:
-                break;
+				case 7:
+					break;
 
-            case 8:
-                time5 += Krylov("scf",LSCF_iter,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 8:
+					time5 += Krylov("scf", LSCF_iter, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 9:
-                time5 += Cluster_DFT_ON2("scf",LSCF_iter,SpinP_switch,Cluster_ReCoes,Cluster_ko,
-                                         CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 9:
+					time5 += Cluster_DFT_ON2("scf", LSCF_iter, SpinP_switch, Cluster_ReCoes, Cluster_ko,
+						CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            case 10:
-                time5 += EC("scf",LSCF_iter,CntH,iCntHNL,CntOLP[0],DM[0],EDM,Eele0,Eele1);
-                break;
+				case 10:
+					time5 += EC("scf", LSCF_iter, CntH, iCntHNL, CntOLP[0], DM[0], EDM, Eele0, Eele1);
+					break;
 
-            }
-        }
+				}
+			}
+		}
 
         Uele_OS0 = Eele0[0];
         Uele_OS1 = Eele0[1];
