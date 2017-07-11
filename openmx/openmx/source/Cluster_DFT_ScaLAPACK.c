@@ -948,7 +948,7 @@ diagonalize:
             }
         }
 
-        if (MO_fileout==1) {
+        if (MO_fileout>=1) {
 
             /* HOMOs */
 
@@ -2069,7 +2069,7 @@ static double Cluster_non_collinear(
             printf("  HOMO = %2d\n",Cluster_HOMO[0]);
         }
 
-        if (MO_fileout==1) {
+        if (MO_fileout>=1) {
 
             /* HOMOs */
 

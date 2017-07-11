@@ -2463,7 +2463,13 @@ void Input_std(char *file)
       control patameters for outputting wave functions
     ****************************************************/
 
-    input_logical("MO.fileout",&MO_fileout,0);
+    s_vec[0]="off";
+    s_vec[1]="on";
+    s_vec[2]="onErange";
+    i_vec[0]=0;
+    i_vec[1]=1;
+    i_vec[2]=2;
+    input_string2int("MO.fileout",&MO_fileout,3,s_vec,i_vec);
     input_int("num.HOMOs",&num_HOMOs,1);
     input_int("num.LUMOs",&num_LUMOs,1);
 
@@ -2472,7 +2478,7 @@ void Input_std(char *file)
         num_LUMOs = 1;
     }
 
-    if ((Solver!=2 && Solver!=3 && Solver!=7) && MO_fileout==1) {
+    if ((Solver!=2 && Solver!=3 && Solver!=7) && MO_fileout>=1) {
 
         s_vec[0]="Recursion";
         s_vec[1]="Cluster";
@@ -2490,7 +2496,7 @@ void Input_std(char *file)
         MO_fileout = 0;
     }
 
-    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout==1 ) {
+    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout>=1 ) {
         List_YOUSO[31] = num_HOMOs;
         List_YOUSO[32] = num_LUMOs;
     }
@@ -2515,7 +2521,7 @@ void Input_std(char *file)
         exit(0);
     }
 
-    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout==1 ) {
+    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout>=1 ) {
         List_YOUSO[33] = MO_Nkpoint;
     }
     else {
@@ -2797,8 +2803,13 @@ void Input_std(char *file)
 
     /* selective MO out bluehope*/
     MO_selective = 0;
-    if (MO_fileout == 1) {
+    if (MO_fileout >= 1) {
         input_int("MO.selective",&MO_selective,0);
+		r_vec[0] = -20.0; /* MO Erange lower window default -20 eV */
+		r_vec[1] = +20.0; /* MO Erange upper window default +20 eV */
+		input_doublev("MO.Erange",2,MO_Erange,r_vec);
+		MO_Erange[0] = MO_Erange[0]/eV2Hartree;
+		MO_Erange[1] = MO_Erange[1]/eV2Hartree;
         if (2<=level_stdout) {
             printf("<Input_std> MO.selective %d\n",MO_selective);
         }

@@ -89,7 +89,7 @@ double OutData(char *inputfile)
 
     if (specified_system!=0) out_coordinates_bulk();
 
-    if (MO_fileout==1 && specified_system==0) {
+    if (MO_fileout>=1 && specified_system==0) {
 
         /* spin non-collinear */
         if (SpinP_switch==3)
@@ -98,7 +98,7 @@ double OutData(char *inputfile)
         else
             out_Cluster_MO();
     }
-    else if (MO_fileout==1 && specified_system!=0) {
+    else if (MO_fileout>=1 && specified_system!=0) {
         out_Bulk_MO();
     }
 

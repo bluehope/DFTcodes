@@ -2458,7 +2458,7 @@ int GeoOpt_RestartFromFile,OutData_bin_flag;
 int coordinates_unit,unitvector_unit;
 int Size_Total_Matrix,SP_PEV,EKC_core_size_max;
 int specified_system,MO_fileout,num_HOMOs,num_LUMOs;
-int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag,MO_selective;
+int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag;
 int StressConsistency_flag,stress_flag,scf_stress_flag,MD_cellopt_flag,cellopt_swtich;
 int rediagonalize_flag_overlap_matrix;
 int rediagonalize_flag_overlap_matrix_ELPA1;
@@ -2540,7 +2540,9 @@ double DosGauss_Width;
 double Dos_Erange[2];
 int Dos_Kgrid[3];
 int Opticalconductivity_fileout;
-
+/* MO selective by Hongkee Yoon*/
+int MO_selective;
+double MO_Erange[2];
 /*  electric field */
 double E_Field[3];
 

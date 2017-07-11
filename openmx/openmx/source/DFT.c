@@ -2290,7 +2290,7 @@ double DFT(int MD_iter, int Cnt_Now)
            Calc. of Bloch waves at given k-points
     *****************************************************/
 
-    if (MO_fileout==1 && MO_Nkpoint>0 && (Solver==3 || PeriodicGamma_flag==1) ) {
+    if (MO_fileout>=1 && MO_Nkpoint>0 && (Solver==3 || PeriodicGamma_flag==1) ) {
         if (Cnt_switch==0) {
             Band_DFT_MO(MO_Nkpoint, MO_kpoint, SpinP_switch, H, iHNL, OLP[0]);
         }
