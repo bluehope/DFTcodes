@@ -1,0 +1,242 @@
+diff --git a/openmx/openmx3.7/source/Allocate_Arrays.c b/openmx/openmx3.7/source/Allocate_Arrays.c
+index e96b9f9..dd52001 100644
+--- a/openmx/openmx3.7/source/Allocate_Arrays.c
++++ b/openmx/openmx3.7/source/Allocate_Arrays.c
+@@ -388,7 +388,20 @@ void Allocate_Arrays(int wherefrom)
+         for (i=0; i<(MO_Nkpoint+1); i++) {
+             MO_kpoint[i] = (double*)malloc(sizeof(double)*4);
+         }
++        MO_selection = (int**)malloc(sizeof(int*)*(atomnum+1));
++        for (i=0; i<(atomnum+1); i++) {
++            MO_selection[i] = (int*)malloc(sizeof(int)*2);
++        }
+ 
++        MO_basis_selection =  (int***)malloc(sizeof(int**)*SpeciesNum);
++        for (i=0; i<SpeciesNum; i++) {
++            printf("Spe_MaxL_Basis %d %d\n",i,Spe_MaxL_Basis[i]);
++            MO_basis_selection[i] = (int**)malloc(sizeof(int*)*(Spe_MaxL_Basis[i]+1));
++            for (l=0; l<(Spe_MaxL_Basis[i]+1); l++) {
++                printf("MO_basis_selection %d %d\n",i,l);
++                MO_basis_selection[i][l] = (int*)malloc(sizeof(int)*Spe_Num_Basis[i][l]);
++            }
++        }
+         break;
+ 
+     case 6:
+diff --git a/openmx/openmx3.7/source/Band_DFT_MO.c b/openmx/openmx3.7/source/Band_DFT_MO.c
+index b13138d..d71e3c7 100644
+--- a/openmx/openmx3.7/source/Band_DFT_MO.c
++++ b/openmx/openmx3.7/source/Band_DFT_MO.c
+@@ -737,14 +737,26 @@ static void Band_DFT_MO_Col(
+                         for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
+ 
+                             wan1 = WhatSpecies[Gc_AN];
++                            n = 0;
++                            //selection
++                            if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
++                                continue; //skip output
++                            }
+ 
+                             for (l=0; l<=Supported_MaxL; l++) {
+                                 for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
+                                     for (m=0; m<(2*l+1); m++) {
+-
+-                                        if (l==0 && mul==0 && m==0)
++                                        if(2==MO_selective) {
++                                            if(0==MO_basis_selection[wan1][l][mul]) {
++                                                continue;
++                                            }
++                                        }
++                                        //if (l==0 && mul==0 && m==0)
++                                        if (0==n) {
+                                             fprintf(fp_EV,"%4d %3s %s %s",
+                                                     Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
++                                            n++;
++                                        }
+                                         else
+                                             fprintf(fp_EV,"         %s %s",
+                                                     Name_Multiple[mul],Name_Angular[l][m]);
+@@ -1661,15 +1673,26 @@ static void Band_DFT_MO_NonCol(
+                     for (Gc_AN=1; Gc_AN<=atomnum; Gc_AN++) {
+ 
+                         wan1 = WhatSpecies[Gc_AN];
++                        n = 0;
++                        //selection
++                        if(1>=MO_selective && 0==MO_selection[Gc_AN][1]) {
++                            continue; //skip output
++                        }
+ 
+                         for (l=0; l<=Supported_MaxL; l++) {
+                             for (mul=0; mul<Spe_Num_CBasis[wan1][l]; mul++) {
++                                if(2==MO_selective) {
++                                    if(0==MO_basis_selection[wan1][l][mul]) {
++                                        continue;
++                                    }
++                                }
+                                 for (m=0; m<(2*l+1); m++) {
+-
+-                                    if (l==0 && mul==0 && m==0)
++                                    //if (l==0 && mul==0 && m==0)
++                                    if (0==n) {
+                                         fprintf(fp_EV,"%4d %3s %s %s",
+                                                 Gc_AN,SpeName[wan1],Name_Multiple[mul],Name_Angular[l][m]);
+-                                    else
++                                        n++;
++                                    } else
+                                         fprintf(fp_EV,"         %s %s",
+                                                 Name_Multiple[mul],Name_Angular[l][m]);
+ 
+diff --git a/openmx/openmx3.7/source/Free_Arrays.c b/openmx/openmx3.7/source/Free_Arrays.c
+index 5a6e6d6..bf6d26a 100644
+--- a/openmx/openmx3.7/source/Free_Arrays.c
++++ b/openmx/openmx3.7/source/Free_Arrays.c
+@@ -1722,6 +1722,14 @@ void array0()
+ 
+         free(OrbPol_flag);
+     }
++    /* arrays for MO basis selective output  */
++    for (i=0; i<SpeciesNum; i++) {
++        for (l=0; l<(Spe_MaxL_Basis[i]+1); l++) {
++            free(MO_basis_selection[i][l]);
++        }
++        free(MO_basis_selection[i]);
++    }
++    free(MO_basis_selection);
+ 
+     /* arrays for DFTD-vdW okuno */
+     if(dftD_switch==1) {
+@@ -2093,6 +2101,10 @@ void array0()
+     }
+     free(MO_kpoint);
+ 
++    for (i=0; i<(atomnum+1); i++) {
++        free(MO_selection[i]);
++    }
++    free(MO_selection);
+     /* Set_Periodic() in truncation.c */
+ 
+ n = 2*CpyCell + 4;
+diff --git a/openmx/openmx3.7/source/Input_std.c b/openmx/openmx3.7/source/Input_std.c
+index 888cf01..7347c19 100644
+--- a/openmx/openmx3.7/source/Input_std.c
++++ b/openmx/openmx3.7/source/Input_std.c
+@@ -2132,16 +2132,77 @@ void Input_std(char *file)
+             kpoint_changeunit(tv,Band_UnitCell,MO_Nkpoint,MO_kpoint);
+         }
+     }
++    /* selective MO out bluehope*/
++    if (MO_fileout == 1) {
++        input_int("MO.selective",&MO_selective,0);
++        if (2<=level_stdout) {
++            printf("<Input_std> MO.selective %d\n",MO_selective);
++        }
++        if(MO_selective >= 1) {
++            if(fp=input_find("<MO.selection")) {
++                for(i=1; i<=atomnum; i++) {
++                    fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
++
++                    if (2<=level_stdout) {
++                        printf("<Input_std> MO_selection %2d %d\n",
++                               i,MO_selection[i][1]);
++                    }
++                }
++                if(!input_last("MO.selection>")) {
++                    /*format error*/
++                    printf("Format error for MO.selection\n");
++                    po++;
++                }
++            }
++            if (MO_selective == 2) {
++
++                if (fp=input_find("<MO.basis")) {
+ 
++                    /* initialize the U-values */
++                    for (i=0; i<SpeciesNum; i++) {
++                        for (l=0; l<=Spe_MaxL_Basis[i]; l++) {
++                            for (mul=0; mul<Spe_Num_Basis[i][l]; mul++) {
++                                MO_basis_selection[i][l][mul]=0.0 ;
++                            }
++                        }
++                    }
++
++                    /* read the MO basis on off from the '.dat' file  */
++                    for (i=0; i<SpeciesNum; i++) {
++                        fscanf(fp,"%s",Species);
++                        if (2<=level_stdout) {
++                            printf("MO.basis %s\n",Species);
++                        }
++                        j = Species2int(Species);
++                        for (l=0; l<=Spe_MaxL_Basis[j]; l++) {
++                            for (mul=0; mul<Spe_Num_Basis[j][l]; mul++) {
++                                fscanf(fp,"%s %d", buf, &MO_basis_selection[j][l][mul]) ;
++                                if (2<=level_stdout) {
++                                    printf("MO.basis %s %s %d\n",Species,buf,MO_basis_selection[j][l][mul]);
++                                }
++                            }
++                        }
++                    }
++
++                    if (! input_last("MO.basis>") ) {
++                        /* format error */
++                        printf("Format error for MO.basis\n");
++                        po++;
++                    }
++
++                }   /*  if (fp=input_find("<MO.basis"))  */
++            }
++        }
++    }
+     /****************************************************
+-                    OutData_bin_flag
+-    ****************************************************/
++      OutData_bin_flag
++     ****************************************************/
+ 
+     input_logical("OutData.bin.flag",&OutData_bin_flag,0); /* default=off */
+ 
+     /****************************************************
+-             for output of contracted orbitals
+-    ****************************************************/
++      for output of contracted orbitals
++     ****************************************************/
+ 
+     input_logical("CntOrb.fileout",&CntOrb_fileout,0);
+     if ((!(Cnt_switch==1 && RCnt_switch==1)) && CntOrb_fileout==1) {
+diff --git a/openmx/openmx3.7/source/openmx_common.h b/openmx/openmx3.7/source/openmx_common.h
+index ceb364f..16e3c52 100644
+--- a/openmx/openmx3.7/source/openmx_common.h
++++ b/openmx/openmx3.7/source/openmx_common.h
+@@ -693,6 +693,24 @@ int **atv_ijk;
+ double **MO_kpoint;
+ 
+ /*******************************************************
++ double **MO_selection;
++  selective wave function ouput.
++  size: MO_selection[atomnum][2]
++  allocation: call as Allocate_Arrays(5) in Input_std.c
++  free:       call as Free_Arrays(0) in openmx.c
++*******************************************************/
++int **MO_selection;
++
++/*******************************************************
++ int ***MO_basis_selection
++ wave fuction output basis selection
++  size: MO_basis_selection[SpeciesNum][Spe_MaxL_Basis+1][Spe_Num_Basis]
++  allocation: call as Allocate_Arrays(5) in Input_std.c
++  free:       call as Free_Arrays(0) in openmx.c
++*******************************************************/
++int ***MO_basis_selection ;
++
++/*******************************************************
+  double **Spe_PAO_XV;
+   radial mesh (x=log(r)) for PAO
+   size: Spe_PAO_XV[List_YOUSO[18]]
+@@ -2123,7 +2141,7 @@ int GeoOpt_RestartFromFile,OutData_bin_flag;
+ int coordinates_unit,unitvector_unit;
+ int Size_Total_Matrix,SP_PEV,EKC_core_size_max;
+ int specified_system,MO_fileout,num_HOMOs,num_LUMOs;
+-int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag;
++int Cluster_HOMO[2],MO_Nkpoint,ML_flag,ForceConsistency_flag,force_flag,MO_selective;
+ int CntOrb_fileout,Num_CntOrb_Atoms;
+ int num_non_eq_kpt,way_of_kpoint;
+ int remake_headfile,OneD_Grid,Ngrid1,Ngrid2,Ngrid3;
