@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
     FILE *custom_kpoints_fp;
     int custom_kpoints_num;
     int custom_kpoints;
-	char custom_kpoints_fname[2048] = "";
-	char custom_kpoints_name[256] = ""; /* representative name for custom kpoint line */
+    char custom_kpoints_fname[2048] = "";
+    char custom_kpoints_name[256] = ""; /* representative name for custom kpoint line */
     static double *custom_KGrids1,*custom_KGrids2,*custom_KGrids3;
     int all_kpoint_output; /* 0: no printout for each k-points, 1:printout for each k-points */
     char all_kpoint_output_fname[2048] = "";
@@ -263,12 +263,12 @@ int main(int argc, char *argv[])
                     printf(" Nk1, Nk2, Nk3 = %d %d %d  \n", Nk[1],Nk[2], Nk[3]);
                 } else if(1 == custom_kpoints) {
                     /* custom kpoints  */
-					printf(" type custom_kpoint filename without '.csv' (ex: kpoint.csv then type kpoint)\n");
-					scanf("%s",custom_kpoints_name);
-					
-					strcat(custom_kpoints_fname,custom_kpoints_name);
-					strcat(custom_kpoints_fname,".csv");
-					
+                    printf(" type custom_kpoint filename without '.csv' (ex: kpoint.csv then type kpoint)\n");
+                    scanf("%s",custom_kpoints_name);
+
+                    strcat(custom_kpoints_fname,custom_kpoints_name);
+                    strcat(custom_kpoints_fname,".csv");
+
                     printf(" Reading %s \n",custom_kpoints_fname);
 
                     if(custom_kpoints_fp=fopen(custom_kpoints_fname,"r")) {
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
             /* custom kpoints  */
             MPI_Bcast(&custom_kpoints_num, 1, MPI_INT, 0, comm1);
             MPI_Bcast(&T_knum, 1, MPI_INT, 0, comm1);
-            MPI_Bcast(&custom_kpoints , 1, MPI_INT, 0, comm1);
+            MPI_Bcast(&custom_kpoints, 1, MPI_INT, 0, comm1);
             if( 0 == custom_kpoints ) {
                 if ( knum_i<=0 || knum_j<=0 || knum_k<=0 ) {
                     printf("invalid number\n");
@@ -638,9 +638,9 @@ int main(int argc, char *argv[])
                             assert(orbital_to_mask < Total_NumOrbs[atmij[2]]);
                             orbital_mask2[orbital_to_mask] = 1;
                         }
-						printf(" Representative name for selected orbitals ex) eg_t2g \n");
-						scanf("%s",orbital_mask_name);
-						printf( " orbital_mask_name: %s",orbital_mask_name);
+                        printf(" Representative name for selected orbitals ex) eg_t2g \n");
+                        scanf("%s",orbital_mask_name);
+                        printf( " orbital_mask_name: %s",orbital_mask_name);
                         printf("\n");
                         if(2==orbital_mask_option) {
                             /* inverse mask */
@@ -871,9 +871,9 @@ int main(int argc, char *argv[])
                             sprintf(all_kpoint_output_fname,"jx-%s_%d_%d",custom_kpoints_name, First_Atom,Second_Atom);
 
                         if(0 < orbital_mask_option) {
-							strcat(all_kpoint_output_fname,"_[");
-							strcat(all_kpoint_output_fname,orbital_mask_name);
-							strcat(all_kpoint_output_fname,"]");
+                            strcat(all_kpoint_output_fname,"_[");
+                            strcat(all_kpoint_output_fname,orbital_mask_name);
+                            strcat(all_kpoint_output_fname,"]");
                             char buf[256];
                             int mask_cnt = 0;
                             if(1 == orbital_mask_option ) {
@@ -928,10 +928,10 @@ int main(int argc, char *argv[])
                                     }
                                 }
                             }
-                        }else{
-							/* when all orbital is used */
-							strcat(all_kpoint_output_fname,"_[all]_");
-						}
+                        } else {
+                            /* when all orbital is used */
+                            strcat(all_kpoint_output_fname,"_[all]_");
+                        }
                         strcat(all_kpoint_output_fname,".csv");
 
                         printf(" k1,k2,k3,JrTk,JiTk\n");
@@ -972,7 +972,7 @@ int main(int argc, char *argv[])
 
         	int *orbital_mask1;
         	int *orbital_mask2;
-			char* orbital_mask_name;
+        	char* orbital_mask_name;
          *********************************************/
 
         free(Full_atom);
@@ -1022,7 +1022,7 @@ int main(int argc, char *argv[])
 
         free(orbital_mask1);
         free(orbital_mask2);
-		orbital_mask_name[0] = '\0';
+        orbital_mask_name[0] = '\0';
     }
 
     /* print message */

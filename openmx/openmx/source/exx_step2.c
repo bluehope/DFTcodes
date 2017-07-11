@@ -603,9 +603,9 @@ int EXX_Step2(const EXX_t *exx)
     EXX_Log_Print("TRACE: %15s= %.2e\n", "NQ_SIG", (double)cnt2_sum);
 #endif
     EXX_LOG_TRACE_DOUBLE("TOTAL_TIME",    et);
-    EXX_LOG_TRACE_DOUBLE("CORE_TIME" ,    et1_core_sum);
+    EXX_LOG_TRACE_DOUBLE("CORE_TIME",    et1_core_sum);
     EXX_LOG_TRACE_DOUBLE("AVG_CORE_TIME", et1_core_sum/(double)cnt1_sum);
-    EXX_LOG_TRACE_DOUBLE("CORE_TIME(2)" ,    et2_core_sum);
+    EXX_LOG_TRACE_DOUBLE("CORE_TIME(2)",    et2_core_sum);
     EXX_LOG_TRACE_DOUBLE("AVG_CORE_TIME(2)", et2_core_sum/(double)cnt1_sum);
     EXX_LOG_MESSAGE("");
 

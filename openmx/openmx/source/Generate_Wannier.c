@@ -9364,7 +9364,7 @@ void Wannier_Interpolation(dcomplex ****Uk, double ***eigen, int spinsize, int S
                             for (info=0; info<wan_num; info++) {
                                 fprintf(fpBand,"%lf ",dw[info]);
                             }
-                            fprintf(fpBand  ,"\n");
+                            fprintf(fpBand,"\n");
                         }
                     } /* spin */
                 } /* kpt */

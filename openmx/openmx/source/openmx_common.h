@@ -723,7 +723,7 @@ double **MO_kpoint;
   free:       call as Free_Arrays(0) in openmx.c
 *******************************************************/
 int **MO_selection;
- 
+
 /*******************************************************
  int ***MO_basis_selection
  wave fuction output basis selection
