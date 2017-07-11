@@ -716,6 +716,24 @@ int **atv_ijk;
 double **MO_kpoint;
 
 /*******************************************************
+ double **MO_selection;
+  selective wave function ouput.
+  size: MO_selection[atomnum][2]
+  allocation: call as Allocate_Arrays(5) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int **MO_selection;
+
+/*******************************************************
+ int ***MO_basis_selection
+ wave fuction output basis selection
+  size: MO_basis_selection[SpeciesNum][Spe_MaxL_Basis+1][Spe_Num_Basis]
+  allocation: call as Allocate_Arrays(5) in Input_std.c
+  free:       call as Free_Arrays(0) in openmx.c
+*******************************************************/
+int ***MO_basis_selection;
+
+/*******************************************************
  double **Spe_PAO_XV;
   radial mesh (x=log(r)) for PAO
   size: Spe_PAO_XV[List_YOUSO[18]]
@@ -2522,7 +2540,9 @@ double DosGauss_Width;
 double Dos_Erange[2];
 int Dos_Kgrid[3];
 int Opticalconductivity_fileout;
-
+/* MO selective by Hongkee Yoon*/
+int MO_selective;
+double MO_Erange[2];
 /*  electric field */
 double E_Field[3];
 

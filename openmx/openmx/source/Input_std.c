@@ -2463,7 +2463,13 @@ void Input_std(char *file)
       control patameters for outputting wave functions
     ****************************************************/
 
-    input_logical("MO.fileout",&MO_fileout,0);
+    s_vec[0]="off";
+    s_vec[1]="on";
+    s_vec[2]="onErange";
+    i_vec[0]=0;
+    i_vec[1]=1;
+    i_vec[2]=2;
+    input_string2int("MO.fileout",&MO_fileout,3,s_vec,i_vec);
     input_int("num.HOMOs",&num_HOMOs,1);
     input_int("num.LUMOs",&num_LUMOs,1);
 
@@ -2472,7 +2478,7 @@ void Input_std(char *file)
         num_LUMOs = 1;
     }
 
-    if ((Solver!=2 && Solver!=3 && Solver!=7) && MO_fileout==1) {
+    if ((Solver!=2 && Solver!=3 && Solver!=7) && MO_fileout>=1) {
 
         s_vec[0]="Recursion";
         s_vec[1]="Cluster";
@@ -2490,7 +2496,7 @@ void Input_std(char *file)
         MO_fileout = 0;
     }
 
-    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout==1 ) {
+    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout>=1 ) {
         List_YOUSO[31] = num_HOMOs;
         List_YOUSO[32] = num_LUMOs;
     }
@@ -2515,7 +2521,7 @@ void Input_std(char *file)
         exit(0);
     }
 
-    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout==1 ) {
+    if ( (Solver==2 || Solver==3 || Solver==7) && MO_fileout>=1 ) {
         List_YOUSO[33] = MO_Nkpoint;
     }
     else {
@@ -2797,6 +2803,77 @@ void Input_std(char *file)
 
     /****************************************************
                     OutData_bin_flag
+    /* selective MO out bluehope*/
+    MO_selective = 0;
+    if (MO_fileout >= 1) {
+        input_int("MO.selective",&MO_selective,0);
+		r_vec[0] = -20.0; /* MO Erange lower window default -20 eV */
+		r_vec[1] = +20.0; /* MO Erange upper window default +20 eV */
+		input_doublev("MO.Erange",2,MO_Erange,r_vec);
+		MO_Erange[0] = MO_Erange[0]/eV2Hartree;
+		MO_Erange[1] = MO_Erange[1]/eV2Hartree;
+        if (2<=level_stdout) {
+            printf("<Input_std> MO.selective %d\n",MO_selective);
+        }
+        if(1 <= MO_selective) {
+            if(fp=input_find("<MO.selection")) {
+                for(i=1; i<=atomnum; i++) {
+                    fscanf(fp,"%d %d",&j,&MO_selection[i][1]);
+
+                    if (2<=level_stdout) {
+                        printf("<Input_std> MO_selection %2d %d\n",
+                               i,MO_selection[i][1]);
+                    }
+                }
+                if(!input_last("MO.selection>")) {
+                    /*format error*/
+                    printf("Format error for MO.selection\n");
+                    po++;
+                }
+            }
+        }
+        if(2 == MO_selective) {
+            if (fp=input_find("<MO.basis")) {
+
+                /* initialize the U-values */
+                for (i=0; i<SpeciesNum; i++) {
+                    for (l=0; l<=Spe_MaxL_Basis[i]; l++) {
+                        for (mul=0; mul<Spe_Num_Basis[i][l]; mul++) {
+                            MO_basis_selection[i][l][mul]= 0 ;
+                        }
+                    }
+                }
+
+                /* read the MO basis on off from the '.dat' file  */
+                for (i=0; i<SpeciesNum; i++) {
+                    fscanf(fp,"%s",Species);
+                    if (2<=level_stdout) {
+                        printf("MO.basis %s\n",Species);
+                    }
+                    j = Species2int(Species);
+                    for (l=0; l<=Spe_MaxL_Basis[j]; l++) {
+                        for (mul=0; mul<Spe_Num_Basis[j][l]; mul++) {
+                            fscanf(fp,"%s %d", buf, &MO_basis_selection[j][l][mul]) ;
+                            if (2<=level_stdout) {
+                                printf("MO.basis %s %s %d\n",Species,buf,MO_basis_selection[j][l][mul]);
+                            }
+                        }
+                    }
+                }
+
+                if (! input_last("MO.basis>") ) {
+                    /* format error */
+                    printf("Format error for MO.basis\n");
+                    po++;
+                }
+
+            }   /*  if (fp=input_find("<MO.basis"))  */
+        }
+
+    }
+
+    /****************************************************
+      OutData_bin_flag
     ****************************************************/
 
     input_logical("OutData.bin.flag",&OutData_bin_flag,0); /* default=off */

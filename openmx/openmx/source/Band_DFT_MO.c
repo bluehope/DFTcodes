@@ -664,8 +664,44 @@ static void Band_DFT_MO_Col(
                 num0 = 4;
                 num1 = n/num0 + 1*(n%num0!=0);
 
+                /* Energy window selection */
+                int band_min = 1 ;// (int)(Bulk_HOMO[kloop][0]/2)-50;
+                int band_max = num1; //(int)(Bulk_HOMO[kloop][0]/2)+50;
+
+                if (MO_fileout >= 2 ) { /* Erange selection is only activated with MO_fileout=2 */
+                    double lower_window = MO_Erange[0];
+                    double upper_window = MO_Erange[1];
+                    int in_range = 1;
+                    for (i=1; i<=num1; i++) { /* Search lower bound */
+                        in_range = 1;
+                        for (spin=0; spin<=SpinP_switch; spin++) {
+                            if(!((EIGEN[kloop][spin][i] - ChemP) < lower_window)) {
+                                in_range = 0;
+                            }
+                        }
+                        if (in_range > 0) {
+                            band_min = i;
+                        }
+                    }
+                    for (i=num1 ; i>=0; i--) { /* Search upper bound */
+                        in_range = 1;
+                        for (spin=0; spin<=SpinP_switch; spin++) {
+                            if(!((EIGEN[kloop][spin][i] - ChemP) > upper_window)) {
+                                in_range = 0;
+                            }
+                        }
+                        if (in_range > 0) {
+                            band_max = i;
+                        }
+                    }
+                }
+
+
+
+
                 for (spin=0; spin<=SpinP_switch; spin++) {
-                    for (i=1; i<=num1; i++) {
+                    /* for (i=1; i<=num1; i++) { */
+                    for (i=band_min; i<=band_max; i++) {
 
                         fprintf(fp_EV,"\n");
 
@@ -1593,7 +1629,43 @@ static void Band_DFT_MO_NonCol(
                 num0 = 2;
                 num1 = 2*n/num0 + 1*((2*n)%num0!=0);
 
-                for (i=1; i<=num1; i++) {
+                int band_min = 1 ;// (int)(Bulk_HOMO[kloop][0]/2)-50;
+                int band_max = num1; //(int)(Bulk_HOMO[kloop][0]/2)+50;
+
+                if (MO_fileout >= 2 ) { /* Erange selection is only activated with MO_fileout=2 */
+                    double lower_window = MO_Erange[0];
+
+                    double upper_window = MO_Erange[1];
+                    int in_range = 1;
+                    for (i=0; i<num1; i++) { /* Search lower bound */
+                        in_range = 1;
+                        for (spin=1; spin<=2; spin++) {
+                            if(!((EIGEN[kloop][spin + 2*i] - ChemP) < lower_window)) {
+                                in_range = 0;
+                            }
+                        }
+                        if (in_range > 0) {
+                            band_min = i;
+                        }
+                    }
+                    for (i=num1-1 ; i>=0; i--) { /* Search upper bound */
+                        in_range = 1;
+                        for (spin=1; spin<=2; spin++) {
+                            if(!((EIGEN[kloop][spin + 2*i] - ChemP) > upper_window)) {
+                                in_range = 0;
+                            }
+                        }
+                        if (in_range > 0) {
+                            band_max = i;
+                        }
+                    }
+                }
+
+
+
+
+                /* for (i=1; i<=num1; i++) { */
+                for (i=band_min; i<=band_max; i++) {
 
                     fprintf(fp_EV,"\n");
 
