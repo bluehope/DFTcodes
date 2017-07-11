@@ -215,6 +215,7 @@ OBJS    = openmx.o openmx_common.o Input_std.o Inputtools.o \
           TRAN_Calc_CurrentDensity.o TRAN_CDen_Main.o \
           elpa1.o solve_evp_real.o solve_evp_complex.o \
           NBO_Cluster.o NBO_Krylov.o \
+          RestartSCFFileDFT.o \
 
 # PROG    = openmx.exe
 # PROG    = openmx
@@ -624,6 +625,8 @@ NBO_Cluster.o: NBO_Cluster.c openmx_common.h Inputtools.h
 	$(CC) -c NBO_Cluster.c
 NBO_Krylov.o: NBO_Krylov.c openmx_common.h Inputtools.h
 	$(CC) -c NBO_Krylov.c
+RestartSCFFileDFT.o: RestartSCFFileDFT.c openmx_common.h # Hongkee Yoon
+	$(CC) -c RestartSCFFileDFT.c
 
 #
 #
