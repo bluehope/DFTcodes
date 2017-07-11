@@ -2797,6 +2797,9 @@ void xyz2spherical(double x, double y, double z,
                    double xo, double yo, double zo,
                    double S_coordinate[3]);
 int RestartFileDFT(char *mode, int MD_iter, double *Uele, double *****H, double *****CntH, double *etime);
+int RestartSCFFileDFT(char *mode,int SpinP_switch, int MD_iter, double *****H,double *****iHNL,
+                      double ****CntOLP,
+                      double *****CDM, double *etime);
 void FT_PAO();
 void FT_NLP();
 void FT_ProExpn_VNA();

@@ -2160,8 +2160,14 @@ void Input_std(char *file)
     i_vec[1] = -1;  /* switch off explicitly */
     s_vec[2]="on";
     i_vec[2] = 1;   /* switch on explicitly */
+    s_vec[3]="onH"; /* Hongkee Yoon */
+    i_vec[3] = 2;   /* switch on explicitly */
+    s_vec[4] = "onDM"; /* Hongkee Yoon */
+    i_vec[4] = 3;   /* switch on explicitly */
+    s_vec[5] = "onDMkeep"; /* Hongkee Yoon */
+    i_vec[5] = 4;   /* switch on explicitly */
 
-    input_string2int("scf.restart", &Scf_RestartFromFile, 3, s_vec,i_vec);
+    input_string2int("scf.restart", &Scf_RestartFromFile, 6, s_vec,i_vec);
 
     /* check the number of processors */
 
@@ -2181,6 +2187,10 @@ void Input_std(char *file)
         else {
             printf("Failure of saving %s\n",file_check);
         }
+    }
+
+    if (Scf_RestartFromFile>=2) {
+        printf("Scf_RestartFromFile %d\n", Scf_RestartFromFile);
     }
 
     /****************************************************
@@ -2807,11 +2817,11 @@ void Input_std(char *file)
     MO_selective = 0;
     if (MO_fileout >= 1) {
         input_int("MO.selective",&MO_selective,0);
-		r_vec[0] = -20.0; /* MO Erange lower window default -20 eV */
-		r_vec[1] = +20.0; /* MO Erange upper window default +20 eV */
-		input_doublev("MO.Erange",2,MO_Erange,r_vec);
-		MO_Erange[0] = MO_Erange[0]/eV2Hartree;
-		MO_Erange[1] = MO_Erange[1]/eV2Hartree;
+        r_vec[0] = -20.0; /* MO Erange lower window default -20 eV */
+        r_vec[1] = +20.0; /* MO Erange upper window default +20 eV */
+        input_doublev("MO.Erange",2,MO_Erange,r_vec);
+        MO_Erange[0] = MO_Erange[0]/eV2Hartree;
+        MO_Erange[1] = MO_Erange[1]/eV2Hartree;
         if (2<=level_stdout) {
             printf("<Input_std> MO.selective %d\n",MO_selective);
         }
