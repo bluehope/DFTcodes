@@ -178,7 +178,18 @@ void Wannier(int Solver,
              char *inputfile);
 
 
+int fcopy(FILE *f1, FILE *f2)
+{
+	char            buffer[BUFSIZ];
+	size_t          n;
 
+	while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0)
+	{
+		if (fwrite(buffer, sizeof(char), n, f2) != n)
+			return -1;
+	}
+	return 0;
+}
 
 
 #pragma optimization_level 1
@@ -2413,9 +2424,14 @@ void Wannier(int Solver,
     ***************************************************/
 
     if (lreadMmnk==0 && myid==Host_ID) {
-
-        sprintf(fname,"%s%s.eigen",filepath,filename);
-        sprintf(fname2,"%s%s.eig",filepath,filename);
+		if (2 == spinsize) {
+			sprintf(fname, "%s%s_%d.eigen", filepath, filename, spin);
+			sprintf(fname2, "%s%s_%d.eig", filepath, filename, spin);
+		}
+		else {
+			sprintf(fname, "%s%s.eigen", filepath, filename);
+			sprintf(fname2, "%s%s.eig", filepath, filename);
+		}
 
         if((fptmp=fopen(fname,"wt"))==NULL) {
             printf("Error in opening %s for writing eigenvalues.\n",fname);
@@ -2491,7 +2507,13 @@ void Wannier(int Solver,
     /* fpwn90 is added for wannier90 input *.win file by  F. Ishii*/
     if (myid==Host_ID) {
         //sprintf(fname3,"%s%s.kptwin",filepath,filename);
-        sprintf(fname4,"%s%s.win",filepath,filename);
+		if (2 == spinsize) {
+			sprintf(fname4, "%s%s_%d.win", filepath, filename, spin);
+		}
+		else {
+			sprintf(fname4, "%s%s.win", filepath, filename);
+		}
+		
         //if((fpkpt2=fopen(fname3,"wt"))==NULL){
         //  printf("Error in opening %s for writing k point for wannier90.\n",fname3);
         //  exit(0);
@@ -2585,6 +2607,17 @@ void Wannier(int Solver,
         fprintf(fpwn90, "kubo_freq_max = 7.0\n");
         fprintf(fpwn90, "kmesh 100\n");
         fprintf(fpwn90, "berry_curv_adpt_kmesh 3\n");
+
+		fprintf(fpwn90, "!write_hr = true\n");
+		fprintf(fpwn90, "!write_rmn = true\n");
+		fprintf(fpwn90, "!write_tb = true\n");
+
+		fprintf(fpwn90, "!wannier_plot\n");
+		fprintf(fpwn90, "!wannier_plot_supercell 2 2 2 \n");
+		fprintf(fpwn90, "!wannier_plot_format=xcrysden\n");
+		fprintf(fpwn90, "!wannier_plot_format=cube\n");
+		fclose(fpwn90); /* end of win file write*/
+		printf(" %s Written \n", fname4);
 
     }
 
@@ -2851,8 +2884,12 @@ void Wannier(int Solver,
                 }/* k point */
             } /* spin */
             fclose(fp); /* End writting case.mmn matrix */
+			
 
         } /* if ( Wannier_Output_Overlap_Matrix && myid==Host_ID ) */
+
+		/* Copy mmn file for spin up & spin down*/
+		
 
     } /* if (lreadMmnk==0) */
 
@@ -2954,6 +2991,41 @@ void Wannier(int Solver,
 
     }/* Read Mmnkb */
 
+	/* Copy mmn file for spin up, down*/
+	if (Wannier90_fileout && (2 == spinsize) && (myid == Host_ID)) {
+		sprintf(fname, "%s%s.mmn", filepath, filename);
+		if ((fp = fopen(fname, "wt")) == NULL) {
+
+			printf("******************************************************************\n");
+			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+			printf("******************************************************************\n");
+			exit(0);
+
+		}
+
+		sprintf(fname, "%s%s_1.mmn", filepath, filename);
+		FILE* fp2 = NULL;
+		if ((fp2 = fopen(fname, "wt")) == NULL) {
+			printf("******************************************************************\n");
+			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+			printf("******************************************************************\n");
+			exit(0);
+		}
+		fcopy(fp, fp2);
+		fclose(fp2);
+
+		sprintf(fname, "%s%s_2.mmn", filepath, filename);
+		if ((fp2 = fopen(fname, "wt")) == NULL) {
+			printf("******************************************************************\n");
+			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+			printf("******************************************************************\n");
+			exit(0);
+		}
+		fcopy(fp, fp2);
+		fclose(fp2);
+
+		fclose(fp);
+	}
     /* Release wave function and eigenvalue arrays, which will not be used anymore */
 
     for(k=0; k<kpt_num; k++) {
@@ -3093,7 +3165,7 @@ void Wannier(int Solver,
             }
 
             dumy=(char*)malloc(sizeof(char)*BUFFSIZE);
-            sprintf(fname,"%s%s.amn",filepath,filename);
+            sprintf(fname,"%s%s.amn",filepath, filename);
 
             if((fp=fopen(fname,"rt"))==NULL) {
 
@@ -3141,115 +3213,120 @@ void Wannier(int Solver,
 
     /* If this is a mixed bands case, we need to disentangle the mixed band and
        iteratively find out the proper Uk which minimize gauge invariant part of spread function. */
+	if (0 == Wannier90_fileout) {
+		if (BANDNUM > WANNUM) {
 
-    if(BANDNUM>WANNUM) {
+			Disentangling_Bands(Uk, Mmnkb_zero, spinsize, kpt_num,
+				BANDNUM, WANNUM, Nk, innerNk, kg,
+				frac_bv, wb, kplusb, tot_bvector, eigen);
 
-        Disentangling_Bands(Uk, Mmnkb_zero, spinsize, kpt_num,
-                            BANDNUM, WANNUM, Nk, innerNk, kg,
-                            frac_bv, wb, kplusb, tot_bvector, eigen);
+			/* after disentangling, we get Uk which will disentangle the original overlap matrix.
+			   M_dis(N x N)= Uk^dagger(N x Nk) * M_zero (Nk x Nk)* Uk(k+b) (Nk x N)*/
 
-        /* after disentangling, we get Uk which will disentangle the original overlap matrix.
-           M_dis(N x N)= Uk^dagger(N x Nk) * M_zero (Nk x Nk)* Uk(k+b) (Nk x N)*/
+			Initial_Guess_Mmnkb(Uk, spinsize, kpt_num, BANDNUM, WANNUM, Mmnkb_dis,
+				Mmnkb_zero, kg, frac_bv, tot_bvector, kplusb, Nk);
 
-        Initial_Guess_Mmnkb(Uk, spinsize, kpt_num, BANDNUM, WANNUM, Mmnkb_dis,
-                            Mmnkb_zero, kg, frac_bv, tot_bvector, kplusb, Nk);
+			/* Still we need to update our initial guess of U matrix since now we are
+			   in the optimized subspace.
+			   Amnk_tilde (now is N x N )= Uk^dagger( N x Nk) * Amnk (Nk x N) */
 
-        /* Still we need to update our initial guess of U matrix since now we are
-           in the optimized subspace.
-           Amnk_tilde (now is N x N )= Uk^dagger( N x Nk) * Amnk (Nk x N) */
+			for (spin = 0; spin < spinsize; spin++) {
+				for (k = 0; k < kpt_num; k++) {
+					for (i = 0; i < WANNUM; i++) {
+						for (j = 0; j < WANNUM; j++) {
+							tmpr = 0.0;
+							tmpi = 0.0;
+							for (l = 0; l < Nk[spin][k][1] - Nk[spin][k][0]; l++) {
 
-        for(spin=0; spin<spinsize; spin++) {
-            for(k=0; k<kpt_num; k++) {
-                for(i=0; i<WANNUM; i++) {
-                    for(j=0; j<WANNUM; j++) {
-                        tmpr=0.0;
-                        tmpi=0.0;
-                        for(l=0; l<Nk[spin][k][1]-Nk[spin][k][0]; l++) {
+								tmpr = tmpr + Uk[spin][k][l][i].r*Amnk[spin][k][l][j].r
+									+ Uk[spin][k][l][i].i*Amnk[spin][k][l][j].i;
+								tmpi = tmpi + Uk[spin][k][l][i].r*Amnk[spin][k][l][j].i - Uk[spin][k][l][i].i*Amnk[spin][k][l][j].r;
+							}
+							tmpM[i][j].r = tmpr;
+							tmpM[i][j].i = tmpi;
+						}
+					}
+					for (i = 0; i < WANNUM; i++) {
+						for (j = 0; j < WANNUM; j++) {
+							Amnk[spin][k][i][j].r = tmpM[i][j].r;
+							Amnk[spin][k][i][j].i = tmpM[i][j].i;
+						}
+					}
+				}/* kpt */
+			}/* spin */
+			/* Then we can find the initial guess for Utilde matrix which is usded for optimizing the omega_Tilde part */
+			Getting_Utilde(Amnk, spinsize, kpt_num, WANNUM, WANNUM, Utilde);
+			/* and update Mmnk matrix to that with intial guess M_opt= Utilde^dagger * M_zero * Utilde(k+b) */
 
-                            tmpr=tmpr + Uk[spin][k][l][i].r*Amnk[spin][k][l][j].r
-                                 + Uk[spin][k][l][i].i*Amnk[spin][k][l][j].i;
-                            tmpi=tmpi+Uk[spin][k][l][i].r*Amnk[spin][k][l][j].i-Uk[spin][k][l][i].i*Amnk[spin][k][l][j].r;
-                        }
-                        tmpM[i][j].r=tmpr;
-                        tmpM[i][j].i=tmpi;
-                    }
-                }
-                for(i=0; i<WANNUM; i++) {
-                    for(j=0; j<WANNUM; j++) {
-                        Amnk[spin][k][i][j].r=tmpM[i][j].r;
-                        Amnk[spin][k][i][j].i=tmpM[i][j].i;
-                    }
-                }
-            }/* kpt */
-        }/* spin */
-        /* Then we can find the initial guess for Utilde matrix which is usded for optimizing the omega_Tilde part */
-        Getting_Utilde(Amnk, spinsize, kpt_num, WANNUM, WANNUM, Utilde);
-        /* and update Mmnk matrix to that with intial guess M_opt= Utilde^dagger * M_zero * Utilde(k+b) */
+			Initial_Guess_Mmnkb(Utilde, spinsize, kpt_num, WANNUM, WANNUM, Mmnkb_zero, Mmnkb_dis, kg, frac_bv, tot_bvector, kplusb, Nk);
+			/* Mmnkb_zero now is the disentangled WANNUMxWANNUM overlap matrix */
 
-        Initial_Guess_Mmnkb(Utilde, spinsize, kpt_num, WANNUM, WANNUM, Mmnkb_zero, Mmnkb_dis, kg, frac_bv, tot_bvector, kplusb, Nk);
-        /* Mmnkb_zero now is the disentangled WANNUMxWANNUM overlap matrix */
+		}/* Disentangle */
 
-    }/* Disentangle */
+		else { /* NOT disentangle */
 
-    else { /* NOT disentangle */
+			/* update Mmnk matrix to that with intial guess M_opt= Utilde^dagger * M_zero * Utilde(k+b) */
+			Initial_Guess_Mmnkb(Uk, spinsize, kpt_num, BANDNUM, WANNUM, Mmnkb_dis, Mmnkb_zero, kg, frac_bv, tot_bvector, kplusb, Nk);
+			/* Mmnkb_zero now is the disentangled WANNUMxWANNUM overlap matrix */
+			for (k = 0; k < kpt_num; k++) {
+				for (bindx = 0; bindx < tot_bvector; bindx++) {
+					for (spin = 0; spin < spinsize; spin++) {
+						for (i = 0; i < WANNUM + 1; i++) {
+							for (j = 0; j < WANNUM + 1; j++) {
+								Mmnkb_zero[k][bindx][spin][i][j].r = Mmnkb_dis[k][bindx][spin][i][j].r;
+								Mmnkb_zero[k][bindx][spin][i][j].i = Mmnkb_dis[k][bindx][spin][i][j].i;
+							}
+						} /* i, j band num */
+					}/* spin */
+				}/* b vector */
+			}/* k point*/
 
-        /* update Mmnk matrix to that with intial guess M_opt= Utilde^dagger * M_zero * Utilde(k+b) */
-        Initial_Guess_Mmnkb(Uk, spinsize, kpt_num, BANDNUM, WANNUM, Mmnkb_dis, Mmnkb_zero, kg, frac_bv, tot_bvector, kplusb, Nk);
-        /* Mmnkb_zero now is the disentangled WANNUMxWANNUM overlap matrix */
-        for(k=0; k<kpt_num; k++) {
-            for(bindx=0; bindx<tot_bvector; bindx++) {
-                for (spin=0; spin<spinsize; spin++) {
-                    for (i=0; i<WANNUM+1; i++) {
-                        for (j=0; j<WANNUM+1; j++) {
-                            Mmnkb_zero[k][bindx][spin][i][j].r=Mmnkb_dis[k][bindx][spin][i][j].r;
-                            Mmnkb_zero[k][bindx][spin][i][j].i=Mmnkb_dis[k][bindx][spin][i][j].i;
-                        }
-                    } /* i, j band num */
-                }/* spin */
-            }/* b vector */
-        }/* k point*/
+			/* for non-disentangle case, this Utilde should be identity matrix for latter interpolation */
+			for (spin = 0; spin < spinsize; spin++) {
+				for (k = 0; k < kpt_num; k++) {
+					for (i = 0; i < WANNUM; i++) {
+						for (j = 0; j < WANNUM; j++) {
+							Utilde[spin][k][i][j].r = 0.0;
+							Utilde[spin][k][i][j].i = 0.0;
+							if (j == i) {
+								Utilde[spin][k][i][j].r = 1.0;
+								Utilde[spin][k][i][j].i = 0.0;
+							}
+						}/* wannier */
+					}/* Windown */
+				} /*kpt */
+			} /* spin */
+		}
 
-        /* for non-disentangle case, this Utilde should be identity matrix for latter interpolation */
-        for(spin=0; spin<spinsize; spin++) {
-            for(k=0; k<kpt_num; k++) {
-                for(i=0; i<WANNUM; i++) {
-                    for(j=0; j<WANNUM; j++) {
-                        Utilde[spin][k][i][j].r=0.0;
-                        Utilde[spin][k][i][j].i=0.0;
-                        if(j==i) {
-                            Utilde[spin][k][i][j].r=1.0;
-                            Utilde[spin][k][i][j].i=0.0;
-                        }
-                    }/* wannier */
-                }/* Windown */
-            } /*kpt */
-        } /* spin */
-    }
-
-    /* Multiply Uk and Utilde and store in Uk. Therefore, Uk now is Udis * Uinitial */
-    for(spin=0; spin<spinsize; spin++) {
-        for(k=0; k<kpt_num; k++) {
-            for(i=0; i<Nk[spin][k][1]-Nk[spin][k][0]; i++) {
-                for(j=0; j<WANNUM; j++) {
-                    tmpr=0.0;
-                    tmpi=0.0;
-                    for(l=0; l<WANNUM; l++) {
-                        tmpr=tmpr+Uk[spin][k][i][l].r*Utilde[spin][k][l][j].r-Uk[spin][k][i][l].i*Utilde[spin][k][l][j].i;
-                        tmpi=tmpi+Uk[spin][k][i][l].r*Utilde[spin][k][l][j].i+Uk[spin][k][i][l].i*Utilde[spin][k][l][j].r;
-                    }
-                    Amnk[spin][k][i][j].r=tmpr;
-                    Amnk[spin][k][i][j].i=tmpi;
-                }
-            }
-            for(i=0; i<Nk[spin][k][1]-Nk[spin][k][0]; i++) {
-                for(j=0; j<WANNUM; j++) {
-                    Uk[spin][k][i][j].r=Amnk[spin][k][i][j].r;
-                    Uk[spin][k][i][j].i=Amnk[spin][k][i][j].i;
-                }
-            }
-        }
-    }
-
+		/* Multiply Uk and Utilde and store in Uk. Therefore, Uk now is Udis * Uinitial */
+		for (spin = 0; spin < spinsize; spin++) {
+			for (k = 0; k < kpt_num; k++) {
+				for (i = 0; i < Nk[spin][k][1] - Nk[spin][k][0]; i++) {
+					for (j = 0; j < WANNUM; j++) {
+						tmpr = 0.0;
+						tmpi = 0.0;
+						for (l = 0; l < WANNUM; l++) {
+							tmpr = tmpr + Uk[spin][k][i][l].r*Utilde[spin][k][l][j].r - Uk[spin][k][i][l].i*Utilde[spin][k][l][j].i;
+							tmpi = tmpi + Uk[spin][k][i][l].r*Utilde[spin][k][l][j].i + Uk[spin][k][i][l].i*Utilde[spin][k][l][j].r;
+						}
+						Amnk[spin][k][i][j].r = tmpr;
+						Amnk[spin][k][i][j].i = tmpi;
+					}
+				}
+				for (i = 0; i < Nk[spin][k][1] - Nk[spin][k][0]; i++) {
+					for (j = 0; j < WANNUM; j++) {
+						Uk[spin][k][i][j].r = Amnk[spin][k][i][j].r;
+						Uk[spin][k][i][j].i = Amnk[spin][k][i][j].i;
+					}
+				}
+			}
+		}
+	} else {
+		/* Wannier90_fileout  */
+		Disentangling_Bands(Uk, Mmnkb_zero, spinsize, kpt_num,
+			BANDNUM, WANNUM, Nk, innerNk, kg,
+			frac_bv, wb, kplusb, tot_bvector, eigen);
+	}
     /* release those not used any more */
     for(spin=0; spin<spinsize; spin++) {
         for(k=0; k<kpt_num; k++) {
@@ -3276,6 +3353,10 @@ void Wannier(int Solver,
     }/* k point*/
     free(Mmnkb_dis);
 
+	/* Wannier90_fileout Generation is finished */
+	if (Wannier90_fileout) {
+		return;
+	}
     /* From here seperate spin */
     sheet=(double***)malloc(sizeof(double**)*kpt_num);
     for(k=0; k<kpt_num; k++) {
@@ -4946,7 +5027,44 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
         }/* kpt */
     }/* spin */
     if(Wannier_Output_Projection_Matrix && myid==Host_ID) {
-        fclose(fp);
+        fclose(fp); /* end of amn file write*/
+		if (Wannier90_fileout && (2 == spinsize)) {
+			/* Copy amn file for spin up & spin down*/
+			sprintf(fname, "%s%s.amn", filepath, filename);
+			if ((fp = fopen(fname, "wt")) == NULL) {
+
+				printf("******************************************************************\n");
+				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+				printf("******************************************************************\n");
+				exit(0);
+
+			}
+
+			sprintf(fname, "%s%s_1.amn", filepath, filename);
+			FILE* fp2 = NULL;
+			if ((fp2 = fopen(fname, "wt")) == NULL) {
+
+				printf("******************************************************************\n");
+				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+				printf("******************************************************************\n");
+				exit(0);
+
+			}
+			fcopy(fp, fp2);
+			fclose(fp2);
+
+			sprintf(fname, "%s%s_2.amn", filepath, filename);
+			if ((fp2 = fopen(fname, "wt")) == NULL) {
+				printf("******************************************************************\n");
+				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+				printf("******************************************************************\n");
+				exit(0);
+			}
+			fcopy(fp, fp2);
+			fclose(fp2);
+
+			fclose(fp);
+		}
     }
 
     /**********************************************************
@@ -8696,6 +8814,8 @@ void Disentangling_Bands(dcomplex ****Uk, dcomplex *****Mmnkb_zero, int spinsize
                     printf(" the parameters and try again.\n");
                     printf("**************************** WARNNING ****************************\n");
                 }
+				MPI_Finalize();
+				exit(0);
             } else {
                 if (myid==Host_ID) {
                     printf("\nThe input files for Wannier90,\n");
@@ -8703,11 +8823,13 @@ void Disentangling_Bands(dcomplex ****Uk, dcomplex *****Mmnkb_zero, int spinsize
                     printf("System.Name.mmn\n");
                     printf("System.Name.eig\n");
                     printf("System.Name.win\n");
+					if(2 == spinsize)
+						printf(" for spin up, down (_1, _2 postfix)  \n");
                     printf("\nare successfully generated.\n");
                 }
+				continue;
             }
-            MPI_Finalize();
-            exit(0);
+
         }
         /* haveing got the optimized subspace, diagonalize system's original Hamiltonian inside
            this subspace to obtain N Bloch-like eigenfunctions psi^tilde. See Sec.III.E of SMV's paper
