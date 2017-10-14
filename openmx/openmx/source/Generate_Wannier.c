@@ -9214,6 +9214,7 @@ void Wannier_Interpolation(dcomplex ****Uk, double ***eigen, int spinsize, int S
                 } /* rpt */
             }/* spin */
         }/* end file output*/
+		fclose(fpBand); /* end of HWR file write*/
     }
     if(debug1) {
         printf("Hamiltonian in Wannier Gauge in real space:\n");
