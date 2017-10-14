@@ -178,16 +178,35 @@ void Wannier(int Solver,
              char *inputfile);
 
 
-int fcopy(FILE *f1, FILE *f2)
+int fcopy(char* fname1,char* fname2)
 {
+
+	FILE *f1 = NULL;
+	FILE *f2 = NULL;
+	
+
 	char            buffer[BUFSIZ];
 	size_t          n;
 
+	int error_check = 0;
+	printf(" copy %s to %s \n",fname1,fname2);
+	if (NULL == (f1 = fopen(fname1, "r"))  ) {
+		printf(" Error oppening file %s\n", fname1);
+		error_check = 1;
+	}
+	if (NULL == (f2 = fopen(fname2, "wt")) ) {
+		printf(" Error oppening file %s\n", fname2);
+		error_check = 1;
+	}
+	if(0 < error_check)
+		return error_check;
 	while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0)
 	{
 		if (fwrite(buffer, sizeof(char), n, f2) != n)
 			return -1;
 	}
+	fclose(f1);
+	fclose(f2);
 	return 0;
 }
 
@@ -2424,23 +2443,16 @@ void Wannier(int Solver,
     ***************************************************/
 
     if (lreadMmnk==0 && myid==Host_ID) {
-		if (2 == spinsize) {
-			sprintf(fname, "%s%s_%d.eigen", filepath, filename, spin);
-			sprintf(fname2, "%s%s_%d.eig", filepath, filename, spin);
-		}
-		else {
-			sprintf(fname, "%s%s.eigen", filepath, filename);
-			sprintf(fname2, "%s%s.eig", filepath, filename);
-		}
+		sprintf(fname, "%s%s.eigen", filepath, filename);
+		sprintf(fname2, "%s%s.eig", filepath, filename);
+		
+		
 
         if((fptmp=fopen(fname,"wt"))==NULL) {
             printf("Error in opening %s for writing eigenvalues.\n",fname);
             exit(0);
         }
-        if((fptmp2=fopen(fname2,"wt"))==NULL) {
-            printf("Error in opening %s for writing eigenvalues.\n",fname2);
-            exit(0);
-        }
+        
 
         fprintf(fptmp,"Fermi level %lf\n",ChemP);
         //fprintf(fptmp2,"Fermi level %lf\n",ChemP*eV2Hartree);
@@ -2448,6 +2460,14 @@ void Wannier(int Solver,
         //fprintf(fptmp2,"Number of bands %i\n",BANDNUM);
 
         for(spin=0; spin<spinsize; spin++) {
+			if (2 == spinsize) {
+				sprintf(fname2, "%s%s_%d.eig", filepath, filename, spin);
+			}
+			if ((fptmp2 = fopen(fname2, "wt")) == NULL) {
+				printf("Error in opening %s for writing eigenvalues.\n", fname2);
+				exit(0);
+			}
+
             for(k=0; k<kpt_num; k++) {
 
                 for(i=1; i<BANDNUM+1; i++) {
@@ -2464,6 +2484,7 @@ void Wannier(int Solver,
                     }
                 }
             }
+			fclose(fptmp2);
         }
 
         for(spin=0; spin<spinsize; spin++) {
@@ -2501,18 +2522,13 @@ void Wannier(int Solver,
         }
 
         fclose(fptmp);
-        fclose(fptmp2);
+        
     }
 
     /* fpwn90 is added for wannier90 input *.win file by  F. Ishii*/
     if (myid==Host_ID) {
         //sprintf(fname3,"%s%s.kptwin",filepath,filename);
-		if (2 == spinsize) {
-			sprintf(fname4, "%s%s_%d.win", filepath, filename, spin);
-		}
-		else {
-			sprintf(fname4, "%s%s.win", filepath, filename);
-		}
+		sprintf(fname4, "%s%s.win", filepath, filename);
 		
         //if((fpkpt2=fopen(fname3,"wt"))==NULL){
         //  printf("Error in opening %s for writing k point for wannier90.\n",fname3);
@@ -2618,6 +2634,15 @@ void Wannier(int Solver,
 		fprintf(fpwn90, "!wannier_plot_format=cube\n");
 		fclose(fpwn90); /* end of win file write*/
 		printf(" %s Written \n", fname4);
+
+		if (2 == spinsize) {
+			sprintf(fname, "%s%s.win", filepath, filename);
+			sprintf(fname2, "%s%s_0.win", filepath, filename);
+			fcopy(fname, fname2);
+			
+			sprintf(fname2, "%s%s_1.win", filepath, filename);
+			fcopy(fname, fname2);
+		}
 
     }
 
@@ -2994,37 +3019,11 @@ void Wannier(int Solver,
 	/* Copy mmn file for spin up, down*/
 	if (Wannier90_fileout && (2 == spinsize) && (myid == Host_ID)) {
 		sprintf(fname, "%s%s.mmn", filepath, filename);
-		if ((fp = fopen(fname, "wt")) == NULL) {
+		sprintf(fname2, "%s%s_0.mmn", filepath, filename);
+		fcopy(fname, fname2);
 
-			printf("******************************************************************\n");
-			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-			printf("******************************************************************\n");
-			exit(0);
-
-		}
-
-		sprintf(fname, "%s%s_1.mmn", filepath, filename);
-		FILE* fp2 = NULL;
-		if ((fp2 = fopen(fname, "wt")) == NULL) {
-			printf("******************************************************************\n");
-			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-			printf("******************************************************************\n");
-			exit(0);
-		}
-		fcopy(fp, fp2);
-		fclose(fp2);
-
-		sprintf(fname, "%s%s_2.mmn", filepath, filename);
-		if ((fp2 = fopen(fname, "wt")) == NULL) {
-			printf("******************************************************************\n");
-			printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-			printf("******************************************************************\n");
-			exit(0);
-		}
-		fcopy(fp, fp2);
-		fclose(fp2);
-
-		fclose(fp);
+		sprintf(fname2, "%s%s_1.mmn", filepath, filename);
+		fcopy(fname, fname2);
 	}
     /* Release wave function and eigenvalue arrays, which will not be used anymore */
 
@@ -4758,6 +4757,7 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
     dcomplex *tmpResult;
     FILE *fp;
     char fname[300];
+	char fname2[300];
     int myid;
 
     /* get MPI ID */
@@ -5031,39 +5031,11 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
 		if (Wannier90_fileout && (2 == spinsize)) {
 			/* Copy amn file for spin up & spin down*/
 			sprintf(fname, "%s%s.amn", filepath, filename);
-			if ((fp = fopen(fname, "wt")) == NULL) {
+			sprintf(fname2, "%s%s_0.amn", filepath, filename);
+			fcopy(fname, fname2);
 
-				printf("******************************************************************\n");
-				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-				printf("******************************************************************\n");
-				exit(0);
-
-			}
-
-			sprintf(fname, "%s%s_1.amn", filepath, filename);
-			FILE* fp2 = NULL;
-			if ((fp2 = fopen(fname, "wt")) == NULL) {
-
-				printf("******************************************************************\n");
-				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-				printf("******************************************************************\n");
-				exit(0);
-
-			}
-			fcopy(fp, fp2);
-			fclose(fp2);
-
-			sprintf(fname, "%s%s_2.amn", filepath, filename);
-			if ((fp2 = fopen(fname, "wt")) == NULL) {
-				printf("******************************************************************\n");
-				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
-				printf("******************************************************************\n");
-				exit(0);
-			}
-			fcopy(fp, fp2);
-			fclose(fp2);
-
-			fclose(fp);
+			sprintf(fname2, "%s%s_1.amn", filepath, filename);
+			fcopy(fname, fname2);
 		}
     }
 
@@ -8824,7 +8796,7 @@ void Disentangling_Bands(dcomplex ****Uk, dcomplex *****Mmnkb_zero, int spinsize
                     printf("System.Name.eig\n");
                     printf("System.Name.win\n");
 					if(2 == spinsize)
-						printf(" for spin up, down (_1, _2 postfix)  \n");
+						printf(" for spin up, down (_0, _1 postfix)  \n");
                     printf("\nare successfully generated.\n");
                 }
 				continue;
