@@ -2542,6 +2542,7 @@ void Wannier(int Solver,
         fprintf(fpwn90, "num_bands %d\n", BANDNUM);
         fprintf(fpwn90, "num_wann %d\n", Wannier_Func_Num);
         fprintf(fpwn90, "num_iter 15000\n");
+		fprintf(fpwn90, "dis_num_iter 10000\n");
         fprintf(fpwn90, "begin unit_cell_cart\n");
         fprintf(fpwn90, "Ang\n");
         for (i=1; i<=3; i++) {
@@ -3016,14 +3017,71 @@ void Wannier(int Solver,
 
     }/* Read Mmnkb */
 
-	/* Copy mmn file for spin up, down*/
+	/* Copy mmn file for spin up, down HK Yoon*/
 	if (Wannier90_fileout && (2 == spinsize) && (myid == Host_ID)) {
-		sprintf(fname, "%s%s.mmn", filepath, filename);
-		sprintf(fname2, "%s%s_0.mmn", filepath, filename);
-		fcopy(fname, fname2);
 
-		sprintf(fname2, "%s%s_1.mmn", filepath, filename);
-		fcopy(fname, fname2);
+#if 1
+		for (spin = 0; spin<spinsize; spin++) {
+			sprintf(fname, "%s%s_%d.mmn", filepath, filename, spin);
+
+			if ((fp = fopen(fname, "wt")) == NULL) {
+
+				printf("******************************************************************\n");
+				printf("* Error in openning file %s for writing Mmn(k,b).\n", fname);
+				printf("******************************************************************\n");
+				exit(0);
+
+			}
+
+			else {
+				printf(" ... ... Writting Mmn_zero(k,b) matrix into file.\n\n");
+				fprintf(fp, "Mmn_zero(k,b). band_num, kpt_num, bvector num, spinsize\n");
+				fprintf(fp, "%13d%13d%13d%13d\n", BANDNUM, kpt_num, tot_bvector, 1); /* the spin size is 1*/
+			}
+
+			for (k = 0; k<kpt_num; k++) {
+
+				/* for each b vectors within the shells around k point */
+
+				for (bindx = 0; bindx<tot_bvector; bindx++) {
+
+					kk = kplusb[k][bindx];
+					ktp[1] = kg[k][0] + frac_bv[bindx][0];  /* Equivalent k point of k+b */
+					ktp[2] = kg[k][1] + frac_bv[bindx][1];
+					ktp[3] = kg[k][2] + frac_bv[bindx][2];
+
+					for (i = 1; i <= 3; i++) {
+						b[i] = ktp[i];
+						if (ktp[i] >= 1.0) {
+							b[i] = ktp[i] - 1.0;
+						}
+						if (ktp[i]<0.0) {
+							b[i] = ktp[i] + 1.0;
+						}
+					}
+
+					fprintf(fp, "%5d%5d%5d%5d%5d\n",
+						k + 1, kk + 1,
+						(int)(ktp[1] - b[1]),
+						(int)(ktp[2] - b[2]),
+						(int)(ktp[3] - b[3]));
+
+					for (i = 1; i<BANDNUM + 1; i++) {
+						for (j = 1; j<BANDNUM + 1; j++) {
+
+							fprintf(fp, "%18.12f%18.12f\n",
+								Mmnkb_zero[k][bindx][spin][j][i].r,
+								Mmnkb_zero[k][bindx][spin][j][i].i);
+
+						} /* j */
+					}/* i */
+				} /* bv indx */
+			}/* k point */
+			fclose(fp); /* End writting case.mmn matrix */
+		} /* spin */
+		
+#endif
+
 	}
     /* Release wave function and eigenvalue arrays, which will not be used anymore */
 
@@ -4822,6 +4880,21 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
     }
 
     for(spin=0; spin<spinsize; spin++) {
+		FILE *fp_spin = NULL;
+		if (Wannier_Output_Projection_Matrix && myid == Host_ID && 2== spinsize) {
+			sprintf(fname, "%s%s_%d.amn", filepath, filename, spin);
+			if ((fp_spin = fopen(fname, "wt")) == NULL) {
+				printf("******************************************************************\n");
+				printf("* Error in openning file for Amn(k).\n");
+				printf("******************************************************************\n");
+			}
+			else {
+				printf(" ... ... Writting Amn(k) matrix into file.\n\n");
+				fprintf(fp_spin, "Amn. Fist line BANDNUM, KPTNUM, WANNUM, spinsize. Next is m n k and elements.Spin is the most outer loop.\n");
+				fprintf(fp_spin, "%13d%13d%13d%13d\n", band_num, kpt_num, wan_num, 1); 
+				/* Spin size is set 1: as up, down are written seperatly*/
+			}
+		}
         for(k=0; k<kpt_num; k++) {
             if(disentangle) {
                 band_num=Nk[spin][k][1]-Nk[spin][k][0];
@@ -5020,14 +5093,27 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
                 for(nindx=0; nindx<wan_num; nindx++) {
                     for(mu1=0; mu1<BAND; mu1++) { /* band index in enegy window */
                         fprintf(fp,"%5d%5d%5d%18.12f%18.12f\n",mu1+1,nindx+1,k+1,Amnk[spin][k][mu1][nindx].r,Amnk[spin][k][mu1][nindx].i);
+						if (2 == spinsize) {
+							fprintf(fp_spin, "%5d%5d%5d%18.12f%18.12f\n", mu1 + 1, nindx + 1, k + 1, Amnk[spin][k][mu1][nindx].r, Amnk[spin][k][mu1][nindx].i);
+						}
+						
                     } /* band */
                 } /* wf */
             }
             /*    printf("next kpt=%i\n",k+1);fflush(0); */
         }/* kpt */
+
+		if (Wannier_Output_Projection_Matrix && myid == Host_ID && 2 == spinsize) {
+			fclose(fp_spin);
+		}
+			
     }/* spin */
+	if (myid == Host_ID) {
+		fclose(fp); /* end of amn file write*/
+	}
+#if 0
     if(Wannier_Output_Projection_Matrix && myid==Host_ID) {
-        fclose(fp); /* end of amn file write*/
+       
 		if (Wannier90_fileout && (2 == spinsize)) {
 			/* Copy amn file for spin up & spin down*/
 			sprintf(fname, "%s%s.amn", filepath, filename);
@@ -5038,7 +5124,7 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
 			fcopy(fname, fname2);
 		}
     }
-
+#endif
     /**********************************************************
              Free Arrays
     ***********************************************************/
