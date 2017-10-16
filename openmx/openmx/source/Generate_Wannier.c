@@ -3034,7 +3034,7 @@ void Wannier(int Solver,
 			}
 
 			else {
-				printf(" ... ... Writting Mmn_zero(k,b) matrix into file.\n\n");
+				printf(" ... ... Writting Mmn_zero(k,b) matrix into file. spin %d\n\n", spin);
 				fprintf(fp, "Mmn_zero(k,b). band_num, kpt_num, bvector num, spinsize\n");
 				fprintf(fp, "%13d%13d%13d%13d\n", BANDNUM, kpt_num, tot_bvector, 1); /* the spin size is 1*/
 			}
@@ -4889,7 +4889,7 @@ void Projection_Amatrix(dcomplex ****Amnk, double **kg, int spinsize,
 				printf("******************************************************************\n");
 			}
 			else {
-				printf(" ... ... Writting Amn(k) matrix into file.\n\n");
+				printf(" ... ... Writting Amn(k) matrix into file. spin %d\n\n", spin);
 				fprintf(fp_spin, "Amn. Fist line BANDNUM, KPTNUM, WANNUM, spinsize. Next is m n k and elements.Spin is the most outer loop.\n");
 				fprintf(fp_spin, "%13d%13d%13d%13d\n", band_num, kpt_num, wan_num, 1); 
 				/* Spin size is set 1: as up, down are written seperatly*/
