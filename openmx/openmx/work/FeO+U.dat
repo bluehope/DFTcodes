@@ -16,8 +16,8 @@ memory.leak                      on    # on|off, default=off
 
 Species.Number       2
 <Definition.of.Atomic.Species
- Fe  Fe6.0S-s2p1d1       Fe_CA13S
- O   O5.0-s1p1d1         O_CA13
+ Fe  Fe6.0S-s2p1d1       Fe_CA19S
+ O   O5.0-s1p1d1         O_CA19
 Definition.of.Atomic.Species>
 
 <Hubbard.U.values                 #  eV

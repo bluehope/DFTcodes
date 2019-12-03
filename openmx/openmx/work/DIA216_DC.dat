@@ -14,7 +14,7 @@ memory.usage.fileout             on    # default=off, on|off
 
 Species.Number       1
 <Definition.of.Atomic.Species
- C   C5.0-s1p1   C_CA13
+ C   C5.0-s1p1   C_CA19
 Definition.of.Atomic.Species>
 
 #

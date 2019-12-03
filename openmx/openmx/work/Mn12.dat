@@ -1,9 +1,9 @@
 #
-#      File Name      
+#  Mn12 single molecular magnet
 #
 
 System.CurrrentDirectory         ./    # default=./
-System.Name                     mn12
+System.Name                     Mn12
 level.of.stdout                   1    # default=1 (1-3)
 level.of.fileout                  0    # default=1 (1-3)
 
@@ -13,10 +13,10 @@ level.of.fileout                  0    # default=1 (1-3)
 
 Species.Number       4
 <Definition.of.Atomic.Species
- Mn  Mn8.0-s3p3d2  Mn_CA13
- O   O5.0-s2p2d1   O_CA13
- C   C5.0-s2p2d1   C_CA13
- H   H5.0-s2p2d1   H_CA13
+ Mn  Mn8.0-s3p2d1  Mn_PBE19
+ O   O5.0-s2p1d1   O_PBE19
+ C   C5.0-s2p1     C_PBE19
+ H   H5.0-s2p1     H_PBE19
 Definition.of.Atomic.Species>
 
 #
@@ -26,18 +26,18 @@ Definition.of.Atomic.Species>
 Atoms.Number        148
 Atoms.SpeciesAndCoordinates.Unit   Ang # Ang|AU
 <Atoms.SpeciesAndCoordinates           # Unit=Ang
-1   Mn   7.222023  -0.311742  2.145602    5.0  10.0
-2   Mn   8.971242  -1.437477  4.048398    5.0  10.0
-3   Mn   8.347758   1.437477  4.048398    5.0  10.0
-4   Mn  10.096977   0.311742  2.145602    5.0  10.0
-5   Mn   4.497744  -0.801870  2.143124   10.0  5.0
-6   Mn   9.461370  -4.161756  4.050876   10.0  5.0
-7   Mn   7.857630   4.161756  4.050876   10.0  5.0
-8   Mn  12.821256   0.801870  2.143124   10.0  5.0
-9   Mn   6.212325  -3.385864  3.355909   10.0  5.0
-10  Mn  12.045364  -2.447175  2.838091   10.0  5.0
-11  Mn   5.273635   2.447175  2.838091   10.0  5.0
-12  Mn  11.106675   3.385864  3.355909   10.0  5.0
+1   Mn   7.222023  -0.311742  2.145602    6.0  9.0
+2   Mn   8.971242  -1.437477  4.048398    6.0  9.0
+3   Mn   8.347758   1.437477  4.048398    6.0  9.0
+4   Mn  10.096977   0.311742  2.145602    6.0  9.0
+5   Mn   4.497744  -0.801870  2.143124    9.0  6.0
+6   Mn   9.461370  -4.161756  4.050876    9.0  6.0
+7   Mn   7.857630   4.161756  4.050876    9.0  6.0
+8   Mn  12.821256   0.801870  2.143124    9.0  6.0
+9   Mn   6.212325  -3.385864  3.355909    9.0  6.0
+10  Mn  12.045364  -2.447175  2.838091    9.0  6.0
+11  Mn   5.273635   2.447175  2.838091    9.0  6.0
+12  Mn  11.106675   3.385864  3.355909    9.0  6.0
 13  O    7.467953  -0.263249  4.029816    3.1  2.9 
 14  O    8.922749  -1.191547  2.164184    3.1  2.9
 15  O    8.396251   1.191547  2.164184    3.1  2.9
@@ -186,20 +186,20 @@ Atoms.UnitVectors>
 # SCF or Electronic System
 #
 
-scf.XcType                 LSDA-CA     # LDA|LSDA
+scf.XcType                GGA-PBE      # LDA|LSDA
 scf.SpinPolarization       On          # On|Off
-scf.ElectronicTemperature  500.0       # default=300 (K)
-scf.energycutoff           130.0       # default=150 (Ry)
-scf.maxIter                100         # default=40
+scf.ElectronicTemperature  800.0       # default=300 (K)
+scf.energycutoff          150.0        # default=150 (Ry)
+scf.maxIter                 3          # default=40
 scf.EigenvalueSolver      Cluster      # Recursion|Cluster|Band
 scf.Kgrid                  1 1 1       # means 4x4x4
 scf.Mixing.Type           rmm-diisk    # Simple|Rmm-Diis|Gr-Pulay
-scf.Init.Mixing.Weight     0.01        # default=0.30 
-scf.Min.Mixing.Weight      0.01        # default=0.001 
-scf.Max.Mixing.Weight      0.30        # default=0.40 
-scf.Mixing.History          7          # default=5
+scf.Init.Mixing.Weight     0.001       # default=0.30 
+scf.Min.Mixing.Weight      0.001       # default=0.001 
+scf.Max.Mixing.Weight      0.20        # default=0.40 
+scf.Mixing.History          40         # default=5
 scf.Mixing.StartPulay       20         # default=6
-scf.criterion             1.0e-9       # default=1.0e-6 (Hartree) 
+scf.criterion             1.0e-10      # default=1.0e-6 (Hartree) 
 
 #
 # MD or Geometry Optimization
@@ -209,3 +209,15 @@ MD.Type                     nomd       # Nomd|Constant_Energy_MD|Opt
 MD.maxIter                   1         # default=1
 MD.TimeStep                1.0         # default=0.5 (fs)
 MD.Opt.criterion          1.0e-4       # default=1.0e-4 (Hartree/bohr)
+
+
+#
+# CDDF
+#
+
+CDDF.start                         1      # default = 1 , 1=on , 0=off
+CDDF.FWHM                          0.2    # default =  0.2 eV
+CDDF.maximum_energy               10.0    # default = 10.0 eV
+CDDF.minimum_energy                0.0    # default =  0.0 eV
+CDDF.frequency.grid.total_number  10000   # default = 10000 grids
+CDDF.material_type                 0

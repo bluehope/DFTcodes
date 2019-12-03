@@ -3,7 +3,7 @@
 #
 
 System.CurrrentDirectory         ./    # default=./
-System.Name                      sia_rmm-diisk
+System.Name                      sia_rmm-diish
 level.of.stdout                   1    # default=1 (1-3)
 level.of.fileout                  0    # default=1 (1-3)
 
@@ -13,10 +13,10 @@ level.of.fileout                  0    # default=1 (1-3)
 
 Species.Number       4
 <Definition.of.Atomic.Species
- H   H6.0-s2       H_PBE13
- C   C6.0-s2p2d1   C_PBE13
- N   N6.0-s2p2d1   N_PBE13
- O   O6.0-s2p2d1   O_PBE13
+ H   H6.0-s2       H_PBE19
+ C   C6.0-s2p2d1   C_PBE19
+ N   N6.0-s2p2d1   N_PBE19
+ O   O6.0-s2p2d1   O_PBE19
 Definition.of.Atomic.Species>
 
 #
@@ -85,7 +85,7 @@ scf.energycutoff           100.0       # default=150 (Ry)
 scf.maxIter                100         # default=40
 scf.EigenvalueSolver       cluster     # Recursion|Cluster|Band
 scf.Kgrid                  1 1 1       # means 4x4x4
-scf.Mixing.Type           rmm-diisk    # Simple|Rmm-Diis|Gr-Pulay
+scf.Mixing.Type           rmm-diish    # Simple|Rmm-Diis|Gr-Pulay
 scf.Init.Mixing.Weight     0.100       # default=0.30 
 scf.Min.Mixing.Weight      0.010       # default=0.001 
 scf.Max.Mixing.Weight      0.300       # default=0.40 

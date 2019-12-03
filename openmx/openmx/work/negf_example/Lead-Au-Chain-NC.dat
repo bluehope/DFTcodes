@@ -22,7 +22,7 @@ NEGF.tran.Kgrid            1 1       # default= 1 1
 
 Species.Number       1
 <Definition.of.Atomic.Species
- Au    Au7.0-s2p2d2      Au_PBE13
+ Au    Au7.0-s2p2d2      Au_PBE19
 Definition.of.Atomic.Species>
 
 #

@@ -13,7 +13,7 @@ level.of.fileout                  0    # default=1 (0-2)
 
 Species.Number       1
 <Definition.of.Atomic.Species
-    Ca     Ca9.0-s4p3d2   Ca_PBE13
+    Ca     Ca9.0-s4p3d2   Ca_PBE19
 Definition.of.Atomic.Species>
  
 #
