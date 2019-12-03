@@ -20,34 +20,34 @@
 void TRAN_Deallocate_Electrode_Grid(int Ngrid2)
 {
 
-    int side,spin,n1,n2;
+  int side,spin,n1,n2;
 
-    for (side=0; side<2; side++) {
+  for (side=0; side<2; side++) {
 
-        for (spin=0; spin<=SpinP_switch_e[side]; spin++) {
-            free( ElectrodeDensity_Grid[side][spin] );
-        }
-
-        free( ElectrodeDensity_Grid[side] );
-        free( ElectrodedVHart_Grid[side] );
-        free( ElectrodeADensity_Grid[side] );
-
-        for (n1=0; n1<Ngrid1_e[side]; n1++) {
-            for (n2=0; n2<Ngrid2; n2++) {
-                free(VHart_Boundary[side][n1][n2]);
-            }
-            free(VHart_Boundary[side][n1]);
-        }
-        free(VHart_Boundary[side]);
-
-        for (n1=0; n1<IntNgrid1_e[side]; n1++) {
-            for (n2=0; n2<Ngrid2; n2++) {
-                free(dDen_IntBoundary[side][n1][n2]);
-            }
-            free(dDen_IntBoundary[side][n1]);
-        }
-        free(dDen_IntBoundary[side]);
+    for (spin=0; spin<=SpinP_switch_e[side]; spin++) {
+      free( ElectrodeDensity_Grid[side][spin] );
     }
+
+    free( ElectrodeDensity_Grid[side] );
+    free( ElectrodedVHart_Grid[side] ); 
+    free( ElectrodeADensity_Grid[side] );
+
+    for (n1=0; n1<Ngrid1_e[side]; n1++){
+      for (n2=0; n2<Ngrid2; n2++){
+	free(VHart_Boundary[side][n1][n2]);
+      }
+      free(VHart_Boundary[side][n1]);
+    }
+    free(VHart_Boundary[side]);
+
+    for (n1=0; n1<IntNgrid1_e[side]; n1++){
+      for (n2=0; n2<Ngrid2; n2++){
+	free(dDen_IntBoundary[side][n1][n2]);
+      }
+      free(dDen_IntBoundary[side][n1]);
+    }
+    free(dDen_IntBoundary[side]);
+  }
 
 }
 

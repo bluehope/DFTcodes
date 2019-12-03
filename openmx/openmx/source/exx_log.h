@@ -3,7 +3,7 @@
 
   simple logging tool
 
-  Coded by M. Toyoda, 16 Dec. 2009
+  Coded by M. Toyoda, 16 Dec. 2009 
 ----------------------------------------------------------------------*/
 #ifndef EXX_LOG_H_INCLUDED
 #define EXX_LOG_H_INCLUDED
@@ -52,9 +52,9 @@ void EXX_Log_Trace_Vector(const char *ket, const double *val);
 #define EXX_LOG_OPEN
 #define EXX_LOG_OPEN
 #define EXX_LOG_CLOSE
-#define EXX_LOG_MESSAGE( message )
+#define EXX_LOG_MESSAGE( message ) 
 #define EXX_LOG_TRACE_INTEGER( key , val )
-#define EXX_LOG_TRACE_DOUBLE( key , val )
+#define EXX_LOG_TRACE_DOUBLE( key , val ) 
 #define EXX_LOG_TRACE_STRING( key , val )
 #define EXX_LOG_TRACE_VECTOR( key , val )
 

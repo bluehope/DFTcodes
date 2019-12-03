@@ -98,7 +98,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    integer na, lda, nblk, mpi_comm_rows, mpi_comm_cols
    real*8 a(lda,*), d(na), e(na), tau(na)
 
-   integer, parameter :: max_stored_rows = 32
+   integer, parameter :: max_stored_rows = 32  ! original 32
 
    integer my_prow, my_pcol, np_rows, np_cols, mpierr
    integer totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
@@ -123,7 +123,7 @@ subroutine tridiag_real(na, a, lda, nblk, mpi_comm_rows, mpi_comm_cols, d, e, ta
    ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
    tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
-   tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+   tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide (in original)
 
    l_rows_tile = tile_size/np_rows ! local rows of a tile
    l_cols_tile = tile_size/np_cols ! local cols of a tile
@@ -1696,7 +1696,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
          noff = limits(n)        ! Start of subproblem
          nlen = limits(n+1)-noff ! Size of subproblem
 
-         call solve_tridi_single(nlen,d(noff+1),e(noff+1),q(nqoff+noff+1,noff+1),ubound(q,1))
+         call solve_tridi_single_dsteqr(nlen,d(noff+1),e(noff+1),q(nqoff+noff+1,noff+1),ubound(q,1))
 
       enddo
 
@@ -1715,7 +1715,7 @@ subroutine solve_tridi_col( na, nev, nqoff, d, e, q, ldq, nblk, mpi_comm_rows )
          noff = limits(my_prow)        ! Start of subproblem
          nlen = limits(my_prow+1)-noff ! Size of subproblem
 
-         call solve_tridi_single(nlen,d(noff+1),e(noff+1),qmat1,ubound(qmat1,1))
+         call solve_tridi_single_dsteqr(nlen,d(noff+1),e(noff+1),qmat1,ubound(qmat1,1))
       endif
 
       ! Fill eigenvectors in qmat1 into global matrix q
@@ -1780,7 +1780,7 @@ end subroutine solve_tridi_col
 
 !-------------------------------------------------------------------------------
 
-subroutine solve_tridi_single(nlen, d, e, q, ldq)
+subroutine solve_tridi_single_dsteqr(nlen, d, e, q, ldq)
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
 
@@ -1810,7 +1810,87 @@ subroutine solve_tridi_single(nlen, d, e, q, ldq)
 
    deallocate(work)
 
-end subroutine solve_tridi_single
+end subroutine solve_tridi_single_dsteqr
+
+
+subroutine solve_tridi_single_dstedc(nlen, d, e, q, ldq)
+
+   ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
+
+   implicit none
+
+   integer nlen, ldq
+   real*8 d(nlen), e(nlen), q(ldq,nlen)
+
+   double precision sum1,sum2
+
+   real*8, allocatable :: work(:), qtmp(:), w(:)
+   real*8 dtmp,vl,vu,abstol
+
+   integer i, j, lwork, liwork, info, mpierr, m, ldz, il, iu
+   integer, allocatable :: iwork(:), ifail(:)
+
+   lwork = 1 + 4*nlen + nlen**2
+   allocate(work(lwork))
+   liwork = 3 + 5*nlen
+   allocate(iwork(liwork))
+
+   call dstedc('I',nlen,d,e,q,ldq,work,lwork,iwork,liwork,info)
+
+   ! If DSTEDC fails also, we don't know what to do further ...
+   if(info /= 0) then
+      print '(a,i8,a)','ERROR: Lapack routine DSTEDC failed, info= ',info,', Aborting!'
+      call mpi_abort(mpi_comm_world,0,mpierr)
+   endif
+
+   deallocate(work)
+   deallocate(iwork)
+
+end subroutine solve_tridi_single_dstedc
+
+
+subroutine solve_tridi_single_dstegr(nlen, d, e, q, ldq)
+
+   ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
+
+   implicit none
+
+   integer nlen, ldq
+   real*8 d(nlen), e(nlen), q(ldq,nlen)
+
+   double precision sum1,sum2
+
+   real*8, allocatable :: work(:), qtmp(:), w(:) 
+   real*8 dtmp,vl,vu,abstol
+
+   integer i, j, lwork, liwork, info, mpierr, m, ldz, il, iu
+   integer, allocatable :: iwork(:), ifail(:), isuppz(:)
+
+   lwork = 18*nlen + 10
+   liwork = 10*nlen + 10
+   allocate(work(lwork))
+   allocate(iwork(liwork))
+   allocate(w(nlen+10))
+   allocate(isuppz(2*nlen+10))
+
+   call dstegr('V','A',nlen,d,e,vl,vu,il,iu,abstol,m,w,q,ldq,isuppz,work,lwork,iwork,liwork,info)
+
+   do i=1,nlen 
+     d(i) = w(i)
+   enddo
+
+   ! If DSTEGR fails also, we don't know what to do further ...
+   if(info /= 0) then
+      print '(a,i8,a)','ERROR: Lapack routine DSTEGR failed, info= ',info,', Aborting!'
+      call mpi_abort(mpi_comm_world,0,mpierr)
+   endif
+
+   deallocate(work)
+   deallocate(iwork)
+   deallocate(w)
+   deallocate(isuppz)
+
+end subroutine solve_tridi_single_dstegr
 
 !-------------------------------------------------------------------------------
 

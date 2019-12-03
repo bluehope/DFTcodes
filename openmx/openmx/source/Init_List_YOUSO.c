@@ -4,14 +4,14 @@
 
 void Init_List_YOUSO()
 {
-    int i;
+  int i;
 
-    for (i=0; i<NYOUSO; i++) {
-        List_YOUSO[i] = 0;
-    }
+  for (i=0; i<NYOUSO; i++){
+    List_YOUSO[i] = 0;
+  }
 
-    List_YOUSO[6]  = 130;
-    List_YOUSO[10] = 100;
-    List_YOUSO[14] = 104;
-    List_YOUSO[26] =  60;
+  List_YOUSO[6]  = 130;
+  List_YOUSO[10] = 100;
+  List_YOUSO[14] = 104;
+  List_YOUSO[26] =  60;
 }

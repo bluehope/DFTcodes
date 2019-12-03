@@ -18,9 +18,9 @@
  */
 void TRAN_Set_Value_double(dcomplex *A, int n, double a, double b)
 {
-    int i;
-    for(i=0; i<n; i++) {
-        A[i].r = a;
-        A[i].i = b;
-    }
+  int i;
+  for(i=0; i<n; i++) {
+    A[i].r = a;
+    A[i].i = b;
+  }
 }

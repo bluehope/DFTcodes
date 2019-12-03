@@ -17,18 +17,18 @@
 void TRAN_Credit(MPI_Comm comm1)
 {
 
-    int myid;
+  int myid;
 
-    MPI_Comm_rank(comm1,&myid);
+  MPI_Comm_rank(comm1,&myid);
 
-    if (myid==Host_ID) {
-        printf("\n***********************************************************\n");
-        printf("***********************************************************\n");
-        printf(" Welcome to the NEGF extension\n");
-        printf(" The prototype fortran code: by Hisashi Kondo.\n");
-        printf(" The current version: by Hiori Kino and Taisuke Ozaki.\n");
-        printf("***********************************************************\n");
-        printf("***********************************************************\n\n\n\n");
-    }
+  if (myid==Host_ID) {
+    printf("\n***********************************************************\n"); 
+    printf("***********************************************************\n"); 
+    printf(" Welcome to the NEGF extension\n");
+    printf(" The prototype fortran code: by Hisashi Kondo.\n");
+    printf(" The current version: by Hiori Kino and Taisuke Ozaki.\n");
+    printf("***********************************************************\n"); 
+    printf("***********************************************************\n\n\n\n"); 
+  }
 
 }

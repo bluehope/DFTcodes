@@ -4,7 +4,7 @@
      XC_EX.c is a subroutine to calculate local exchange energy
      density and potential.
 
-     This routine was written by T.Ozaki, based on the original fortran
+     This routine was written by T.Ozaki, based on the original fortran 
      code provided by the SIESTA group through their website.
      Thanks to them.
 
@@ -36,51 +36,51 @@
 
 void XC_EX(int NSP, double DS0, double DS[2], double EX[1], double VX[2])
 {
-    double D0,D1,D,Z,FZ,FZP;
-    double RS,VXP,EXP,VXF,EXF;
+  double D0,D1,D,Z,FZ,FZP;
+  double RS,VXP,EXP,VXF,EXF;
 
-    if (NSP==2) {
-        D = DS[0] + DS[1];
-        if (D<=den_min) {
-            RS = COE1*pow(den_min,-1.0/3.0);
-            D0 = den_min_half;
-            D1 = den_min_half;
-            D = den_min;
-        }
-        else {
-            RS = COE1*pow(D,-TRD);
-        }
-        Z = (D0 - D1)/D;
-        FZ = (pow(1.0 + Z,FTRD) + pow(1.0 - Z,FTRD) - 2.0)/TFTM;
-        FZP = FTRD*(pow(1.0 + Z,TRD) - pow(1.0 - Z,TRD))/TFTM;
+  if (NSP==2){
+    D = DS[0] + DS[1];
+    if (D<=den_min){
+      RS = COE1*pow(den_min,-1.0/3.0);
+      D0 = den_min_half;
+      D1 = den_min_half; 
+      D = den_min;
     }
+    else{
+      RS = COE1*pow(D,-TRD);
+    }
+    Z = (D0 - D1)/D;
+    FZ = (pow(1.0 + Z,FTRD) + pow(1.0 - Z,FTRD) - 2.0)/TFTM;
+    FZP = FTRD*(pow(1.0 + Z,TRD) - pow(1.0 - Z,TRD))/TFTM;
+  }
+    
+  else{ 
+    if (DS0<=den_min){
+      D = den_min;
+      RS = COE1*pow(den_min,-1.0/3.0);
+    }
+    else{
+      D = DS0;
+      RS = COE1*pow(D,-TRD);
+    }
+    Z = ZERO;
+    FZ = ZERO;
+    FZP = ZERO;
+  }
 
-    else {
-        if (DS0<=den_min) {
-            D = den_min;
-            RS = COE1*pow(den_min,-1.0/3.0);
-        }
-        else {
-            D = DS0;
-            RS = COE1*pow(D,-TRD);
-        }
-        Z = ZERO;
-        FZ = ZERO;
-        FZP = ZERO;
-    }
+  VXP = -COE2/RS;
+  EXP = 0.750*VXP;
+  VXF = NINETH*VXP;
+  EXF = NINETH*EXP;
 
-    VXP = -COE2/RS;
-    EXP = 0.750*VXP;
-    VXF = NINETH*VXP;
-    EXF = NINETH*EXP;
-
-    if (NSP==2) {
-        VX[0] = VXP + FZ*(VXF - VXP) + (1.0 - Z)*FZP*(EXF - EXP);
-        VX[1] = VXP + FZ*(VXF - VXP) - (1.0 + Z)*FZP*(EXF - EXP);
-        EX[0] = EXP + FZ*(EXF - EXP);
-    }
-    else {
-        VX[0] = VXP;
-        EX[0] = EXP;
-    }
+  if (NSP==2){
+    VX[0] = VXP + FZ*(VXF - VXP) + (1.0 - Z)*FZP*(EXF - EXP);
+    VX[1] = VXP + FZ*(VXF - VXP) - (1.0 + Z)*FZP*(EXF - EXP);
+    EX[0] = EXP + FZ*(EXF - EXP);
+  }
+  else{
+    VX[0] = VXP;
+    EX[0] = EXP;
+  } 
 }

@@ -20,43 +20,41 @@
 
 void lapack_dsteqr1(INTEGER N, double *D, double *E, double *W, double **ev)
 {
-    int i,j;
-    char  *COMPZ="I";
-    double *Z;
-    INTEGER LDZ;
-    double *WORK;
-    INTEGER INFO;
+  int i,j;
+  char  *COMPZ="I";
+  double *Z;
+  INTEGER LDZ;
+  double *WORK;
+  INTEGER INFO;
 
-    LDZ = N;
-    Z = (double*)malloc(sizeof(double)*LDZ*N);
-    WORK = (double*)malloc(sizeof(double)*2*N);
+  LDZ = N;
+  Z = (double*)malloc(sizeof(double)*LDZ*N);
+  WORK = (double*)malloc(sizeof(double)*2*N);
 
-    F77_NAME(dsteqr,DSTEQR)( COMPZ, &N, D, E, Z, &LDZ, WORK, &INFO );
+  F77_NAME(dsteqr,DSTEQR)( COMPZ, &N, D, E, Z, &LDZ, WORK, &INFO );
 
-    /* store eigenvectors */
+  /* store eigenvectors */
 
-    for (i=0; i<N; i++) {
-        for (j=0; j<N; j++) {
-            ev[i+1][j+1]= Z[i*N+j];
-        }
+  for (i=0; i<N; i++) {
+    for (j=0; j<N; j++) {
+      ev[i+1][j+1]= Z[i*N+j];
     }
+  }
 
-    /* shift ko by 1 */
-    for (i=N; i>=1; i--) {
-        W[i]= D[i-1];
-    }
+  /* shift ko by 1 */
+  for (i=N; i>=1; i--){
+    W[i]= D[i-1];
+  }
+  
+  if (INFO>0) {
+    printf("\n error in dstevx_, info=%d\n\n",INFO);fflush(stdout);
+  }
+  if (INFO<0) {
+    printf("info=%d in dstevx_\n",INFO);fflush(stdout);
+    MPI_Finalize();
+    exit(0);
+  }
 
-    if (INFO>0) {
-        printf("\n error in dstevx_, info=%d\n\n",INFO);
-        fflush(stdout);
-    }
-    if (INFO<0) {
-        printf("info=%d in dstevx_\n",INFO);
-        fflush(stdout);
-        MPI_Finalize();
-        exit(0);
-    }
-
-    free(Z);
-    free(WORK);
+  free(Z);
+  free(WORK);
 }

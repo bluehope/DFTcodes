@@ -22,64 +22,64 @@
 
 void TRAN_Check_Input(  MPI_Comm comm1, int Solver )
 {
-    int po=0;
-    FILE *fp;
-    char *s_vec[20];
-    int i_vec[20];
-    double r_vec[20];
+  int po=0;
+  FILE *fp;
+  char *s_vec[20];
+  int i_vec[20];
+  double r_vec[20];
 
-    int myid,i,j,spe,spe_e;
-    char Species[YOUSO10];
-    double Length_C, Length_L, Length_R;
-    double angleCL, angleCR;
-    double Lsign, Rsign;
+  int myid,i,j,spe,spe_e; 
+  char Species[YOUSO10];
+  double Length_C, Length_L, Length_R;
+  double angleCL, angleCR;
+  double Lsign, Rsign; 
 
-    if (Solver!=4) return;
+  if (Solver!=4) return; 
 
-    MPI_Comm_rank(comm1,&myid);
+  MPI_Comm_rank(comm1,&myid);
 
-    /* left */
+  /* left */
 
-    for (i=1; i<=Latomnum; i++) {
+  for (i=1; i<=Latomnum; i++){
 
-        j = TRAN_Original_Id[i];
-        spe   = WhatSpecies[i];
-        spe_e = WhatSpecies_e[0][j];
+    j = TRAN_Original_Id[i];
+    spe   = WhatSpecies[i];
+    spe_e = WhatSpecies_e[0][j];
 
-        if (Spe_Total_NO_e[0][spe_e]!=Spe_Total_NO[spe]) {
+    if (Spe_Total_NO_e[0][spe_e]!=Spe_Total_NO[spe]){
 
-            if (myid==Host_ID) {
-                printf("The specification of species in the LEFT lead is inconsistent.\n");
-                printf("Probably the basis set is different from that used in the band calculation.\n");
-            }
+      if (myid==Host_ID){
+        printf("The specification of species in the LEFT lead is inconsistent.\n");
+        printf("Probably the basis set is different from that used in the band calculation.\n");
+      }
 
-            po++;
-        }
+      po++;
     }
+  }
 
-    /* right */
+  /* right */
 
-    for (i=1; i<=Ratomnum; i++) {
+  for (i=1; i<=Ratomnum; i++){
 
-        j = TRAN_Original_Id[Catomnum+Latomnum+i];
-        spe   = WhatSpecies[Catomnum+Latomnum+i];
-        spe_e = WhatSpecies_e[1][j];
+    j = TRAN_Original_Id[Catomnum+Latomnum+i];
+    spe   = WhatSpecies[Catomnum+Latomnum+i];
+    spe_e = WhatSpecies_e[1][j];
 
-        if (Spe_Total_NO_e[1][spe_e]!=Spe_Total_NO[spe]) {
+    if (Spe_Total_NO_e[1][spe_e]!=Spe_Total_NO[spe]){
 
-            if (myid==Host_ID) {
-                printf("The specification of species in the RIGHT lead is inconsistent.\n");
-                printf("Probably the basis set is different from that used in the band calculation.\n");
-            }
+      if (myid==Host_ID){
+        printf("The specification of species in the RIGHT lead is inconsistent.\n");
+        printf("Probably the basis set is different from that used in the band calculation.\n");
+      }
 
-            po++;
-        }
+      po++;
     }
+  }
 
-    /* check po */
+  /* check po */
 
-    if (po!=0) {
-        MPI_Finalize();
-        exit(0);
-    }
+  if (po!=0){
+    MPI_Finalize();
+    exit(0);
+  } 
 }

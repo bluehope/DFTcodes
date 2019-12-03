@@ -27,252 +27,252 @@
 
 void FT_NLP()
 {
-    int numprocs,myid,ID,tag=999;
-    int count,NumSpe;
-    int i,kj,num_k,so;
-    int Lspe,spe,L,GL,MaxGL;
-    int RestartRead_Succeed;
-    double dk,norm_k;
-    double rmin,rmax,r,r2,h,sum[2];
-    double **SphB;
-    double *tmp_SphB,*tmp_SphBp;
-    double TStime, TEtime;
-    /* for MPI */
-    MPI_Status stat;
-    MPI_Request request;
-    /* for OpenMP */
-    int OMPID,Nthrds,Nprocs;
+  int numprocs,myid,ID,tag=999;
+  int count,NumSpe;
+  int i,kj,num_k,so;
+  int Lspe,spe,L,GL,MaxGL;
+  int RestartRead_Succeed;
+  double dk,norm_k;
+  double rmin,rmax,r,r2,h,sum[2];
+  double **SphB;
+  double *tmp_SphB,*tmp_SphBp;
+  double TStime, TEtime;
+  /* for MPI */
+  MPI_Status stat;
+  MPI_Request request;
+  /* for OpenMP */
+  int OMPID,Nthrds,Nprocs;
 
-    char fileFT[YOUSO10];
-    char operate[300];
-    FILE *fp;
-    size_t size;
+  char fileFT[YOUSO10];
+  char operate[300];
+  FILE *fp;
+  size_t size; 
 
-    dtime(&TStime);
+  dtime(&TStime);
 
-    /* MPI */
-    MPI_Comm_size(mpi_comm_level1,&numprocs);
-    MPI_Comm_rank(mpi_comm_level1,&myid);
+  /* MPI */
+  MPI_Comm_size(mpi_comm_level1,&numprocs);
+  MPI_Comm_rank(mpi_comm_level1,&myid);
+ 
+  if (myid==Host_ID && 0<level_stdout) printf("<FT_NLP>          Fourier transform of non-local projectors\n");
 
-    if (myid==Host_ID && 0<level_stdout) printf("<FT_NLP>          Fourier transform of non-local projectors\n");
+  RestartRead_Succeed = 0;
 
-    RestartRead_Succeed = 0;
+  /***********************************************************
+     In case of Scf_RestartFromFile==1, read Spe_NLRF_Bessel
+  ***********************************************************/
 
-    /***********************************************************
-       In case of Scf_RestartFromFile==1, read Spe_NLRF_Bessel
-    ***********************************************************/
+  if (Scf_RestartFromFile==1){
 
-    if (Scf_RestartFromFile==1) {
+    /****************************************************
+          generate radial grids in the k-space
+    ****************************************************/
 
-        /****************************************************
-              generate radial grids in the k-space
-        ****************************************************/
-
-        dk = PAO_Nkmax/(double)Ngrid_NormK;
-        for (i=0; i<Ngrid_NormK; i++) {
-            NormK[i] = (double)i*dk;
-        }
-
-        /***********************************************************
-                          read Spe_NLRF_Bessel
-        ***********************************************************/
-
-        sprintf(fileFT,"%s%s_rst/%s.ftnlp",filepath,filename,filename);
-
-        if ((fp = fopen(fileFT,"rb")) != NULL) {
-
-            RestartRead_Succeed = 1;
-
-            for (spe=0; spe<SpeciesNum; spe++) {
-                for (so=0; so<=VPS_j_dependency[spe]; so++) {
-                    for (L=1; L<=Spe_Num_RVPS[spe]; L++) {
-
-                        size = fread(&Spe_NLRF_Bessel[so][spe][L][0],sizeof(double),List_YOUSO[15],fp);
-                        if (size!=List_YOUSO[15]) RestartRead_Succeed = 0;
-                    }
-                }
-            }
-
-            fclose(fp);
-        }
-        else {
-            printf("Could not open a file %s in FT_NLP\n",fileFT);
-        }
+    dk = PAO_Nkmax/(double)Ngrid_NormK;
+    for (i=0; i<Ngrid_NormK; i++){
+      NormK[i] = (double)i*dk;
     }
 
     /***********************************************************
-       if (RestartRead_Succeed==0), calculate Spe_NLRF_Bessel
+                      read Spe_NLRF_Bessel
     ***********************************************************/
 
-    if (RestartRead_Succeed==0) {
+    sprintf(fileFT,"%s%s_rst/%s.ftnlp",filepath,restart_filename,restart_filename);
 
-        for (Lspe=0; Lspe<MSpeciesNum; Lspe++) {
+    if ((fp = fopen(fileFT,"rb")) != NULL){
 
-            spe = Species_Top[myid] + Lspe;
+      RestartRead_Succeed = 1;
 
-            num_k = Ngrid_NormK;
-            dk = PAO_Nkmax/(double)num_k;
-            rmin = Spe_VPS_RV[spe][0];
-            rmax = Spe_Atom_Cut1[spe] + 0.5;
-            h = (rmax - rmin)/(double)OneD_Grid;
+      for (spe=0; spe<SpeciesNum; spe++){
+	for (so=0; so<=VPS_j_dependency[spe]; so++){
+	  for (L=1; L<=Spe_Num_RVPS[spe]; L++){
 
-            /* kj loop */
+	    size = fread(&Spe_NLRF_Bessel[so][spe][L][0],sizeof(double),List_YOUSO[15],fp);
+	    if (size!=List_YOUSO[15]) RestartRead_Succeed = 0;
+	  }
+	}
+      }
 
-            #pragma omp parallel shared(Spe_VPS_List,spe,Spe_Num_RVPS,num_k,dk,OneD_Grid,rmin,h,VPS_j_dependency,Spe_NLRF_Bessel)  private(MaxGL,L,GL,SphB,tmp_SphB,tmp_SphBp,OMPID,Nthrds,Nprocs,norm_k,i,r,r2,sum,so,kj)
-            {
+      fclose(fp);
+    }
+    else{
+      printf("Could not open a file %s in FT_NLP\n",fileFT);
+    }
+  }
 
-                /* allocate SphB */
+  /***********************************************************
+     if (RestartRead_Succeed==0), calculate Spe_NLRF_Bessel
+  ***********************************************************/
 
-                MaxGL = -1;
-                for (L=1; L<=Spe_Num_RVPS[spe]; L++) {
-                    GL = Spe_VPS_List[spe][L];
-                    if (MaxGL<GL) MaxGL = GL;
-                }
+  if (RestartRead_Succeed==0){
 
-                SphB = (double**)malloc(sizeof(double*)*(MaxGL+3));
-                for(GL=0; GL<(MaxGL+3); GL++) {
-                    SphB[GL] = (double*)malloc(sizeof(double)*(OneD_Grid+1));
-                }
+    for (Lspe=0; Lspe<MSpeciesNum; Lspe++){
 
-                tmp_SphB  = (double*)malloc(sizeof(double)*(MaxGL+3));
-                tmp_SphBp = (double*)malloc(sizeof(double)*(MaxGL+3));
+      spe = Species_Top[myid] + Lspe;
 
-                /* get info. on OpenMP */
+      num_k = Ngrid_NormK;
+      dk = PAO_Nkmax/(double)num_k;
+      rmin = Spe_VPS_RV[spe][0];
+      rmax = Spe_Atom_Cut1[spe] + 0.5;
+      h = (rmax - rmin)/(double)OneD_Grid;
 
-                OMPID = omp_get_thread_num();
-                Nthrds = omp_get_num_threads();
-                Nprocs = omp_get_num_procs();
+      /* kj loop */
 
-                for ( kj=OMPID; kj<num_k; kj+=Nthrds ) {
+#pragma omp parallel shared(Spe_VPS_List,spe,Spe_Num_RVPS,num_k,dk,OneD_Grid,rmin,h,VPS_j_dependency,Spe_NLRF_Bessel)  private(MaxGL,L,GL,SphB,tmp_SphB,tmp_SphBp,OMPID,Nthrds,Nprocs,norm_k,i,r,r2,sum,so,kj)
+      {
 
-                    norm_k = (double)kj*dk;
+	/* allocate SphB */
 
-                    /* calculate SphB */
+	MaxGL = -1;
+	for (L=1; L<=Spe_Num_RVPS[spe]; L++){
+	  GL = Spe_VPS_List[spe][L];
+	  if (MaxGL<GL) MaxGL = GL;
+	}      
 
-                    for (i=0; i<=OneD_Grid; i++) {
+	SphB = (double**)malloc(sizeof(double*)*(MaxGL+3));
+	for(GL=0; GL<(MaxGL+3); GL++){ 
+	  SphB[GL] = (double*)malloc(sizeof(double)*(OneD_Grid+1));
+	}
 
-                        r = rmin + (double)i*h;
+	tmp_SphB  = (double*)malloc(sizeof(double)*(MaxGL+3));
+	tmp_SphBp = (double*)malloc(sizeof(double)*(MaxGL+3));
 
-                        Spherical_Bessel(norm_k*r,MaxGL,tmp_SphB,tmp_SphBp);
+	/* get info. on OpenMP */ 
 
-                        r2 = r*r;
-                        for(GL=0; GL<=MaxGL; GL++) {
-                            SphB[GL][i] = tmp_SphB[GL]*r2;
-                        }
-                    }
+	OMPID = omp_get_thread_num();
+	Nthrds = omp_get_num_threads();
+	Nprocs = omp_get_num_procs();
 
-                    for(GL=0; GL<=MaxGL; GL++) {
-                        SphB[GL][0] *= 0.5;
-                        SphB[GL][OneD_Grid] *= 0.5;
-                    }
+	for ( kj=OMPID; kj<num_k; kj+=Nthrds ){
 
-                    /* loof for L */
+	  norm_k = (double)kj*dk;
 
-                    for (L=1; L<=Spe_Num_RVPS[spe]; L++) {
+	  /* calculate SphB */
 
-                        GL = Spe_VPS_List[spe][L];
+	  for (i=0; i<=OneD_Grid; i++){
 
-                        /****************************************************
-                                      \int jL(k*r)*RL*r^2 dr
-                        ****************************************************/
+	    r = rmin + (double)i*h;
 
-                        sum[0] = 0.0;
-                        sum[1] = 0.0;
+	    Spherical_Bessel(norm_k*r,MaxGL,tmp_SphB,tmp_SphBp);
 
-                        for (i=0; i<=OneD_Grid; i++) {
-                            r = rmin + (double)i*h;
-                            for (so=0; so<=VPS_j_dependency[spe]; so++) {
-                                sum[so] += Nonlocal_RadialF(spe,L-1,so,r)*SphB[GL][i];
-                            }
-                        }
+	    r2 = r*r;
+	    for(GL=0; GL<=MaxGL; GL++){ 
+	      SphB[GL][i] = tmp_SphB[GL]*r2; 
+	    }
+	  }
 
-                        for (so=0; so<=VPS_j_dependency[spe]; so++) {
-                            Spe_NLRF_Bessel[so][spe][L][kj] = sum[so]*h;
-                        }
+	  for(GL=0; GL<=MaxGL; GL++){ 
+	    SphB[GL][0] *= 0.5;
+	    SphB[GL][OneD_Grid] *= 0.5;
+	  }
 
-                    } /* L */
-                } /* kj */
+	  /* loof for L */
 
-                /* free arrays */
+	  for (L=1; L<=Spe_Num_RVPS[spe]; L++){
 
-                for(GL=0; GL<(MaxGL+3); GL++) {
-                    free(SphB[GL]);
-                }
-                free(SphB);
+	    GL = Spe_VPS_List[spe][L];
 
-                free(tmp_SphB);
-                free(tmp_SphBp);
+	    /****************************************************
+                      \int jL(k*r)*RL*r^2 dr 
+	    ****************************************************/
 
-                #pragma omp flush(Spe_NLRF_Bessel)
+	    sum[0] = 0.0;
+	    sum[1] = 0.0;
 
-            } /* #pragma omp parallel */
+	    for (i=0; i<=OneD_Grid; i++){
+	      r = rmin + (double)i*h;
+	      for (so=0; so<=VPS_j_dependency[spe]; so++){
+		sum[so] += Nonlocal_RadialF(spe,L-1,so,r)*SphB[GL][i];
+	      }
+	    }
 
-        } /* Lspe */
+	    for (so=0; so<=VPS_j_dependency[spe]; so++){
+	      Spe_NLRF_Bessel[so][spe][L][kj] = sum[so]*h;
+	    }
 
-        /****************************************************
-         Remedy for MSpeciesNum==0
-         generate radial grids in the k-space
-        ****************************************************/
+	  } /* L */
+	} /* kj */
 
-        dk = PAO_Nkmax/(double)Ngrid_NormK;
-        for (i=0; i<Ngrid_NormK; i++) {
-            NormK[i] = (double)i*dk;
-        }
+	/* free arrays */
 
-        /***********************************************************
-            sending and receiving of Spe_RF_Bessel by MPI
-        ***********************************************************/
+	for(GL=0; GL<(MaxGL+3); GL++){ 
+	  free(SphB[GL]);
+	}
+	free(SphB);
 
-        for (ID=0; ID<Num_Procs2; ID++) {
-            NumSpe = Species_End[ID] - Species_Top[ID] + 1;
-            for (Lspe=0; Lspe<NumSpe; Lspe++) {
-                spe = Species_Top[ID] + Lspe;
-                for (so=0; so<=VPS_j_dependency[spe]; so++) {
-                    for (L=1; L<=Spe_Num_RVPS[spe]; L++) {
-                        MPI_Bcast(&Spe_NLRF_Bessel[so][spe][L][0],
-                                  List_YOUSO[15],MPI_DOUBLE,ID,mpi_comm_level1);
-                    }
-                }
-            }
-        }
+	free(tmp_SphB);
+	free(tmp_SphBp);
 
-        /***********************************************************
-                          save Spe_NLRF_Bessel
-        ***********************************************************/
+#pragma omp flush(Spe_NLRF_Bessel)
 
-        if (myid==Host_ID) {
+      } /* #pragma omp parallel */
 
-            sprintf(fileFT,"%s%s_rst/%s.ftnlp",filepath,filename,filename);
+    } /* Lspe */
 
-            if ((fp = fopen(fileFT,"wb")) != NULL) {
+    /****************************************************
+     Remedy for MSpeciesNum==0
+     generate radial grids in the k-space
+    ****************************************************/
 
-                for (spe=0; spe<SpeciesNum; spe++) {
-                    for (so=0; so<=VPS_j_dependency[spe]; so++) {
-                        for (L=1; L<=Spe_Num_RVPS[spe]; L++) {
-                            fwrite(&Spe_NLRF_Bessel[so][spe][L][0],sizeof(double),List_YOUSO[15],fp);
-                        }
-                    }
-                }
-
-                fclose(fp);
-            }
-            else {
-                printf("Could not open a file %s in FT_NLP\n",fileFT);
-            }
-        }
-
-    } /* if (RestartRead_Succeed==0) */
+    dk = PAO_Nkmax/(double)Ngrid_NormK;
+    for (i=0; i<Ngrid_NormK; i++){
+      NormK[i] = (double)i*dk;
+    }
 
     /***********************************************************
-                           elapsed time
+        sending and receiving of Spe_RF_Bessel by MPI
     ***********************************************************/
 
-    dtime(&TEtime);
+    for (ID=0; ID<Num_Procs2; ID++){
+      NumSpe = Species_End[ID] - Species_Top[ID] + 1;
+      for (Lspe=0; Lspe<NumSpe; Lspe++){
+	spe = Species_Top[ID] + Lspe;
+	for (so=0; so<=VPS_j_dependency[spe]; so++){
+	  for (L=1; L<=Spe_Num_RVPS[spe]; L++){
+	    MPI_Bcast(&Spe_NLRF_Bessel[so][spe][L][0],
+		      List_YOUSO[15],MPI_DOUBLE,ID,mpi_comm_level1);
+	  }
+	}
+      }
+    }
 
-    /*
-    printf("myid=%2d Elapsed Time (s) = %15.12f\n",myid,TEtime-TStime);
-    MPI_Finalize();
-    exit(0);
-    */
+    /***********************************************************
+                      save Spe_NLRF_Bessel
+    ***********************************************************/
+
+    if (myid==Host_ID){
+
+      sprintf(fileFT,"%s%s_rst/%s.ftnlp",filepath,filename,filename);
+
+      if ((fp = fopen(fileFT,"wb")) != NULL){
+
+	for (spe=0; spe<SpeciesNum; spe++){
+  	  for (so=0; so<=VPS_j_dependency[spe]; so++){
+	    for (L=1; L<=Spe_Num_RVPS[spe]; L++){
+	      fwrite(&Spe_NLRF_Bessel[so][spe][L][0],sizeof(double),List_YOUSO[15],fp);
+	    }
+	  }
+	}  
+
+	fclose(fp);
+      }
+      else{
+	printf("Could not open a file %s in FT_NLP\n",fileFT);
+      }
+    }
+
+  } /* if (RestartRead_Succeed==0) */
+
+  /***********************************************************
+                         elapsed time
+  ***********************************************************/
+
+  dtime(&TEtime);
+
+  /*
+  printf("myid=%2d Elapsed Time (s) = %15.12f\n",myid,TEtime-TStime);
+  MPI_Finalize();
+  exit(0);
+  */
 
 }

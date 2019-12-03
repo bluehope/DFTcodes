@@ -20,23 +20,23 @@
 
 void  TRAN_adjust_Ngrid( MPI_Comm comm1, int *Ngrid1,int *Ngrid2, int *Ngrid3)
 {
-    static int numprocs,myid,ID;
+  static int numprocs,myid,ID;
+ 
+  MPI_Comm_size(comm1,&numprocs);
+  MPI_Comm_rank(comm1,&myid);
 
-    MPI_Comm_size(comm1,&numprocs);
-    MPI_Comm_rank(comm1,&myid);
+  if ( Ngrid3_e[0] != Ngrid3_e[1]  ||  Ngrid2_e[0] != Ngrid2_e[1] ) {
+    printf("TRAN> internal error, Ngrid?_e[0] is different from Ngrid?_e[1]\n");
+    printf("TRAN> Ngrid?[0]=%d %d %d Ngrid?[1]=%d %d %d\n", 
+	   Ngrid1_e[0],Ngrid2_e[0], Ngrid3_e[0], 
+	   Ngrid1_e[1],Ngrid2_e[1], Ngrid3_e[1] );
+    exit(0);
+  }
 
-    if ( Ngrid3_e[0] != Ngrid3_e[1]  ||  Ngrid2_e[0] != Ngrid2_e[1] ) {
-        printf("TRAN> internal error, Ngrid?_e[0] is different from Ngrid?_e[1]\n");
-        printf("TRAN> Ngrid?[0]=%d %d %d Ngrid?[1]=%d %d %d\n",
-               Ngrid1_e[0],Ngrid2_e[0], Ngrid3_e[0],
-               Ngrid1_e[1],Ngrid2_e[1], Ngrid3_e[1] );
-        exit(0);
-    }
+  if (myid==Host_ID){
+    printf("<TRAN> adjust Ngrid2 and Ngrid3 to fit those of electrodes\n");
+  }
 
-    if (myid==Host_ID) {
-        printf("<TRAN> adjust Ngrid2 and Ngrid3 to fit those of electrodes\n");
-    }
-
-    *Ngrid2 = Ngrid2_e[0];
-    *Ngrid3 = Ngrid3_e[0];
+  *Ngrid2 = Ngrid2_e[0];
+  *Ngrid3 = Ngrid3_e[0];
 }
