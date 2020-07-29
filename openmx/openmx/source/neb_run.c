@@ -34,7 +34,9 @@ void neb_run(char *argv[], MPI_Comm mpi_commWD, int index_images, double ***neb_
 
   mpi_comm_level1 = mpi_commWD;
   MPI_Comm_size(mpi_comm_level1,&numprocs);
+
   MPI_Comm_rank(mpi_comm_level1,&myid);
+
   NUMPROCS_MPI_COMM_WORLD = numprocs;
   MYID_MPI_COMM_WORLD = myid;
   Num_Procs = numprocs;
@@ -47,8 +49,8 @@ void neb_run(char *argv[], MPI_Comm mpi_commWD, int index_images, double ***neb_
 
   CompTime = (double**)malloc(sizeof(double*)*numprocs); 
   for (i=0; i<numprocs; i++){
-    CompTime[i] = (double*)malloc(sizeof(double)*20); 
-    for (j=0; j<20; j++) CompTime[i][j] = 0.0;
+    CompTime[i] = (double*)malloc(sizeof(double)*21); 
+    for (j=0; j<21; j++) CompTime[i][j] = 0.0;
   }
 
   Init_List_YOUSO();

@@ -21,6 +21,8 @@
 #include "mpi.h"
 #include <omp.h>
 
+#define maxint(a,b) (((a)>(b))?  (a):(b))
+
 #define  measure_time   0
 
 
@@ -3232,8 +3234,8 @@ static double Band_DFT_Dosout_Col(
 
   /* add a buffer to iemin and iemax */
 
-  iemin -= 5;
-  iemax += 5;
+  iemin -= maxint(n/20,10);
+  iemax += maxint(n/20,10);
 
   if (iemin<1) iemin = 1;
   if (n<iemax) iemax = n;
@@ -3690,6 +3692,24 @@ static double Band_DFT_Dosout_Col(
 	  fwrite(i_vec,sizeof(int),3,fp_ev);
 	  fwrite(&SD[1],sizeof(float),n,fp_ev);
 
+
+
+
+
+	  /*
+          if ( fabs(ko[0][l]-ChemP)<0.01 && 0.01<fabs(SD[499]) ){
+	  */
+
+	  /*
+          if ( fabs(ko[0][l]-ChemP)<0.05 ){
+
+            printf("ZZZ1 kloop=%2d %10.5f %10.5f %10.5f l=%2d %15.12f %15.12f %15.12f   %15.12f\n",
+                   kloop,k1,k2,k3,l,fabs(ko[0][l]-ChemP),H2[0][l][395].r,H2[0][l][395].i,fabs(SD[395]));
+	  }
+	  */
+
+
+
 	} /* l */
       } /* spin */
     } /* if (0<=kloop) */ 
@@ -3776,6 +3796,26 @@ static double Band_DFT_Dosout_Col(
     }
 
   } /* kloop0        */
+
+  /*
+  for (kloop=0; kloop<T_knum; kloop++){
+
+    int po;
+
+    po = 0; 
+    for (i=1; i<=n; i++){
+      if ( fabs(EIGEN[0][kloop][i]-ChemP)<0.002 ) po = 1; 
+    }
+
+    if (myid==Host_ID && po==1){
+      printf("ABC1 kloop=%2d  %15.12f %15.12f %15.12f\n",kloop,T_KGrids1[kloop],T_KGrids2[kloop],T_KGrids3[kloop]);
+    }
+    
+  }
+
+  MPI_Finalize();
+  exit(0);
+  */
 
   /****************************************************
      MPI: PDM
@@ -3955,9 +3995,9 @@ Finishing:
 	      fwrite(i_vec,  sizeof(int),  3,fp_ev0);
 	      fread( &SD[1], sizeof(float),n,fp_ev);
 	      fwrite(&SD[1], sizeof(float),n,fp_ev0);
-              /*
-               Atomic projection for FermiSurfer
-              */
+
+              /* Atomic projection for FermiSurfer */
+
               if (fermisurfer_output) {
 		if (iemin_fs[spin] <= l && l <= iemax_fs[spin]) {
 		  j1 = 0;
@@ -3972,6 +4012,7 @@ Finishing:
 		  }/*for (GA_AN = 1; GA_AN <= atomnum; GA_AN++)*/
 		}
 	      }
+
 	    }
 	  }
           kloop += 1;
@@ -4825,8 +4866,8 @@ static double Band_DFT_Dosout_NonCol(
 
   /* add a buffer to iemin and iemax */
 
-  iemin -= 5;
-  iemax += 5;
+  iemin -= maxint(n/10,10);
+  iemax += maxint(n/10,10);
 
   if (iemin<1)  iemin = 1;
   if ((2*n)<iemax) iemax = 2*n;

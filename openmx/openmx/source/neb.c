@@ -259,11 +259,11 @@ void neb(int argc, char *argv[])
       /* if the restart is not performed, perform the SCF calulations for the two terminals */ 
 
       else {
-    
+
 	/* generate input files */
 
 	generate_input_files(fname_original,1);
-    
+
 	/* In case of parallel2_flag==1 */
      
 	if (parallel2_flag==1){
@@ -934,7 +934,7 @@ void neb(int argc, char *argv[])
     /****************************************************
        allocate processes to each image in the World2
     ****************************************************/
-    
+
     Num_Comm_World2 = 2;
     
     if ( Num_Comm_World2<=numprocs ){
@@ -1001,8 +1001,8 @@ void neb(int argc, char *argv[])
 	  sprintf(fname1,"%s_%i",fname_original,index_images);
 	  argv[1] = fname1;
 
-	  neb_run( argv,MPI_CommWD2[myworld2],index_images,neb_atom_coordinates,
-		   WhatSpecies_NEB,Spe_WhatAtom_NEB,SpeName_NEB );
+          neb_run( argv,MPI_COMM_WORLD1,index_images,neb_atom_coordinates,
+    	           WhatSpecies_NEB,Spe_WhatAtom_NEB,SpeName_NEB );
 	}
       }
 
@@ -2799,7 +2799,7 @@ void generate_input_files(char *file, int iter)
 
 	  /* level.of.stdout */
 
-	  else if (strncmp(st1,"level.of.stdout",15)==0 && p<=1 ){
+	  else if (strncmp(st1,"level.of.stdout",15)==0 && (p<=1 || PN==1) ){
 	    fprintf(fp1,"level.of.stdout                   1\n");
 	    level_flag = 1;
 	  }  
@@ -2863,13 +2863,13 @@ void read_input(char *file)
   int unitvectors_flag;
   int itmp1,itmp2,itmp3,itmp4;
   int myid,numprocs;
-  double tv[4][4];
   double dtmp1,dtmp2,dtmp3,dtmp4,dtmp5;
   double dtmp6,dtmp7,dtmp8,dtmp9;
   double tmpx,tmpy,tmpz,x,y,z;
   double dif,sx,sy,sz;
   double xc0,yc0,zc0,xc1,yc1,zc1;
   double xc,yc,zc;
+  double tmp[4],CellV;
   char Species[100];
   char OrbPol[100];
   char buf[MAXBUF];
@@ -2958,6 +2958,29 @@ void read_input(char *file)
     MPI_Finalize();
     exit(0);
   }  
+
+  /**************************************************************
+                       calculation of rtv
+  **************************************************************/
+
+  Cross_Product(tv[2],tv[3],tmp);
+  CellV = Dot_Product(tv[1],tmp); 
+  Cell_Volume = fabs(CellV);
+
+  Cross_Product(tv[2],tv[3],tmp);
+  rtv[1][1] = 2.0*PI*tmp[1]/CellV;
+  rtv[1][2] = 2.0*PI*tmp[2]/CellV;
+  rtv[1][3] = 2.0*PI*tmp[3]/CellV;
+  
+  Cross_Product(tv[3],tv[1],tmp);
+  rtv[2][1] = 2.0*PI*tmp[1]/CellV;
+  rtv[2][2] = 2.0*PI*tmp[2]/CellV;
+  rtv[2][3] = 2.0*PI*tmp[3]/CellV;
+  
+  Cross_Product(tv[1],tv[2],tmp);
+  rtv[3][1] = 2.0*PI*tmp[1]/CellV;
+  rtv[3][2] = 2.0*PI*tmp[2]/CellV;
+  rtv[3][3] = 2.0*PI*tmp[3]/CellV;
 
   /**************************************************************
    read atomic coodinates given by Atoms.SpeciesAndCoordinates.
@@ -3052,7 +3075,7 @@ void read_input(char *file)
 
 	if (1.0<neb_atom_coordinates[0][i][k]){
 
-	  /* ended by T.Ohwaki */
+	  /* ended by T. Ohwaki */
 
 	  neb_atom_coordinates[0][i][k] = neb_atom_coordinates[0][i][k] - (double)itmp;
 
@@ -3098,6 +3121,7 @@ void read_input(char *file)
       neb_atom_coordinates[0][i][1] = x;
       neb_atom_coordinates[0][i][2] = y;
       neb_atom_coordinates[0][i][3] = z;
+
     }
   }
 

@@ -19,6 +19,7 @@
 #include "mpi.h"
 #include "tran_prototypes.h"
 
+int TRAN_SCF_Iter_Band;
 
 /* variables for cluster and band calculations  */
 double *Ss_Re,*Cs_Re,*Hs_Re;
@@ -1018,6 +1019,15 @@ double DFT(int MD_iter, int Cnt_Now)
       /* update Beta */ 
       Beta = 1.0/kB/E_Temp;
     }
+
+    /********************************************************
+     In case of NEGF, 
+
+     change SCF_iter_shift to delay the SCF step for Pulay-type 
+     mixing after NEGF.SCF.Iter.Band.
+    ********************************************************/
+
+    if (SCF_iter==TRAN_SCF_Iter_Band) SCF_iter_shift = TRAN_SCF_Iter_Band;
 
     /********************************************************
      simple, RMM-DIIS, or GR-Pulay mixing for density matrix

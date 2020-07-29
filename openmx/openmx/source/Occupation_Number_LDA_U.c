@@ -2949,10 +2949,46 @@ void make_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele)
   Snd_Size = (int*)malloc(sizeof(int)*numprocs);
   Rcv_Size = (int*)malloc(sizeof(int)*numprocs);
 
+  /* initialize v_eff */
 
+  for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++){
+    
+    dtime(&Stime_atom);
+
+    Gc_AN = M2G[Mc_AN];
+    wan1 = WhatSpecies[Gc_AN];
+
+    for (spin=0; spin<=SpinP_switch; spin++){
+
+      /* store the v_eff --- MJ */
+
+      to1 = 0;
+      for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
+	for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
+	  for(m1=0; m1<(2*l1+1); m1++){
+
+	    to2 = 0;
+	    for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
+	      for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
+		for(m2=0; m2<(2*l2+1); m2++){
+
+		  v_eff[spin][Mc_AN][to1][to2] = 0.0;
+
+		  to2++;
+
+		} /* mul2 */
+	      }  /* m2 */
+	    } /* l2 */
+
+	    to1++;
+
+	  } /* mul1 */
+	}  /* m1 */
+      } /* l1 */
+    } /* spin */
+  } /* Mc_AN */
 
   /****************************************************
-
                        make v_eff
 
       Important note: 
@@ -3375,7 +3411,7 @@ void make_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele)
 
 
 
-
+#pragma optimization_level 1
 void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double ECE[])
 {
   int i,j,k,tno0,tno1,tno2,Cwan,Gc_AN,spin;
@@ -3426,36 +3462,72 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
   My_Uzo = 0.0;
 
   for (Mc_AN=1; Mc_AN<=Matomnum; Mc_AN++){
-    switch (Hub_Type){
-    case 1:	/* Dudarev form */  
-      dtime(&Stime_atom);
 
-      Gc_AN = M2G[Mc_AN];
-      wan1 = WhatSpecies[Gc_AN];
+    Gc_AN = M2G[Mc_AN];
+    wan1 = WhatSpecies[Gc_AN];
 
-      /************************************************************
-       *********************************************************** 
-       *********************************************************** 
-       *********************************************************** 
+    /* initialization of NC_v_eff */
+ 
+    to1 = 0;
+    for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
+      for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
+	for(m1=0; m1<(2*l1+1); m1++){
+
+	  to2 = 0;
+	  for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
+	    for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
+	      for(m2=0; m2<(2*l2+1); m2++){
+
+		NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
+		NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
+		NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
+		NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
+		NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
+		NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
+		NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
+		NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
+
+		to2++;
+
+	      } /* mul2 */
+	    }  /* m2 */
+	  } /* l2 */
+
+	  to1++;
+
+	} /* mul1 */
+      }  /* m1 */
+    } /* l1 */
+
+    /* add Hubbard term */
+
+    if (Hub_U_switch==1){
+
+      switch (Hub_Type){
+      case 1:	/* Dudarev form */  
+	dtime(&Stime_atom);
+
+	/************************************************************
+	 *********************************************************** 
+	 *********************************************************** 
+	 *********************************************************** 
 
                      calculate the v_eff for LDA+U 
 
-       *********************************************************** 
-       *********************************************************** 
-       *********************************************************** 
-      ************************************************************/
+         *********************************************************** 
+         *********************************************************** 
+         *********************************************************** 
+         ************************************************************/
 
-      to1 = 0;
-      for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
-        for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
-	  for(m1=0; m1<(2*l1+1); m1++){
+	to1 = 0;
+	for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
+	  for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
+	    for(m1=0; m1<(2*l1+1); m1++){
 
-	    to2 = 0;
-	    for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
-	      for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
-	        for(m2=0; m2<(2*l2+1); m2++){
-
-		  if (Hub_U_switch==1){
+	      to2 = 0;
+	      for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
+		for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
+		  for(m2=0; m2<(2*l2+1); m2++){
 
 		    if (l1==l2 && mul1==mul2)
 		      Uvalue = Hub_U_Basis[wan1][l1][mul1];
@@ -3483,371 +3555,356 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
 		      NC_v_eff[1][0][Mc_AN][to1][to2].i = Uvalue*(0.0 - NC_OcpN[0][0][1][Mc_AN][to2][to1].i);
 		    }
 
-		  } /* if (Hub_U_switch==1) */
+		    to2++;
 
-                  /* initialize NC_v_eff */
+		  } /* mul2 */
+		}  /* m2 */
+	      } /* l2 */
 
-                  else {
-		    NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
-                  } 
+	      to1++;
 
-		  to2++;
+	    } /* mul1 */
+	  }  /* m1 */
+	} /* l1 */
 
-	        } /* mul2 */
-	      }  /* m2 */
-	    } /* l2 */
+	break;
 
-	    to1++;
+      case 2:   /* General form by S.Ryee */
+	dtime(&Stime_atom);
 
-	  } /* mul1 */
-        }  /* m1 */
-      } /* l1 */
-    break;
+	to1 = 0;
+	on_off_dc=1;
+	mul_index1 = 0;
+	for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
+	  for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
+	    Uvalue = Hub_U_Basis[wan1][l1][mul1];
+	    Jvalue = Hund_J_Basis[wan1][l1][mul1];
+	    NZUJ = Nonzero_UJ[wan1][l1][mul1];
+	    for(m1=0; m1<(2*l1+1); m1++){
+	      to2 = 0;
+	      mul_index2 = 0;
+	      for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
+		for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
+		  for(m2=0; m2<(2*l2+1); m2++){
+		    if((mul_index1 == mul_index2) && (NZUJ > 0)){
+		      to_start = 0;
+		      switch (mul1){
+		      case 0:  /* mul1 = 0 */
+			if(l1 > 0){
+			  for(tmp_l=0; tmp_l<l1; tmp_l++){
+			    to_start += (2*tmp_l+1)*Spe_Num_Basis[wan1][tmp_l];
+			  }
+			}
+			else{  /* l1 = 0 */
+			  to_start = 0;
+			}
+			break;
 
-    case 2:	/* General form by S.Ryee */
-      dtime(&Stime_atom);
+		      case 1:  /* mul1 = 1 */
+			if(l1 > 0){
+			  for(tmp_l=0; tmp_l<l1; tmp_l++){
+			    to_start += (2*tmp_l+1)*Spe_Num_Basis[wan1][tmp_l];
+			  }
+			  to_start += (2*l1+1)*mul1;
+			}
+			else{  /* l1 = 0 */
+			  to_start = (2*l1+1)*mul1;
+			}
+			break;
+		      } /* switch (mul1) */
 
-      Gc_AN = M2G[Mc_AN];
-      wan1 = WhatSpecies[Gc_AN];
-      
-      to1 = 0;
-      on_off_dc=1;
-      mul_index1 = 0;
-      for(l1=0; l1<=Spe_MaxL_Basis[wan1]; l1++){
-        for(mul1=0; mul1<Spe_Num_Basis[wan1][l1]; mul1++){
-          Uvalue = Hub_U_Basis[wan1][l1][mul1];
-          Jvalue = Hund_J_Basis[wan1][l1][mul1];
-          NZUJ = Nonzero_UJ[wan1][l1][mul1];
-          for(m1=0; m1<(2*l1+1); m1++){
-            to2 = 0;
-            mul_index2 = 0;
-            for(l2=0; l2<=Spe_MaxL_Basis[wan1]; l2++){
-              for(mul2=0; mul2<Spe_Num_Basis[wan1][l2]; mul2++){
-                for(m2=0; m2<(2*l2+1); m2++){
-                  if((mul_index1 == mul_index2) && (NZUJ > 0)){
-                    to_start = 0;
-                    switch (mul1){
-                    case 0:  /* mul1 = 0 */
-                      if(l1 > 0){
-                        for(tmp_l=0; tmp_l<l1; tmp_l++){
-                          to_start += (2*tmp_l+1)*Spe_Num_Basis[wan1][tmp_l];
-                        }
-                      }
-                      else{  /* l1 = 0 */
-                        to_start = 0;
-                      }
-                    break;
-
-                    case 1:  /* mul1 = 1 */
-                      if(l1 > 0){
-                        for(tmp_l=0; tmp_l<l1; tmp_l++){
-                          to_start += (2*tmp_l+1)*Spe_Num_Basis[wan1][tmp_l];
-                        }
-                        to_start += (2*l1+1)*mul1;
-                      }
-                      else{  /* l1 = 0 */
-                        to_start = (2*l1+1)*mul1;
-                      }
-                    break;
-                    } /* switch (mul1) */
-
-                    ii = to1 - to_start;
-		    kk = to2 - to_start;
-		    NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
+		      ii = to1 - to_start;
+		      kk = to2 - to_start;
+		      NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
                 
-                    if(to1 == to2){	/* double counting correction */
-		      trace_N00.r = 0.0;
-		      trace_N00.i = 0.0;
-		      trace_N11.r = 0.0;
-		      trace_N11.i = 0.0;
+		      if(to1 == to2){	/* double counting correction */
+			trace_N00.r = 0.0;
+			trace_N00.i = 0.0;
+			trace_N11.r = 0.0;
+			trace_N11.i = 0.0;
 
-		      trace_N01.r = 0.0;
-		      trace_N01.i = 0.0;
-   		      trace_N10.r = 0.0;
-		      trace_N10.i = 0.0;
-		      for(dd=0; dd<(2*l1+1); dd++){
-			trace_N00.r += NC_OcpN[0][0][0][Mc_AN][to_start+dd][to_start+dd].r;
-			trace_N00.i += NC_OcpN[0][0][0][Mc_AN][to_start+dd][to_start+dd].i;
-			trace_N11.r += NC_OcpN[0][1][1][Mc_AN][to_start+dd][to_start+dd].r;
-			trace_N11.i += NC_OcpN[0][1][1][Mc_AN][to_start+dd][to_start+dd].i;
+			trace_N01.r = 0.0;
+			trace_N01.i = 0.0;
+			trace_N10.r = 0.0;
+			trace_N10.i = 0.0;
+			for(dd=0; dd<(2*l1+1); dd++){
+			  trace_N00.r += NC_OcpN[0][0][0][Mc_AN][to_start+dd][to_start+dd].r;
+			  trace_N00.i += NC_OcpN[0][0][0][Mc_AN][to_start+dd][to_start+dd].i;
+			  trace_N11.r += NC_OcpN[0][1][1][Mc_AN][to_start+dd][to_start+dd].r;
+			  trace_N11.i += NC_OcpN[0][1][1][Mc_AN][to_start+dd][to_start+dd].i;
 
-			trace_N01.r += NC_OcpN[0][0][1][Mc_AN][to_start+dd][to_start+dd].r;
-			trace_N01.i += NC_OcpN[0][0][1][Mc_AN][to_start+dd][to_start+dd].i;
- 			trace_N10.r += NC_OcpN[0][1][0][Mc_AN][to_start+dd][to_start+dd].r;
-			trace_N10.i += NC_OcpN[0][1][0][Mc_AN][to_start+dd][to_start+dd].i;
-		      }
+			  trace_N01.r += NC_OcpN[0][0][1][Mc_AN][to_start+dd][to_start+dd].r;
+			  trace_N01.i += NC_OcpN[0][0][1][Mc_AN][to_start+dd][to_start+dd].i;
+			  trace_N10.r += NC_OcpN[0][1][0][Mc_AN][to_start+dd][to_start+dd].r;
+			  trace_N10.i += NC_OcpN[0][1][0][Mc_AN][to_start+dd][to_start+dd].i;
+			}
 
-		      /* Double counting term */
-                      switch(dc_Type){
-		      case 1:	/* sFLL */
-			NC_v_eff[0][0][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*(trace_N00.r - 0.5);
-		        NC_v_eff[0][0][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i);
-			NC_v_eff[1][1][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*(trace_N11.r - 0.5);
-	                NC_v_eff[1][1][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N11.i);
+			/* Double counting term */
+			switch(dc_Type){
+			case 1:	/* sFLL */
+			  NC_v_eff[0][0][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*(trace_N00.r - 0.5);
+			  NC_v_eff[0][0][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i);
+			  NC_v_eff[1][1][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*(trace_N11.r - 0.5);
+			  NC_v_eff[1][1][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N11.i);
 	
-            	        NC_v_eff[0][1][Mc_AN][to1][to2].r -= -(Jvalue)*trace_N10.r;
-			NC_v_eff[0][1][Mc_AN][to1][to2].i -= -(Jvalue)*trace_N10.i;
-			NC_v_eff[1][0][Mc_AN][to1][to2].r -= -(Jvalue)*trace_N01.r;
-			NC_v_eff[1][0][Mc_AN][to1][to2].i -= -(Jvalue)*trace_N01.i;
-		      break;
+			  NC_v_eff[0][1][Mc_AN][to1][to2].r -= -(Jvalue)*trace_N10.r;
+			  NC_v_eff[0][1][Mc_AN][to1][to2].i -= -(Jvalue)*trace_N10.i;
+			  NC_v_eff[1][0][Mc_AN][to1][to2].r -= -(Jvalue)*trace_N01.r;
+			  NC_v_eff[1][0][Mc_AN][to1][to2].i -= -(Jvalue)*trace_N01.i;
+			  break;
 
-                      case 2:	/* sAMF */
-                        if (on_off_dc==1){
-                          for(jj=0; jj<(2*l1+1); jj++){
-                            for(ll=0; ll<(2*l1+1); ll++){
-                              if(jj==ll){
-                                AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r - trace_N00.r/((double)(2*l1+1));
-                                AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i - trace_N00.i/((double)(2*l1+1));
-                                AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r - trace_N11.r/((double)(2*l1+1));
-                                AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i - trace_N11.i/((double)(2*l1+1));
-                                AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r - (trace_N01.r+trace_N10.r)/((double)(2*(2*l1+1)));
-                                AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i - (trace_N01.i-trace_N10.i)/((double)(2*(2*l1+1)));
-                                AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r - (trace_N01.r+trace_N10.r)/((double)(2*(2*l1+1)));
-                                AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i + (trace_N01.i-trace_N10.i)/((double)(2*(2*l1+1)));
-                              }
-                              else{
-                                AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-                              }
-                            }
-                          }
-                          on_off_dc=0;
-                        }
-                      break;
+			case 2:	/* sAMF */
+			  if (on_off_dc==1){
+			    for(jj=0; jj<(2*l1+1); jj++){
+			      for(ll=0; ll<(2*l1+1); ll++){
+				if(jj==ll){
+				  AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r - trace_N00.r/((double)(2*l1+1));
+				  AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i - trace_N00.i/((double)(2*l1+1));
+				  AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r - trace_N11.r/((double)(2*l1+1));
+				  AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i - trace_N11.i/((double)(2*l1+1));
+				  AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r - (trace_N01.r+trace_N10.r)/((double)(2*(2*l1+1)));
+				  AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i - (trace_N01.i-trace_N10.i)/((double)(2*(2*l1+1)));
+				  AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r - (trace_N01.r+trace_N10.r)/((double)(2*(2*l1+1)));
+				  AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i + (trace_N01.i-trace_N10.i)/((double)(2*(2*l1+1)));
+				}
+				else{
+				  AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+				}
+			      }
+			    }
+			    on_off_dc=0;
+			  }
+			  break;
 
-		      case 3:	/* cFLL */
-			NC_v_eff[0][0][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*((trace_N00.r+trace_N11.r)/2.0 - 0.5);
-		        NC_v_eff[0][0][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i+trace_N11.i)/2.0;
-			NC_v_eff[1][1][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*((trace_N00.r+trace_N11.r)/2.0 - 0.5);
-	                NC_v_eff[1][1][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i+trace_N11.i)/2.0;
-		      break;
+			case 3:	/* cFLL */
+			  NC_v_eff[0][0][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*((trace_N00.r+trace_N11.r)/2.0 - 0.5);
+			  NC_v_eff[0][0][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i+trace_N11.i)/2.0;
+			  NC_v_eff[1][1][Mc_AN][to1][to2].r -= (Uvalue)*(trace_N00.r+trace_N11.r - 0.5) - (Jvalue)*((trace_N00.r+trace_N11.r)/2.0 - 0.5);
+			  NC_v_eff[1][1][Mc_AN][to1][to2].i -= (Uvalue)*(trace_N00.i+trace_N11.i) - (Jvalue)*(trace_N00.i+trace_N11.i)/2.0;
+			  break;
 
-                      case 4:	/* cAMF */
-                        if (on_off_dc==1){
-                          for(jj=0; jj<(2*l1+1); jj++){
-                            for(ll=0; ll<(2*l1+1); ll++){
-                              if(jj==ll){
-                                AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r - (trace_N00.r+trace_N11.r)/(2.0*((double)(2*l1+1)));
-                                AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i - (trace_N00.i+trace_N11.i)/(2.0*((double)(2*l1+1)));
-                                AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r - (trace_N00.r+trace_N11.r)/(2.0*((double)(2*l1+1)));
-                                AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i - (trace_N00.i+trace_N11.i)/(2.0*((double)(2*l1+1)));
-                                AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-                              }
-                              else{
-                                AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
-                                AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-                                AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-                              }
-                            }
-                          }
-                          on_off_dc=0;
-                        }
-                      break;
-                      }
+			case 4:	/* cAMF */
+			  if (on_off_dc==1){
+			    for(jj=0; jj<(2*l1+1); jj++){
+			      for(ll=0; ll<(2*l1+1); ll++){
+				if(jj==ll){
+				  AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r - (trace_N00.r+trace_N11.r)/(2.0*((double)(2*l1+1)));
+				  AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i - (trace_N00.i+trace_N11.i)/(2.0*((double)(2*l1+1)));
+				  AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r - (trace_N00.r+trace_N11.r)/(2.0*((double)(2*l1+1)));
+				  AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i - (trace_N00.i+trace_N11.i)/(2.0*((double)(2*l1+1)));
+				  AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+				}
+				else{
+				  AMF_Array[NZUJ][0][0][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][0][1][jj][ll] = NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][1][0][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][1][1][jj][ll] = NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][2][0][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][2][1][jj][ll] = NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+				  AMF_Array[NZUJ][3][0][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+				  AMF_Array[NZUJ][3][1][jj][ll] = NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+				}
+			      }
+			    }
+			    on_off_dc=0;
+			  }
+			  break;
+			}
 
-                     /*f(dc_Type==3){
-                        dum_alpha=0.0;
-                        for(jj=0; jj<(2*l1+1); jj++){
+			/*f(dc_Type==3){
+			  dum_alpha=0.0;
+			  for(jj=0; jj<(2*l1+1); jj++){
                           for(ll=0; ll<(2*l1+1); ll++){
-                            dum_alpha += AMF_Array[count][0][0][jj][ll]*AMF_Array[count][0][0][jj][ll]
-                                        +AMF_Array[count][0][1][jj][ll]*AMF_Array[count][0][1][jj][ll]
-                                        +AMF_Array[count][1][0][jj][ll]*AMF_Array[count][1][0][jj][ll]
-                                        +AMF_Array[count][1][1][jj][ll]*AMF_Array[count][1][1][jj][ll]
-                                        +AMF_Array[count][2][0][jj][ll]*AMF_Array[count][2][0][jj][ll]
-                                        +AMF_Array[count][2][1][jj][ll]*AMF_Array[count][2][1][jj][ll]
-                                        +AMF_Array[count][3][0][jj][ll]*AMF_Array[count][3][0][jj][ll]
-                                        +AMF_Array[count][3][1][jj][ll]*AMF_Array[count][3][1][jj][ll];
+			  dum_alpha += AMF_Array[count][0][0][jj][ll]*AMF_Array[count][0][0][jj][ll]
+			  +AMF_Array[count][0][1][jj][ll]*AMF_Array[count][0][1][jj][ll]
+			  +AMF_Array[count][1][0][jj][ll]*AMF_Array[count][1][0][jj][ll]
+			  +AMF_Array[count][1][1][jj][ll]*AMF_Array[count][1][1][jj][ll]
+			  +AMF_Array[count][2][0][jj][ll]*AMF_Array[count][2][0][jj][ll]
+			  +AMF_Array[count][2][1][jj][ll]*AMF_Array[count][2][1][jj][ll]
+			  +AMF_Array[count][3][0][jj][ll]*AMF_Array[count][3][0][jj][ll]
+			  +AMF_Array[count][3][1][jj][ll]*AMF_Array[count][3][1][jj][ll];
                           }
-                        }
-                        dum_alpha2 = ((double)(2*(2*l1+1)))*(trace_N00.r+trace_N11.r)
-                                    -(trace_N00.r+trace_N11.r)*(trace_N00.r+trace_N11.r)
-                                    -(M_z*M_z + M_x*M_x + M_y*M_y);
-                        if(dum_alpha2>1.0e-14 || dum_alpha2<-1.0e-14){
+			  }
+			  dum_alpha2 = ((double)(2*(2*l1+1)))*(trace_N00.r+trace_N11.r)
+			  -(trace_N00.r+trace_N11.r)*(trace_N00.r+trace_N11.r)
+			  -(M_z*M_z + M_x*M_x + M_y*M_y);
+			  if(dum_alpha2>1.0e-14 || dum_alpha2<-1.0e-14){
                           dc_alpha[count] = ((double)(2*(2*l1+1))*dum_alpha)/dum_alpha2;
-                        }
-                        else{
+			  }
+			  else{
                           dc_alpha[count] = 0.0;
-                        } 
-                      } */
+			  } 
+			  } */
                                         
 
-		    }	/* double counting correction */
+		      }	/* double counting correction */
                 
-                    /* loop start for interaction potential */
-		    for(jj=0; jj<(2*l1+1); jj++){
-		      for(ll=0; ll<(2*l1+1); ll++){
-                        switch(dc_Type){
-                        case 1: /* sFLL */
-			  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
-                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
-			     			              -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
-                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
-                        break;
+		      /* loop start for interaction potential */
+		      for(jj=0; jj<(2*l1+1); jj++){
+			for(ll=0; ll<(2*l1+1); ll++){
+			  switch(dc_Type){
+			  case 1: /* sFLL */
+			    NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
+												      +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
+			    NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
+												      +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
+												      +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
+												      +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
+			    NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+			    NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+			    NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+			    NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+			    break;
                      
-                        case 2: /* sAMF */
-			  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][0][jj][ll]
-                                                                                                    +AMF_Array[NZUJ][1][0][jj][ll])
-			     			              -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][0][jj][ll]);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][1][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][1][1][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][1][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][0][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][0][0][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][0][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][1][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][0][1][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][1][jj][ll]);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][0][jj][ll];
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][1][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][0][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][1][jj][ll];
-                        break;
+			  case 2: /* sAMF */
+			    NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][0][jj][ll]
+												      +AMF_Array[NZUJ][1][0][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][0][jj][ll]);
+			    NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][1][jj][ll] 
+												      +AMF_Array[NZUJ][1][1][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][1][jj][ll]);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][0][jj][ll] 
+												      +AMF_Array[NZUJ][0][0][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][0][jj][ll]);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][1][jj][ll] 
+												      +AMF_Array[NZUJ][0][1][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][1][jj][ll]);
+			    NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][0][jj][ll];
+			    NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][1][jj][ll];
+			    NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][0][jj][ll];
+			    NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][1][jj][ll];
+			    break;
 
-                        case 3: /* cFLL */
-                 	  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
-                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
-			     			              -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
-                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
-                        break;
+			  case 3: /* cFLL */
+			    NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
+												      +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
+			    NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
+												      +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
+												      +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
+												      +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
+			    NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+			    NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+			    NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+			    NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+			    break;
 
-                        case 4: /* cAMF */
-			  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][0][jj][ll]
-                                                                                                    +AMF_Array[NZUJ][1][0][jj][ll])
-			     			              -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][0][jj][ll]);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][1][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][1][1][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][1][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][0][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][0][0][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][0][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][1][jj][ll] 
-                                                                                                    +AMF_Array[NZUJ][0][1][jj][ll])
-							      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][1][jj][ll]);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][0][jj][ll];
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][1][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][0][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][1][jj][ll];
-                        break;
-                      /*  case 3:
-			  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
-                                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
-			     			              -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                                    +NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
-                                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
-							      -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
-                                                                                                                    +NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
-							      -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
+			  case 4: /* cAMF */
+			    NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][0][jj][ll]
+												      +AMF_Array[NZUJ][1][0][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][0][jj][ll]);
+			    NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][0][1][jj][ll] 
+												      +AMF_Array[NZUJ][1][1][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][0][1][jj][ll]);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][0][jj][ll] 
+												      +AMF_Array[NZUJ][0][0][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][0][jj][ll]);
+			    NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[NZUJ][ii][jj][kk][ll]*(AMF_Array[NZUJ][1][1][jj][ll] 
+												      +AMF_Array[NZUJ][0][1][jj][ll])
+			      -Coulomb_Array[NZUJ][ii][jj][ll][kk]*(AMF_Array[NZUJ][1][1][jj][ll]);
+			    NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][0][jj][ll];
+			    NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][3][1][jj][ll];
+			    NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][0][jj][ll];
+			    NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[NZUJ][ii][jj][ll][kk]*AMF_Array[NZUJ][2][1][jj][ll];
+			    break;
+			    /*  case 3:
+				NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r
+				+NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r)
+				-Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r);
+				NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i 
+				+NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i)
+				-Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i);
+				NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r 
+				+NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].r)
+				-Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].r);
+				NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i 
+				+NC_OcpN[0][0][0][Mc_AN][to_start+jj][to_start+ll].i)
+				-Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*(NC_OcpN[0][1][1][Mc_AN][to_start+jj][to_start+ll].i);
+				NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].r;
+				NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][1][0][Mc_AN][to_start+jj][to_start+ll].i;
+				NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].r;
+				NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*dc_alpha[count]*NC_OcpN[0][0][1][Mc_AN][to_start+jj][to_start+ll].i;
 
-			  NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][0][0][jj][ll]
-                                                                                                                          +AMF_Array[count][1][0][jj][ll])
-			     			              -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][0][0][jj][ll]);
-			  NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][0][1][jj][ll] 
-                                                                                                                          +AMF_Array[count][1][1][jj][ll])
-							      -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][0][1][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][1][0][jj][ll] 
-                                                                                                                          +AMF_Array[count][0][0][jj][ll])
-							      -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][1][0][jj][ll]);
-			  NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][1][1][jj][ll] 
-                                                                                                                          +AMF_Array[count][0][1][jj][ll])
-							      -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][1][1][jj][ll]);
-			  NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][3][0][jj][ll];
-			  NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][3][1][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][2][0][jj][ll];
-			  NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][2][1][jj][ll];
-                        break; */
-                        }
+				NC_v_eff[0][0][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][0][0][jj][ll]
+				+AMF_Array[count][1][0][jj][ll])
+				-Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][0][0][jj][ll]);
+				NC_v_eff[0][0][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][0][1][jj][ll] 
+				+AMF_Array[count][1][1][jj][ll])
+				-Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][0][1][jj][ll]);
+				NC_v_eff[1][1][Mc_AN][to1][to2].r += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][1][0][jj][ll] 
+				+AMF_Array[count][0][0][jj][ll])
+				-Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][1][0][jj][ll]);
+				NC_v_eff[1][1][Mc_AN][to1][to2].i += Coulomb_Array[count][ii][jj][kk][ll]*(1.0-dc_alpha[count])*(AMF_Array[count][1][1][jj][ll] 
+				+AMF_Array[count][0][1][jj][ll])
+				-Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*(AMF_Array[count][1][1][jj][ll]);
+				NC_v_eff[0][1][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][3][0][jj][ll];
+				NC_v_eff[0][1][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][3][1][jj][ll];
+				NC_v_eff[1][0][Mc_AN][to1][to2].r += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][2][0][jj][ll];
+				NC_v_eff[1][0][Mc_AN][to1][to2].i += -Coulomb_Array[count][ii][jj][ll][kk]*(1.0-dc_alpha[count])*AMF_Array[count][2][1][jj][ll];
+				break; */
+			  }
+			}
 		      }
+
+		    } /* U || J != 0.0 */
+		    else{
+		      NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
+		      NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
+		      NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
 		    }
-
-		  } /* U || J != 0.0 */
-		  else{
-		    NC_v_eff[0][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][0][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[0][1][Mc_AN][to1][to2].i = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].r = 0.0;
-		    NC_v_eff[1][0][Mc_AN][to1][to2].i = 0.0;
-   		  }
 		
-		  to2++;
+		    to2++;
 
-	        } /* m2 */
-	        mul_index2++;
-	      } /* mul2 */
-	    } /* l2*/
+		  } /* m2 */
+		  mul_index2++;
+		} /* mul2 */
+	      } /* l2*/
 
-	    to1++;
-	  } /* m1 */
-	 mul_index1++;
-         on_off_dc=1;
-        } /* mul1 */
-      } /* l1 */
+	      to1++;
+	    } /* m1 */
+	    mul_index1++;
+	    on_off_dc=1;
+	  } /* mul1 */
+	} /* l1 */
 
-    break;
-    }
+	break;
+      }
   
+    } /* end of if (Hub_U_switch==1) */
+
     /************************************************************
      *********************************************************** 
      *********************************************************** 
@@ -3894,24 +3951,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
       }
 
 
-      /*
-      printf("TN.r Mc_AN=%2d\n",Mc_AN); 
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN[i][j].r);     
-        }
-        printf("\n");
-      }
-
-      printf("TN.i Mc_AN=%2d\n",Mc_AN); 
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN[i][j].i);     
-        }
-        printf("\n");
-      }
-      */
-
       EulerAngle_Spin( 1,
                        TN[0][0].r, TN[1][1].r,
                        TN[0][1].r, TN[0][1].i,
@@ -3919,14 +3958,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
                        Nup, Ndn, theta, phi );
       
       /* calculate TN0 */
-
-      /*
-      printf("Nup=%15.12f Ndn=%15.12f theta=%15.12f phi=%15.12f\n",Nup[0],Ndn[0],theta[0],phi[0]);
-      printf("theta =%15.12f phi =%15.12f\n",theta[0]/PI*180.0,phi[0]/PI*180.0);
-
-      printf("theta0=%15.12f phi0=%15.12f\n",InitAngle0_Spin[Gc_AN]/PI*180.0,
-                                             InitAngle1_Spin[Gc_AN]/PI*180.0);
-      */
 
       sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
       cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
@@ -3963,319 +3994,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
       /* calculate dTN */
 
       Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-      
-
-
-
-
-
-
-
-      /*
-
-      {
-
-
-	dcomplex TNA[10][10];
-	dcomplex TNB[10][10];
-	dcomplex TNC[10][10];
-
-        dcomplex ctmp1,ctmp2;
-
-
-
-      l1 = 1;
-      l2 = 0;
-      tmp1 = 0.0001;
-      tmp2 = 0.01;
-
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V0 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V0 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-      
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                     + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                     + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =  Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =  Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-      printf("1 TN0.r\n");
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].r);     
-
-          TNA[i][j] = TN0[i][j];
-        }
-        printf("\n");
-      }
-
-      printf("1 TN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-
-      TN[l1][l2].r += tmp1;
-      TN[l1][l2].i += tmp2;
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V1 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V1 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-      
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =    Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =    Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-
-
-
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-      printf("\nanalytical dTN.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",dTN[l1][l2][i][j].r);     
-        }
-        printf("\n");
-      }
-
-      printf("analytical dTN.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",dTN[l1][l2][i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-
-
-
-      TN[l1][l2].r += tmp1;
-      TN[l1][l2].i += tmp2;
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V2 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V2 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-
-
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =    Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =    Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-
-
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-
-
-
-      printf("2 TN0.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].r);     
-          TNB[i][j] = TN0[i][j];
-
-        }
-        printf("\n");
-      }
-
-      printf("2 TN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          TNC[i][j].r = 0.5*(TNB[i][j].r - TNA[i][j].r)/( tmp1*tmp1 + tmp2*tmp2 );     
-          TNC[i][j].i = 0.5*(TNB[i][j].i - TNA[i][j].i)/( tmp1*tmp1 + tmp2*tmp2 );     
-        }
-      }
-
-      printf("\nnumerical dTN0.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ", tmp1*TNC[i][j].r + tmp2*TNC[i][j].i );
-        }
-        printf("\n");
-      }
-
-      printf("numerical dTN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ", tmp1*TNC[i][j].i - tmp2*TNC[i][j].r );
-        }
-        printf("\n");
-      }
-
-
-      }
-
-      MPI_Finalize();
-      exit(0);
-      */
 
       for (i=0; i<Spe_Total_NO[wan1]; i++){
         for (j=0; j<Spe_Total_NO[wan1]; j++){
@@ -4387,25 +4105,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
 	TN[1][1].i -= NC_OcpN[0][1][1][Mc_AN][i][i].i;
       }
 
-
-      /*
-      printf("TN.r Mc_AN=%2d\n",Mc_AN); 
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN[i][j].r);     
-        }
-        printf("\n");
-      }
-
-      printf("TN.i Mc_AN=%2d\n",Mc_AN); 
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN[i][j].i);     
-        }
-        printf("\n");
-      }
-      */
-
       EulerAngle_Spin( 1,
                        TN[0][0].r, TN[1][1].r,
                        TN[0][1].r, TN[0][1].i,
@@ -4415,14 +4114,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
       /**********************
            calculate TN0 
       **********************/
-
-      /*
-      printf("Nup=%15.12f Ndn=%15.12f theta=%15.12f phi=%15.12f\n",Nup[0],Ndn[0],theta[0],phi[0]);
-      printf("theta =%15.12f phi =%15.12f\n",theta[0]/PI*180.0,phi[0]/PI*180.0);
-
-      printf("theta0=%15.12f phi0=%15.12f\n",InitAngle0_Spin[Gc_AN]/PI*180.0,
-                                             InitAngle1_Spin[Gc_AN]/PI*180.0);
-      */
 
       /* constraint which trys to keep the initial magnetic moment */
 
@@ -4470,319 +4161,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
 
       Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
       
-            
-      
-      
-
-
-
-
-
-      /*
-
-      {
-
-
-	dcomplex TNA[10][10];
-	dcomplex TNB[10][10];
-	dcomplex TNC[10][10];
-
-        dcomplex ctmp1,ctmp2;
-
-
-
-      l1 = 1;
-      l2 = 0;
-      tmp1 = 0.0001;
-      tmp2 = 0.01;
-
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V0 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V0 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-      
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                     + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                     + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =  Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =  Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-      printf("1 TN0.r\n");
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].r);     
-
-          TNA[i][j] = TN0[i][j];
-        }
-        printf("\n");
-      }
-
-      printf("1 TN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-
-      TN[l1][l2].r += tmp1;
-      TN[l1][l2].i += tmp2;
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V1 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V1 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-      
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =    Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =    Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-
-
-
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-      printf("\nanalytical dTN.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",dTN[l1][l2][i][j].r);     
-        }
-        printf("\n");
-      }
-
-      printf("analytical dTN.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",dTN[l1][l2][i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-
-
-
-      TN[l1][l2].r += tmp1;
-      TN[l1][l2].i += tmp2;
-
-      EulerAngle_Spin( 0,
-                       TN[0][0].r, TN[1][1].r,
-                       TN[0][1].r, TN[0][1].i,
-                       TN[1][0].r, TN[1][0].i,
-                       Nup, Ndn, theta, phi );
-
-      printf("V2 Nup.r=%15.12f Nup.i=%15.12f\n",Nup[0],Nup[1]);
-      printf("V2 Ndn.r=%15.12f Ndn.i=%15.12f\n",Ndn[0],Ndn[1]);
-
-
-      sit = sin(0.5*InitAngle0_Spin[Gc_AN]);
-      cot = cos(0.5*InitAngle0_Spin[Gc_AN]);
-      sip = sin(0.5*InitAngle1_Spin[Gc_AN]);
-      cop = cos(0.5*InitAngle1_Spin[Gc_AN]);
-
-      U[0][0].r = cop*cot;  U[0][0].i = sip*cot;
-      U[0][1].r = cop*sit;  U[0][1].i =-sip*sit;
-      U[1][0].r =-cop*sit;  U[1][0].i =-sip*sit;
-      U[1][1].r = cop*cot;  U[1][1].i =-sip*cot;
-
-
-
-
-      TN0[0][0].r =    Nup[0]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[0]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      TN0[0][0].i =    Nup[1]*( U[0][0].r*U[0][0].r + U[0][0].i*U[0][0].i )
-                   + Ndn[1]*( U[1][0].r*U[1][0].r + U[1][0].i*U[1][0].i );
-
-      ctmp1.r = U[0][0].r*U[0][1].r + U[0][0].i*U[0][1].i;
-      ctmp1.i =-U[0][0].i*U[0][1].r + U[0][0].r*U[0][1].i;
-      ctmp2.r = U[1][0].r*U[1][1].r + U[1][0].i*U[1][1].i;
-      ctmp2.i =-U[1][0].i*U[1][1].r + U[1][0].r*U[1][1].i;  
-
-      TN0[0][1].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[0][1].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      ctmp1.r =  U[0][1].r*U[0][0].r + U[0][1].i*U[0][0].i;
-      ctmp1.i = -U[0][1].i*U[0][0].r + U[0][1].r*U[0][0].i; 
-      ctmp2.r =  U[1][1].r*U[1][0].r + U[1][1].i*U[1][0].i;
-      ctmp2.i = -U[1][1].i*U[1][0].r + U[1][1].r*U[1][0].i; 
-
-      TN0[1][0].r = Nup[0]*ctmp1.r - Nup[1]*ctmp1.i 
-                  + Ndn[0]*ctmp2.r - Ndn[1]*ctmp2.i;  
-
-      TN0[1][0].i = Nup[0]*ctmp1.i + Nup[1]*ctmp1.r 
-                  + Ndn[0]*ctmp2.i + Ndn[1]*ctmp2.r;
-
-      TN0[1][1].r =    Nup[0]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[0]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-      TN0[1][1].i =    Nup[1]*( U[0][1].r*U[0][1].r + U[0][1].i*U[0][1].i )
-                   + Ndn[1]*( U[1][1].r*U[1][1].r + U[1][1].i*U[1][1].i );
-
-
-
-
-
-
-      Calc_dTN( Constraint_NCS_switch, TN, dTN, U, theta, phi );
-
-
-
-
-      printf("2 TN0.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].r);     
-          TNB[i][j] = TN0[i][j];
-
-        }
-        printf("\n");
-      }
-
-      printf("2 TN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ",TN0[i][j].i);     
-        }
-        printf("\n");
-      }
-
-
-
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          TNC[i][j].r = 0.5*(TNB[i][j].r - TNA[i][j].r)/( tmp1*tmp1 + tmp2*tmp2 );     
-          TNC[i][j].i = 0.5*(TNB[i][j].i - TNA[i][j].i)/( tmp1*tmp1 + tmp2*tmp2 );     
-        }
-      }
-
-      printf("\nnumerical dTN0.r\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ", tmp1*TNC[i][j].r + tmp2*TNC[i][j].i );
-        }
-        printf("\n");
-      }
-
-      printf("numerical dTN0.i\n");      
-      for (i=0; i<2; i++){
-        for (j=0; j<2; j++){
-          printf("%15.12f ", tmp1*TNC[i][j].i - tmp2*TNC[i][j].r );
-        }
-        printf("\n");
-      }
-
-
-      }
-
-      MPI_Finalize();
-      exit(0);
-      */
-
       for (i=0; i<Spe_Total_NO[wan1]; i++){
         for (j=0; j<Spe_Total_NO[wan1]; j++){
 
@@ -4900,19 +4278,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
                        TN[1][0].r, TN[1][0].i,
                        Nup, Ndn, theta, phi );
 
-
-
-
-
-      /*
-      printf("Nup=   %18.15f\n",Nup[0],Nup[1]); 
-      printf("Ndn=   %18.15f\n",Ndn[0],Ndn[1]); 
-      printf("theta= %18.15f\n",theta[0],theta[1]); 
-      printf("phi=   %18.15f\n",phi[0],phi[1]); 
-      */
-
-
-
       /* calculate dSx, dSy, dSz */
 
       dSx[0][0].r = 0.0;
@@ -4945,59 +4310,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
       dSz[1][0].i = 0.0;
       dSz[1][1].i = 0.0;
 
-      /*      
-      Calc_dSxyz( TN, dSx, dSy, dSz, Nup, Ndn, theta, phi );
-
-      {
-
-        double Sx,Sy,Sz;
-
-        Sx = 0.5*(Nup[0] - Ndn[0])*sin(theta[0])*cos(phi[0]);
-        Sy = 0.5*(Nup[0] - Ndn[0])*sin(theta[0])*sin(phi[0]);
-        Sz = 0.5*(Nup[0] - Ndn[0])*cos(theta[0]);
-
-        printf("Sx=%18.15f\n",Sx);
-        printf("Sy=%18.15f\n",Sy);
-        printf("Sz=%18.15f\n",Sz);
-
-        printf("Re dSx11=%18.15f\n",dSx[0][0].r);
-        printf("Re dSx12=%18.15f\n",dSx[0][1].r);
-        printf("Re dSx21=%18.15f\n",dSx[1][0].r);
-        printf("Re dSx22=%18.15f\n",dSx[1][1].r);
-
-        printf("Im dSx11=%18.15f\n",dSx[0][0].i);
-        printf("Im dSx12=%18.15f\n",dSx[0][1].i);
-        printf("Im dSx21=%18.15f\n",dSx[1][0].i);
-        printf("Im dSx22=%18.15f\n\n",dSx[1][1].i);
-
-
-        printf("Re dSy11=%18.15f\n",dSy[0][0].r);
-        printf("Re dSy12=%18.15f\n",dSy[0][1].r);
-        printf("Re dSy21=%18.15f\n",dSy[1][0].r);
-        printf("Re dSy22=%18.15f\n",dSy[1][1].r);
-
-        printf("Im dSy11=%18.15f\n",dSy[0][0].i);
-        printf("Im dSy12=%18.15f\n",dSy[0][1].i);
-        printf("Im dSy21=%18.15f\n",dSy[1][0].i);
-        printf("Im dSy22=%18.15f\n\n",dSy[1][1].i);
-      
-        printf("Re dSz11=%18.15f\n",dSz[0][0].r);
-        printf("Re dSz12=%18.15f\n",dSz[0][1].r);
-        printf("Re dSz21=%18.15f\n",dSz[1][0].r);
-        printf("Re dSz22=%18.15f\n",dSz[1][1].r);
-
-        printf("Im dSz11=%18.15f\n",dSz[0][0].i);
-        printf("Im dSz12=%18.15f\n",dSz[0][1].i);
-        printf("Im dSz21=%18.15f\n",dSz[1][0].i);
-        printf("Im dSz22=%18.15f\n\n",dSz[1][1].i);
-
-      }
-
-       
-      MPI_Finalize();
-      exit(0);
-      */
-
       /* calculate the energy for the Zeeman term for spin, Uzs */
 
       lx = sin(theta0)*cos(phi0);
@@ -5014,22 +4326,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
 
       My_Uzs += sx*Bx + sy*By + sz*Bz;
 
-      /*
-      printf("Uzs=%15.12f\n",sx*Bx + sy*By + sz*Bz);
-
-      printf("|s|=%18.15f\n",sqrt(sx*sx+sy*sy+sz*sz));
-      printf("theta=%18.15f %18.15f\n",theta0/PI*180.0,theta[0]/PI*180.0);
-      printf("phi  =%18.15f %18.15f\n",phi0/PI*180.0,phi[0]/PI*180.0);
-
-      printf("sx=%18.15f %18.15f\n",sx,0.5*(Nup[0] - Ndn[0])*sin(theta[0])*cos(phi[0]));
-      printf("sy=%18.15f %18.15f\n",sy,0.5*(Nup[0] - Ndn[0])*sin(theta[0])*sin(phi[0]));
-      printf("sz=%18.15f %18.15f\n",sz,0.5*(Nup[0] - Ndn[0])*cos(theta[0]));
-
-      printf("Bx=%18.15f\n",Bx);
-      printf("By=%18.15f\n",By);
-      printf("Bz=%18.15f\n",Bz);
-      */
-
       /* calculate veff by the Zeeman term for spin magnetic moment */
 
       for (i=0; i<Spe_Total_NO[wan1]; i++){
@@ -5041,15 +4337,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
 
 		NC_v_eff[s1][s2][Mc_AN][i][j].r += Bx*dSx[s1][s2].r + By*dSy[s1][s2].r + Bz*dSz[s1][s2].r;
 		NC_v_eff[s1][s2][Mc_AN][i][j].i += Bx*dSx[s1][s2].i + By*dSy[s1][s2].i + Bz*dSz[s1][s2].i;
-
-		/*
-                printf("spin i=%2d j=%2d s1=%2d s2=%2d re=%15.12f im=%15.12f\n",
-                       i,j,s1,s2,
-                       Bx*dSx[s1][s2].r + By*dSy[s1][s2].r + Bz*dSz[s1][s2].r,
-                       Bx*dSx[s1][s2].i + By*dSy[s1][s2].i + Bz*dSz[s1][s2].i );
-		*/
-
-
 	      }
 	    }
 	  }
@@ -5057,10 +4344,6 @@ void make_NC_v_eff(int SCF_iter, int SucceedReadingDMfile, double dUele, double 
       }
 
     } /* else if (Zeeman_NCS_switch==1 && Constraint_SpinAngle[Gc_AN]==1 ) */
-
-
-
-
 
     /************************************************************
      *********************************************************** 

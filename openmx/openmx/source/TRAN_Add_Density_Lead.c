@@ -8,8 +8,8 @@
 
   Log of TRAN_Add_Density_Lead.c:
 
-     24/July/2008  Released by T.Ozaki
-     24/Apr/2012   Modified by T.Ozaki
+     24/July/2008  Released by T. Ozaki
+     24/Apr/2012   Modified by T. Ozaki
 
 ***********************************************************************/
 
@@ -20,7 +20,8 @@
 #include "tran_variables.h"
 #include "tran_prototypes.h"
 
-void Density_Grid_Copy_B2D();
+void Density_Grid_Copy_B2D(double **Density_Grid_B0);
+
 
 
 
@@ -94,5 +95,5 @@ void TRAN_Add_Density_Lead(
              MPI: from the partitions B to D
   ******************************************************/
 
-  Density_Grid_Copy_B2D();
+  Density_Grid_Copy_B2D(Density_Grid_B);
 }

@@ -473,22 +473,22 @@ void Input( FILE *fp )
     for (order=0; order<order_max; order++){
       OLPpo[direction][order]=(double****)malloc(sizeof(double***)*(atomnum+1));
       for (ct_AN=0; ct_AN<=atomnum; ct_AN++){
-	TNO1 = Total_NumOrbs[ct_AN];
-	OLPpo[direction][order][ct_AN] = (double***)malloc(sizeof(double**)*(FNAN[ct_AN]+1));
-	for (h_AN=0; h_AN<=FNAN[ct_AN]; h_AN++){
-	  OLPpo[direction][order][ct_AN][h_AN] = (double**)malloc(sizeof(double*)*TNO1);
+	      TNO1 = Total_NumOrbs[ct_AN];
+        OLPpo[direction][order][ct_AN] = (double***)malloc(sizeof(double**)*(FNAN[ct_AN]+1));
+        for (h_AN=0; h_AN<=FNAN[ct_AN]; h_AN++){
+          OLPpo[direction][order][ct_AN][h_AN] = (double**)malloc(sizeof(double*)*TNO1);
 
-	  if (ct_AN==0){
-	    TNO2 = 1;
-	  }
-	  else{
-	    Gh_AN = natn[ct_AN][h_AN];
-	    TNO2 = Total_NumOrbs[Gh_AN];
-	  }
-	  for (i=0; i<TNO1; i++){
-	    OLPpo[direction][order][ct_AN][h_AN][i] = (double*)malloc(sizeof(double)*TNO2);
-	  }
-	}
+          if (ct_AN==0){
+            TNO2 = 1;
+          }
+          else{
+            Gh_AN = natn[ct_AN][h_AN];
+            TNO2 = Total_NumOrbs[Gh_AN];
+          }
+          for (i=0; i<TNO1; i++){
+            OLPpo[direction][order][ct_AN][h_AN][i] = (double*)malloc(sizeof(double)*TNO2);
+          }
+        }
       }
     }
   }

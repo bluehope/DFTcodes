@@ -89,7 +89,7 @@ void Make_InputFile_with_FinalCoord_Normal(char *file, int MD_iter)
  
     /* the new input file */    
 
-    sprintf(fname1,"%s#",file);
+    sprintf(fname1,"%s%s#",filepath,file);
     fp1 = fopen(fname1,"w");
     fseek(fp1,0,SEEK_END);
 
@@ -573,7 +573,7 @@ void Make_InputFile_with_FinalCoord_NEGF(char *file, int MD_iter)
 
     /* the new input file */    
 
-    sprintf(fname1,"%s#",file);
+    sprintf(fname1,"%s%s#",filepath,file);
     fp1 = fopen(fname1,"w");
     fseek(fp1,0,SEEK_END);
 

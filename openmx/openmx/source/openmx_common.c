@@ -83,7 +83,6 @@ int R_atv(int N, int i, int j, int k)
   return Rn;
 }
 
-
 dcomplex Complex(double re, double im)
 {
   dcomplex c;
@@ -116,6 +115,7 @@ dcomplex Cmul(dcomplex a, dcomplex b)
   return c;
 }
 
+
 dcomplex Conjg(dcomplex z)
 {
   dcomplex c;
@@ -123,6 +123,7 @@ dcomplex Conjg(dcomplex z)
   c.i = -z.i;
   return c;
 }
+
 
 dcomplex Cdiv(dcomplex a, dcomplex b)
 {
@@ -143,6 +144,7 @@ dcomplex Cdiv(dcomplex a, dcomplex b)
   return c;
 }
 
+
 double Cabs(dcomplex z)
 {
   double x,y,ans,temp;
@@ -161,6 +163,7 @@ double Cabs(dcomplex z)
   }
   return ans;
 }
+
 
 dcomplex Csqrt(dcomplex z)
 {
@@ -599,7 +602,6 @@ void asbessel(int n, double x, double sbe[2])
 
 
 
-
 void ComplexSH(int l, int m, double theta, double phi,
                double SH[2], double dSHt[2], double dSHp[2])
 {
@@ -643,20 +645,24 @@ void ComplexSH(int l, int m, double theta, double phi,
   }
   else{
     if (abs(m)%2==0){
+
       SH[0]   = tmp0*ALeg[0]*co;
       SH[1]   = tmp0*ALeg[0]*si;
       dSHt[0] = tmp0*ALeg[1]*co;
       dSHt[1] = tmp0*ALeg[1]*si;
       dSHp[0] = -(double)m*tmp0*ALeg[0]*si;
       dSHp[1] =  (double)m*tmp0*ALeg[0]*co;
+
     }
     else{
+
       SH[0]   = -tmp0*ALeg[0]*co;
       SH[1]   = -tmp0*ALeg[0]*si;
       dSHt[0] = -tmp0*ALeg[1]*co;
       dSHt[1] = -tmp0*ALeg[1]*si;
       dSHp[0] =  (double)m*tmp0*ALeg[0]*si;
       dSHp[1] = -(double)m*tmp0*ALeg[0]*co;
+
     }
   } 
 
@@ -675,7 +681,7 @@ void Associated_Legendre(int l, int m, double x, double ALeg[2])
    1/sqrt{1-x*x}*(l*x*Plm(x)-(l+m)*P{l-1}m(x))     
    where x=cos(theta)
   ******************************************************/
-  double cut0=1.0e-24,cut1=1.0e-12;
+  double cut0=1.0e-15,cut1=1.0e-20;
   double Pm,Pm1,f,p0,p1,dP,tmp0; 
   int i,ll;
   
@@ -706,6 +712,7 @@ void Associated_Legendre(int l, int m, double x, double ALeg[2])
     p1 = 0.0;
 
     tmp0 = sqrt(1.0-x*x);
+
     if (cut1<tmp0)  dP = ((double)l*x*p0 - (double)(l+m)*p1)/tmp0;
     else            dP = 0.0;
 
@@ -722,6 +729,7 @@ void Associated_Legendre(int l, int m, double x, double ALeg[2])
     if (l==(m+1)){
       p0 = Pm1; 
       p1 = Pm;
+
       tmp0 = sqrt(1.0-x*x);
 
       if (cut1<tmp0) dP = ((double)l*x*p0 - (double)(l+m)*p1)/tmp0;
