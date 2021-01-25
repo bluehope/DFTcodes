@@ -35,6 +35,9 @@ int RestartSCFFileDFT(char *mode, int SpinP_switch, int MD_iter, double *****H,d
 	int numprocs, myid;
 	char fname[YOUSO10];
 	static FILE *fp;
+	int ret;
+
+	ret = 1;
 
 	MPI_Comm_size(mpi_comm_level1, &numprocs);
 	MPI_Comm_rank(mpi_comm_level1, &myid);
@@ -42,7 +45,7 @@ int RestartSCFFileDFT(char *mode, int SpinP_switch, int MD_iter, double *****H,d
 	//if (ML_flag) return 0;
 	if (0 != myid ) return 0;
 
-	sprintf(fname, "%s%s.scfout", filepath, filename);
+	sprintf(fname, "%s%s.restart.scfout", filepath, filename);
 	//if (myid == Host_ID) {
 		MPI_Barrier(mpi_comm_level1);
 		if ((fp = fopen(fname, "r")) != NULL) {
@@ -57,11 +60,12 @@ int RestartSCFFileDFT(char *mode, int SpinP_switch, int MD_iter, double *****H,d
 		}
 		else {
 			printf("Failure of reading the scfout file (%s).\n", fname);
+			ret = 0;
 			fflush(stdout);
 		}
 		MPI_Barrier(mpi_comm_level1);
 	//}
-	return 0;
+	return ret;
 }
 
 
